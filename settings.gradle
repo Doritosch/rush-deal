@@ -1,0 +1,5 @@
+rootProject.name = 'rush-deal'
+
+include 'api-gateway'
+include 'user-service'
+include 'discovery-service'
