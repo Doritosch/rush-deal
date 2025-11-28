@@ -1,0 +1,4 @@
+# CODEOWNERS 파일 - Pull Request 자동 리뷰어 지정
+# 전체 프로젝트에 대한 기본 리뷰어 지정
+
+* @bbangjae @chachohee @Doritosch @miiiiiin @minahYu
