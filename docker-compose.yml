@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  rushdeal_postgres:
+    image: postgres:16-alpine
+    container_name: rushdeal_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rushdeal_db
+      POSTGRES_USER: rushdeal
+      POSTGRES_PASSWORD: rushdeal
+    ports:
+      - "15432:5432"
+    volumes:
+      - rushdeal_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rushdeal -d rushdeal_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  rushdeal_pg_data:
