@@ -31,6 +31,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class OrderHistory {
+
 	@Id
 	private UUID orderHistoryId;
 
@@ -56,4 +57,5 @@ public class OrderHistory {
 	@Type(JsonBinaryType.class)
 	@Column(columnDefinition = "jsonb")
 	private Map<String, Object> metadata;
+
 }
