@@ -33,4 +33,27 @@ public class ShippingInfo {
 	@Column(length = 100)
 	private String deliveryMessage;
 
+
+	public void validate() {
+		if (recipientName == null || recipientName.isBlank()) {
+			throw new IllegalArgumentException("수령인 이름은 필수입니다.");
+		}
+
+		if (recipientPhone == null || !recipientPhone.matches("^01[0-9]{8,9}$")) {
+			throw new IllegalArgumentException("올바른 휴대폰 번호 형식이 아닙니다.");
+		}
+
+		if (zipCode == null || !zipCode.matches("^[0-9]{5}$")) {
+			throw new IllegalArgumentException("우편번호는 5자리 숫자여야 합니다.");
+		}
+
+		if (addressBase == null || addressBase.isBlank()) {
+			throw new IllegalArgumentException("기본 주소는 필수입니다.");
+		}
+
+		if (addressDetail == null || addressDetail.isBlank()) {
+			throw new IllegalArgumentException("상세 주소는 필수입니다.");
+		}
+	}
+
 }
