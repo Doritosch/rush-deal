@@ -28,6 +28,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class OrderReservation {
+
 	@Id
 	private UUID orderReservationId;
 
@@ -54,4 +55,59 @@ public class OrderReservation {
 	private Instant confirmedAt;
 
 	private Instant releasedAt;
+
+
+	// ============================================
+	//                 도메인 로직
+	// ============================================
+
+	// 예약 생성 (15분 TTL)
+	public static OrderReservation create(UUID timeDealStockId, Integer quantity) {
+		return OrderReservation.builder()
+			.orderReservationId(UUID.randomUUID())
+			.timeDealStockId(timeDealStockId)
+			.quantity(quantity)
+			.status(ReservationStatus.RESERVED)
+			.reservedAt(Instant.now())
+			.expiresAt(Instant.now().plus(15, ChronoUnit.MINUTES)) // 15분 TTL
+			.build();
+	}
+
+	// 결제 완료 시 예약 확정
+	public void confirm() {
+		if (this.status != ReservationStatus.RESERVED) {
+			throw new IllegalStateException("RESERVED 상태에서만 확정할 수 있습니다.");
+		}
+		this.status = ReservationStatus.CONFIRMED;
+		this.confirmedAt = Instant.now();
+	}
+
+	// 15분 경과 시 예약 만료
+	public void expire() {
+		if (this.status != ReservationStatus.RESERVED) {
+			throw new IllegalStateException("RESERVED 상태에서만 만료 처리할 수 있습니다.");
+		}
+		this.status = ReservationStatus.EXPIRED;
+		this.releasedAt = Instant.now();
+	}
+
+	// 주문 취소 시 예약 취소
+	public void cancel() {
+		if (this.status != ReservationStatus.RESERVED) {
+			throw new IllegalStateException("RESERVED 상태에서만 취소할 수 있습니다.");
+		}
+		this.status = ReservationStatus.CANCELLED;
+		this.releasedAt = Instant.now();
+	}
+
+	// 예약 만료 여부 확인
+	public boolean isExpired() {
+		return Instant.now().isAfter(expiresAt);
+	}
+
+	// 주문 연관 관계 설정
+	public void assignOrder(Order order) {
+		this.order = order;
+	}
+
 }
