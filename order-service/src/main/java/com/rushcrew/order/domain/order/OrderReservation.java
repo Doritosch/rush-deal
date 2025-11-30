@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder
+@Builder(access = AccessLevel.PRIVATE)
 public class OrderReservation {
 
 	@Id
