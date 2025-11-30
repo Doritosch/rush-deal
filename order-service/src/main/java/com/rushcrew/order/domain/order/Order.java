@@ -121,10 +121,55 @@ public class Order {
 		return order;
 	}
 
+	// public void updateShippingInfo(ShippingInfo newShippingInfo) {
+	// 	validateStatus(OrderStatus.PENDING, "배송지 정보는 PENDING 상태에서만 수정할 수 있습니다.");
+	// 	this.shippingInfo = newShippingInfo;
+	// 	addHistory(OrderEventType.SHIPPING_INFO_UPDATED, status, status, "배송지 정보 수정");
+	// }
+
 	public void updateShippingInfo(ShippingInfo newShippingInfo) {
-		validateStatus(OrderStatus.PENDING, "배송지 정보는 PENDING 상태에서만 수정할 수 있습니다.");
+		if (this.status != OrderStatus.PENDING && this.status != OrderStatus.PAID) {
+			throw new IllegalStateException(
+				"배송지 정보는 PENDING 또는 PAID 상태에서만 수정할 수 있습니다. 현재 상태 : %s".formatted(this.status)
+			);
+		}
+		newShippingInfo.validate();
 		this.shippingInfo = newShippingInfo;
-		addHistory(OrderEventType.SHIPPING_INFO_UPDATED, status, status, "배송지 정보 수정");
+		addHistory(
+			OrderEventType.SHIPPING_INFO_UPDATED,
+			status,
+			status,
+			OrderEventType.SHIPPING_INFO_UPDATED.getDescription()
+		);
+	}
+
+	// 포인트 사용량 수정 (PENDING 상태에서만 가능 - 결제 전)
+	public void updatePointUsed(BigDecimal newPointUsed) {
+		validateStatus(OrderStatus.PENDING, "포인트 사용량은 PENDING 상태에서만 수정할 수 있습니다.");
+		if (newPointUsed == null || newPointUsed.compareTo(BigDecimal.ZERO) < 0) {
+			throw new IllegalArgumentException("포인트 사용량은 0 이상이어야 합니다.");
+		}
+		if (newPointUsed.compareTo(this.totalAmount) > 0) {
+			throw new IllegalArgumentException(
+				"포인트 사용량은 주문 금액을 초과할 수 없습니다. 포인트 사용량: %s, 주문 금액: %s".formatted(newPointUsed, this.totalAmount)
+			);
+		}
+		BigDecimal oldPointUsed = this.pointUsed;
+		this.pointUsed = newPointUsed;
+		recalculateFinalAmount(); // 최종 금액 재계산
+		addHistory(
+			OrderEventType.POINT_USAGE_UPDATED,
+			status,
+			status,
+			"포인트 사용량 변경: %s --> %s".formatted(oldPointUsed, newPointUsed)
+		);
+	}
+
+	public void recalculateFinalAmount() {
+		this.finalAmount = this.totalAmount.subtract(this.pointUsed);
+		if (this.finalAmount.compareTo(BigDecimal.ZERO) < 0) {
+			throw new IllegalStateException("최종 결제 금액은 0보다 작을 수 없습니다.");
+		}
 	}
 
 	public void completePayment() {
@@ -152,7 +197,7 @@ public class Order {
 			OrderEventType.CANCELLED_BEFORE_PAYMENT,
 			previousStatus,
 			OrderStatus.CANCELLED,
-			OrderStatus.CANCELLED.getDescription()
+			reason != null ? reason : OrderStatus.CANCELLED.getDescription()
 		);
 	}
 
@@ -166,7 +211,7 @@ public class Order {
 			OrderEventType.CANCELLED_AFTER_PAYMENT,
 			previousStatus,
 			OrderStatus.CANCELLED,
-			OrderStatus.CANCELLED.getDescription()
+			reason != null ? reason : OrderStatus.CANCELLED.getDescription()
 		);
 	}
 
@@ -180,7 +225,7 @@ public class Order {
 			OrderEventType.REFUNDED,
 			previousStatus,
 			OrderStatus.REFUNDED,
-			OrderStatus.REFUNDED.getDescription()
+			reason != null ? reason : OrderStatus.REFUNDED.getDescription()
 		);
 	}
 
@@ -256,6 +301,16 @@ public class Order {
 
 	public boolean canUpdateShippingInfo() {
 		return this.status == OrderStatus.PENDING;
+	}
+	
+	// 포인트 수정 가능 여부
+	public boolean canUpdatePointUsed() {
+		return this.status == OrderStatus.PENDING;
+	}
+	
+	// 주문 수정 가능 여부
+	public boolean canUpdate() {
+		return this.status == OrderStatus.PENDING || this.status == OrderStatus.PAID;
 	}
 
 }
