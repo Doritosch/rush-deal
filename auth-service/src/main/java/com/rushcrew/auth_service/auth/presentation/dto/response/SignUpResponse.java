@@ -1,4 +1,4 @@
-package com.rushcrew.auth_service.auth.presentation.dto;
+package com.rushcrew.auth_service.auth.presentation.dto.response;
 
 import com.rushcrew.auth_service.auth.application.dto.SignUpResult;
 import java.util.Date;

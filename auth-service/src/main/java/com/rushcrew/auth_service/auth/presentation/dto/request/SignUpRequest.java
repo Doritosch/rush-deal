@@ -1,4 +1,4 @@
-package com.rushcrew.auth_service.auth.presentation.dto;
+package com.rushcrew.auth_service.auth.presentation.dto.request;
 
 import com.rushcrew.auth_service.auth.application.dto.SignUpCommand;
 import jakarta.validation.constraints.Email;
