@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_order_history", schema = "order_schema")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class OrderHistory {
 
