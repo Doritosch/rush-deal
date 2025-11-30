@@ -1,6 +1,6 @@
 package com.rushcrew.auth_service.auth.presentation.dto.response;
 
-import com.rushcrew.auth_service.auth.application.dto.SignUpResult;
+import com.rushcrew.auth_service.auth.application.result.SignUpResult;
 import java.util.Date;
 
 public record SignUpResponse(

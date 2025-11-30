@@ -1,6 +1,6 @@
 package com.rushcrew.auth_service.auth.presentation.dto.request;
 
-import com.rushcrew.auth_service.auth.application.dto.SignUpCommand;
+import com.rushcrew.auth_service.auth.application.command.SignUpCommand;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

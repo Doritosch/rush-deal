@@ -1,4 +1,4 @@
-package com.rushcrew.auth_service.auth.application.dto;
+package com.rushcrew.auth_service.auth.application.result;
 
 import java.util.Date;
 

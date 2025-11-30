@@ -1,10 +1,10 @@
 package com.rushcrew.auth_service.auth.presentation;
 
 import com.rushcrew.auth_service.auth.application.AuthService;
-import com.rushcrew.auth_service.auth.application.dto.SignUpCommand;
-import com.rushcrew.auth_service.auth.application.dto.SignUpResult;
-import com.rushcrew.auth_service.auth.presentation.dto.SignUpRequest;
-import com.rushcrew.auth_service.auth.presentation.dto.SignUpResponse;
+import com.rushcrew.auth_service.auth.application.command.SignUpCommand;
+import com.rushcrew.auth_service.auth.application.result.SignUpResult;
+import com.rushcrew.auth_service.auth.presentation.dto.request.SignUpRequest;
+import com.rushcrew.auth_service.auth.presentation.dto.response.SignUpResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;

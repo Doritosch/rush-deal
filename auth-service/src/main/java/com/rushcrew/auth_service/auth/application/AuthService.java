@@ -1,10 +1,10 @@
 package com.rushcrew.auth_service.auth.application;
 
 import com.rushcrew.auth_service.auth.application.client.UserClient;
-import com.rushcrew.auth_service.auth.application.dto.SignUpCommand;
-import com.rushcrew.auth_service.auth.application.dto.SignUpResult;
-import com.rushcrew.auth_service.auth.application.dto.UserCreateResult;
+import com.rushcrew.auth_service.auth.application.command.SignUpCommand;
 import com.rushcrew.auth_service.auth.application.port.TokenProvider;
+import com.rushcrew.auth_service.auth.application.result.SignUpResult;
+import com.rushcrew.auth_service.auth.application.result.UserCreateResult;
 import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

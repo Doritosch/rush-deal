@@ -1,6 +1,6 @@
 package com.rushcrew.auth_service.auth.infrastructure.external.dto;
 
-import com.rushcrew.auth_service.auth.application.dto.SignUpCommand;
+import com.rushcrew.auth_service.auth.application.command.SignUpCommand;
 
 public record UserCreateRequest(
     String email,
