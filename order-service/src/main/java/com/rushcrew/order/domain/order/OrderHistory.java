@@ -58,4 +58,49 @@ public class OrderHistory {
 	@Column(columnDefinition = "jsonb")
 	private Map<String, Object> metadata;
 
+	// ============================================
+	//                 도메인 로직
+	// ============================================
+
+	public static OrderHistory create(
+		Order order,
+		OrderEventType eventType,
+		OrderStatus previousStatus,
+		OrderStatus newStatus,
+		String reason
+	) {
+		if (order == null) {
+			throw new IllegalArgumentException("주문 정보는 필수입니다.");
+		}
+		if (eventType == null) {
+			throw new IllegalArgumentException("이벤트 타입은 필수입니다.");
+		}
+		if (newStatus == null) {
+			throw new IllegalArgumentException("새 상태는 필수입니다.");
+		}
+
+		return OrderHistory.builder()
+			.orderHistoryId(UUID.randomUUID())
+			.order(order)
+			.eventType(eventType)
+			.previousStatus(previousStatus)
+			.newStatus(newStatus)
+			.reason(reason)
+			.build();
+	}
+
+	// 메타데이터를 포함하는 주문 이력 생성
+	public static OrderHistory createWithMetadata(
+		Order order,
+		OrderEventType eventType,
+		OrderStatus previousStatus,
+		OrderStatus newStatus,
+		String reason,
+		Map<String, Object> metadata
+	) {
+		OrderHistory history = create(order, eventType, previousStatus, newStatus, reason);
+		history.metadata = metadata;
+		return history;
+	}
+
 }
