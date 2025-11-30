@@ -1,14 +1,11 @@
 rootProject.name = 'rush-deal'
 
-
-include 'gateway', 'user', 'discovery', 'payment', 'order', 'product', 'timedeal', 'auth', 'queue'
+include 'gateway', 'user', 'discovery', 'payment', 'order', 'product', 'timedeal'
 
 project(':gateway').projectDir = file('api-gateway')
 project(':user').projectDir = file('user-service')
-project(':auth').projectDir = file('auth-service')
 project(':discovery').projectDir = file('discovery-service')
 project(':payment').projectDir = file('payment-service')
 project(':order').projectDir = file('order-service')
 project(':product').projectDir = file('product-service')
 project(':timedeal').projectDir = file('timedeal-service')
-project(':queue').projectDir = file('queue-service')
