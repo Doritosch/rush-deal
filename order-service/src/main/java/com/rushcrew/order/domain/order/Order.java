@@ -121,12 +121,6 @@ public class Order {
 		return order;
 	}
 
-	// public void updateShippingInfo(ShippingInfo newShippingInfo) {
-	// 	validateStatus(OrderStatus.PENDING, "배송지 정보는 PENDING 상태에서만 수정할 수 있습니다.");
-	// 	this.shippingInfo = newShippingInfo;
-	// 	addHistory(OrderEventType.SHIPPING_INFO_UPDATED, status, status, "배송지 정보 수정");
-	// }
-
 	public void updateShippingInfo(ShippingInfo newShippingInfo) {
 		if (this.status != OrderStatus.PENDING && this.status != OrderStatus.PAID) {
 			throw new IllegalStateException(
