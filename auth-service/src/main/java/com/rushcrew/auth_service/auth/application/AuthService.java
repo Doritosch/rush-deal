@@ -5,7 +5,6 @@ import com.rushcrew.auth_service.auth.application.command.SignUpCommand;
 import com.rushcrew.auth_service.auth.application.port.TokenProvider;
 import com.rushcrew.auth_service.auth.application.result.SignUpResult;
 import com.rushcrew.auth_service.auth.application.result.UserCreateResult;
-import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,8 +31,7 @@ public class AuthService {
             result.userId(),
             result.email(),
             result.name(),
-            accessToken,
-            new Date()
+            accessToken
         );
     }
 }
