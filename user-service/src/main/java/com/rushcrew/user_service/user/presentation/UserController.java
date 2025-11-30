@@ -20,13 +20,13 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping("/signup")
-    public ResponseEntity<UserCreateResponse> signUp(
+    @PostMapping
+    public ResponseEntity<UserCreateResponse> createUser(
         @Valid @RequestBody UserCreateRequest request
     ) {
         UserCreateCommand command = request.toCommand();
 
-        UserCreateResult result = userService.signUp(command);
+        UserCreateResult result = userService.createUser(command);
 
         return ResponseEntity.ok(UserCreateResponse.from(result));
     }

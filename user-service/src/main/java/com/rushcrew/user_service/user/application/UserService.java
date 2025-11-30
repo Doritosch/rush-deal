@@ -18,8 +18,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserCreateResult signUp(UserCreateCommand command) {
-        userValidator.validateSignup(command.email());
+    public UserCreateResult createUser(UserCreateCommand command) {
+        userValidator.validateEmailUniqueness(command.email());
 
         UserRole userRole = UserRole.from(command.role());
 
