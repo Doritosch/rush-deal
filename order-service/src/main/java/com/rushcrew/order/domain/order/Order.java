@@ -109,9 +109,7 @@ public class Order {
 			.orderedAt(Instant.now())
 			.build();
 
-		// 주문 아이템 연관 관계 설정
 		orderItems.forEach(order::addOrderItem);
-		// 주문 생성 이력 기록
 		order.addHistory(
 			OrderEventType.ORDER_CREATED,
 			null,
@@ -247,14 +245,13 @@ public class Order {
 	}
 
 	private void addHistory(OrderEventType eventType, OrderStatus previousStatus, OrderStatus newStatus, String reason) {
-		OrderHistory history = OrderHistory.builder()
-			.orderHistoryId(UUID.randomUUID())
-			.order(this)
-			.eventType(eventType)
-			.previousStatus(previousStatus)
-			.newStatus(newStatus)
-			.reason(reason)
-			.build();
+		OrderHistory history = OrderHistory.create(
+			this,
+			eventType,
+			previousStatus,
+			newStatus,
+			reason
+		);
 		this.histories.add(history);
 	}
 
