@@ -1,3 +1,32 @@
 spring:
   application:
     name: queue-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/rushdeal_db
+    username: rushdeal
+    password: rushdeal
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: queue_schema
+        format_sql: true
+        use_sql_comments: true
+    show-sql: true
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    appname: queue-service
+
+server:
+  port: 8011
