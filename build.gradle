@@ -56,8 +56,5 @@ subprojects {
         // 테스트 시에도 Lombok 사용 가능하도록
         testCompileOnly 'org.projectlombok:lombok'
         testAnnotationProcessor 'org.projectlombok:lombok'
-
-        // 자체 공통 모듈
-        implementation 'com.github.RushCrew:rush-deal-common:v0.0.7'
     }
 }
