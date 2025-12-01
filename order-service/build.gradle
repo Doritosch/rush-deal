@@ -10,9 +10,13 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.kafka:spring-kafka'
 //    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     // Hibernate Types 60
     implementation 'com.vladmihalcea:hibernate-types-60:2.21.1'
+
+    // Redisson (분산 락)
+    implementation 'org.redisson:redisson-spring-boot-starter:3.23.5'
 
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'
