@@ -1,6 +1,6 @@
-package com.rushdeal.product.domain.repository;
+package com.rushcrew.product.domain.repository;
 
-import com.rushdeal.product.domain.entity.Product;
+import com.rushcrew.product.domain.entity.Product;
 import java.util.Optional;
 import java.util.UUID;
 

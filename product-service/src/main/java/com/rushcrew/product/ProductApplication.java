@@ -1,4 +1,4 @@
-package com.rushdeal.product;
+package com.rushcrew.product;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,11 +1,11 @@
-package com.rushdeal.product.domain.entity;
+package com.rushcrew.product.domain.entity;
 
-import com.rushdeal.product.domain.vo.Category;
-import com.rushdeal.product.domain.vo.Price;
-import com.rushdeal.product.domain.vo.ProductInfo;
-import com.rushdeal.product.domain.vo.SellerId;
-import com.rushdeal.product.presentation.dto.request.CreateProductRequest;
-import com.rushdeal.product.presentation.dto.request.UpdateProductRequest;
+import com.rushcrew.product.domain.vo.Category;
+import com.rushcrew.product.domain.vo.Price;
+import com.rushcrew.product.domain.vo.ProductInfo;
+import com.rushcrew.product.domain.vo.SellerId;
+import com.rushcrew.product.presentation.dto.request.CreateProductRequest;
+import com.rushcrew.product.presentation.dto.request.UpdateProductRequest;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.CascadeType;

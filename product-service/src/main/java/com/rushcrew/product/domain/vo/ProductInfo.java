@@ -1,4 +1,4 @@
-package com.rushdeal.product.domain.vo;
+package com.rushcrew.product.domain.vo;
 
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;

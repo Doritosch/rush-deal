@@ -1,6 +1,6 @@
-package com.rushdeal.product.infrastructure.repostiory;
+package com.rushcrew.product.infrastructure.repostiory;
 
-import com.rushdeal.product.domain.entity.Product;
+import com.rushcrew.product.domain.entity.Product;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

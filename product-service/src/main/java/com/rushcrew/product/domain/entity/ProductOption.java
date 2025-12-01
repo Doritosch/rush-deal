@@ -1,6 +1,6 @@
-package com.rushdeal.product.domain.entity;
+package com.rushcrew.product.domain.entity;
 
-import com.rushdeal.product.presentation.dto.request.CreateOptionRequest;
+import com.rushcrew.product.presentation.dto.request.CreateOptionRequest;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
