@@ -120,11 +120,7 @@ public class Order {
 	}
 
 	public void updateShippingInfo(ShippingInfo newShippingInfo) {
-		if (this.status != OrderStatus.PENDING && this.status != OrderStatus.PAID) {
-			throw new IllegalStateException(
-				"배송지 정보는 PENDING 또는 PAID 상태에서만 수정할 수 있습니다. 현재 상태 : %s".formatted(this.status)
-			);
-		}
+		this.status.validateCanUpdateShippingInfo();
 		newShippingInfo.validate();
 		this.shippingInfo = newShippingInfo;
 		addHistory(
@@ -137,13 +133,13 @@ public class Order {
 
 	// 포인트 사용량 수정 (PENDING 상태에서만 가능 - 결제 전)
 	public void updatePointUsed(BigDecimal newPointUsed) {
-		validateStatus(OrderStatus.PENDING, "포인트 사용량은 PENDING 상태에서만 수정할 수 있습니다.");
+		this.status.validateCanUpdatePointUsed();
 		if (newPointUsed == null || newPointUsed.compareTo(BigDecimal.ZERO) < 0) {
 			throw new IllegalArgumentException("포인트 사용량은 0 이상이어야 합니다.");
 		}
 		if (newPointUsed.compareTo(this.totalAmount) > 0) {
 			throw new IllegalArgumentException(
-				"포인트 사용량은 주문 금액을 초과할 수 없습니다. 포인트 사용량: %s, 주문 금액: %s".formatted(newPointUsed, this.totalAmount)
+				"포인트 사용량은 주문 금액을 초과할 수 없습니다. (포인트 사용량: %s, 주문 금액: %s)".formatted(newPointUsed, this.totalAmount)
 			);
 		}
 		BigDecimal oldPointUsed = this.pointUsed;
@@ -164,24 +160,10 @@ public class Order {
 		}
 	}
 
-	public void completePayment() {
-		validateStatus(OrderStatus.PENDING, "결제 완료 처리는 PENDING 상태에서만 가능합니다.");
-		OrderStatus previousStatus = this.status;
-		this.status = OrderStatus.PAID;
-		this.paymentCompletedAt = Instant.now();
-		// 7일 후 자동 구매확정 예약
-		this.autoConfirmScheduledAt = this.paymentCompletedAt.plus(7, ChronoUnit.DAYS);
-		addHistory(
-			OrderEventType.PAYMENT_COMPLETED,
-			previousStatus,
-			OrderStatus.PAID,
-			OrderStatus.PAID.getDescription()
-		);
-	}
-
 	// 결제 전 주문 취소
 	public void cancelBeforePayment(String reason) {
-		validateStatus(OrderStatus.PENDING, "결제 전 주문 취소는 PENDING 상태에서만 가능합니다.");
+		this.status.validateCanCancelBeforePayment();
+		this.status.validateTransition(OrderStatus.CANCELLED);
 		OrderStatus previousStatus = this.status;
 		this.status = OrderStatus.CANCELLED;
 		this.cancelledAt = Instant.now();
@@ -195,7 +177,8 @@ public class Order {
 
 	// 결제 후 주문 취소 (구매확정 전)
 	public void cancelAfterPayment(String reason) {
-		validateStatus(OrderStatus.PAID, "결제 후 주문 취소는 PAID 상태에서만 가능합니다.");
+		this.status.validateCanCancelAfterPayment();
+		this.status.validateTransition(OrderStatus.CANCELLED);
 		OrderStatus previousStatus = this.status;
 		this.status = OrderStatus.CANCELLED;
 		this.cancelledAt = Instant.now();
@@ -209,7 +192,8 @@ public class Order {
 
 	// 환불 (구매확정 후)
 	public void refund(String reason) {
-		validateStatus(OrderStatus.PAID, "환불은 PURCHASE_CONFIRMED 상태에서만 가능합니다.");
+		this.status.validateCanRefund();
+		this.status.validateTransition(OrderStatus.REFUNDED);
 		OrderStatus previousStatus = this.status;
 		this.status = OrderStatus.REFUNDED;
 		this.refundedAt = Instant.now();
@@ -221,8 +205,25 @@ public class Order {
 		);
 	}
 
+	public void completePayment() {
+		this.status.validateCanPay();
+		this.status.validateTransition(OrderStatus.PAID);
+		OrderStatus previousStatus = this.status;
+		this.status = OrderStatus.PAID;
+		this.paymentCompletedAt = Instant.now();
+		// 7일 후 자동 구매확정 예약
+		this.autoConfirmScheduledAt = this.paymentCompletedAt.plus(7, ChronoUnit.DAYS);
+		addHistory(
+			OrderEventType.PAYMENT_COMPLETED,
+			previousStatus,
+			OrderStatus.PAID,
+			OrderStatus.PAID.getDescription()
+		);
+	}
+
 	public void confirmPurchase() {
-		validateStatus(OrderStatus.PAID, "구매 확정은 PAID 상태에서만 가능합니다.");
+		this.status.validateCanConfirmPurchase();
+		this.status.validateTransition(OrderStatus.PURCHASE_CONFIRMED);
 		OrderStatus previousStatus = this.status;
 		this.status = OrderStatus.PURCHASE_CONFIRMED;
 		this.purchaseConfirmedAt = Instant.now();
@@ -255,12 +256,6 @@ public class Order {
 		this.histories.add(history);
 	}
 
-	private void validateStatus(OrderStatus expectedStatus, String errorMessage) {
-		if (this.status != expectedStatus) {
-			throw new IllegalStateException("%s 현재 상태 : %s".formatted(errorMessage, this.status));
-		}
-	}
-
 	public boolean isOwnedBy(Long userId) {
 		return this.userId.equals(userId);
 	}
@@ -271,37 +266,31 @@ public class Order {
 	// ============================================
 
 	public boolean canPay() {
-		return this.status == OrderStatus.PENDING;
+		return this.status.canPay();
 	}
 
 	public boolean canCancelBeforePayment() {
-		return this.status == OrderStatus.PENDING;
+		return this.status.canCancelBeforePayment();
 	}
 
 	public boolean canCancelAfterPayment() {
-		return this.status == OrderStatus.PAID;
+		return this.status.canCancelAfterPayment();
 	}
 
 	public boolean canRefund() {
-		return this.status == OrderStatus.PURCHASE_CONFIRMED;
+		return this.status.canRefund();
 	}
 
 	public boolean canConfirmPurchase() {
-		return this.status == OrderStatus.PAID;
+		return this.status.canConfirmPurchase();
 	}
 
 	public boolean canUpdateShippingInfo() {
-		return this.status == OrderStatus.PENDING;
+		return this.status.canUpdateShippingInfo();
 	}
-	
-	// 포인트 수정 가능 여부
+
 	public boolean canUpdatePointUsed() {
-		return this.status == OrderStatus.PENDING;
-	}
-	
-	// 주문 수정 가능 여부
-	public boolean canUpdate() {
-		return this.status == OrderStatus.PENDING || this.status == OrderStatus.PAID;
+		return this.status.canUpdatePointUsed();
 	}
 
 }
