@@ -11,11 +11,13 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductResponseDto {
+public class TimeDealProductResponse {
 	private UUID timeDealStockId;
-	private String productId;
+	private UUID productId;           // 상품 ID (주문 생성에 필요)
+	private UUID optionId;            // 옵션 ID (nullable)
 	private String timeDealId;
 	private Integer availableStock;
 	private Integer reservedStock;
 	private Integer soldStock;
+	private String status;            // AVAILABLE, SOLD_OUT, RESERVED, PAUSED
 }

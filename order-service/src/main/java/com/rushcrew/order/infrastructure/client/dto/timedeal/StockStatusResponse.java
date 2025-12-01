@@ -11,8 +11,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class StockReservationRequestDto {
+public class StockStatusResponse {
 	private UUID timeDealStockId;
-	private Integer quantity;
-	private Long userId;
+	private UUID productId;
+	private UUID optionId;
+	private Integer availableStock;
+	private Integer reservedStock;
+	private Integer soldStock;
+	private String status; // AVAILABLE, SOLD_OUT
 }

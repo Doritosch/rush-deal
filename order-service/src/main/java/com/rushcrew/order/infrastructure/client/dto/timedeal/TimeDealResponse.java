@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TimeDealResponseDto {
+public class TimeDealResponse {
 	private String timeDealId;
 	private String title;
 	private TimeDealStatus status;
