@@ -15,7 +15,7 @@ public interface OrderRepository {
 	 * 사용자의 특정 타임딜 누적 구매 수량 조회
 	 * (1인당 구매 제한 검증용)
 	 */
-	Integer getTotalPurchasedQuantityByUserAndTimeDeal(Long userId, String timeDealId);
+	Integer getTotalPurchasedQuantity(Long userId, String timeDealId);
 
 	boolean existsById(UUID orderId);
 

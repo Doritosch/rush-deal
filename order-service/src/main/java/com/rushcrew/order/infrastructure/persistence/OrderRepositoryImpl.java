@@ -18,21 +18,21 @@ public class OrderRepositoryImpl implements OrderRepository {
 
 	@Override
 	public Order save(Order order) {
-		return null;
+		return orderJpaRepository.save(order);
 	}
 
 	@Override
 	public Optional<Order> findById(UUID orderId) {
-		return Optional.empty();
+		return orderJpaRepository.findById(orderId);
 	}
 
 	@Override
-	public Integer getTotalPurchasedQuantityByUserAndTimeDeal(Long userId, String timeDealId) {
-		return 0;
+	public Integer getTotalPurchasedQuantity(Long userId, String timeDealId) {
+		return orderJpaRepository.getTotalPurchasedQuantity(userId, timeDealId);
 	}
 
 	@Override
 	public boolean existsById(UUID orderId) {
-		return false;
+		return orderJpaRepository.existsById(orderId);
 	}
 }
