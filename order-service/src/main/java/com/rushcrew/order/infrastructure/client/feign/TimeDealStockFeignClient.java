@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.rushcrew.order.infrastructure.client.TimeDealStockServiceClient;
 import com.rushcrew.order.infrastructure.client.dto.timedeal.StockStatusResponse;
-import com.rushcrew.order.infrastructure.client.dto.timedeal.TimeDealProductResponse;
 import com.rushcrew.order.infrastructure.client.dto.timedeal.StockReservationRequest;
 import com.rushcrew.order.infrastructure.client.dto.timedeal.StockReservationResponse;
 import com.rushcrew.order.infrastructure.client.dto.timedeal.TimeDealResponse;
+import com.rushcrew.order.infrastructure.client.dto.timedeal.TimeDealStockResponse;
 
 @FeignClient(name = "timedeal-service")
 public interface TimeDealStockFeignClient extends TimeDealStockServiceClient {
@@ -24,17 +24,9 @@ public interface TimeDealStockFeignClient extends TimeDealStockServiceClient {
 	@Override
 	TimeDealResponse getTimeDeal(@PathVariable("timeDealId") String timeDealId);
 
-	@GetMapping("/api/v1/timedeal-stocks")
+	@GetMapping("/api/v1/timedeal-stocks/{timeDealStockId}")
 	@Override
-	List<TimeDealProductResponse> getTimeDealProducts(
-		@RequestParam("ids") List<UUID> timeDealStockIds
-	);
-
-	@GetMapping("/api/v1/timedeal-stocks/{timeDealStockId}/status")
-	@Override
-	StockStatusResponse getStockStatus(
-		@PathVariable("timeDealStockId") UUID timeDealStockId
-	);
+	TimeDealStockResponse getTimeDealStock(@PathVariable("timeDealStockId") UUID timeDealStockId);
 
 	@PostMapping("/api/v1/timedeal-stocks/reserve")
 	@Override
