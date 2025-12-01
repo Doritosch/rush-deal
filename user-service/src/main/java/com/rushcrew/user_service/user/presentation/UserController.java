@@ -6,6 +6,7 @@ import com.rushcrew.user_service.user.application.result.UserCreateResult;
 import com.rushcrew.user_service.user.presentation.dto.request.UserCreateRequest;
 import com.rushcrew.user_service.user.presentation.dto.response.UserCreateResponse;
 import jakarta.validation.Valid;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +29,8 @@ public class UserController {
 
         UserCreateResult result = userService.signUp(command);
 
-        return ResponseEntity.ok(UserCreateResponse.from(result));
+        URI location =  URI.create("/api/v1/users/" + result.userId());
+
+        return ResponseEntity.created(location).body(UserCreateResponse.from(result));
     }
 }
