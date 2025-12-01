@@ -1,8 +1,10 @@
 package com.rushcrew.order.domain.order.enums;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
+@RequiredArgsConstructor
 public enum ReservationStatus {
 	RESERVED("예약됨"),
 	CONFIRMED("확정됨"),
@@ -10,8 +12,4 @@ public enum ReservationStatus {
 	CANCELLED("취소됨");
 
 	private final String description;
-
-	ReservationStatus(String description) {
-		this.description = description;
-	}
 }

@@ -1,8 +1,10 @@
 package com.rushcrew.order.domain.order.enums;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
+@RequiredArgsConstructor
 public enum OrderEventType {
 	ORDER_CREATED("주문 생성"),
 	SHIPPING_INFO_UPDATED("배송지 정보 수정"),
@@ -14,8 +16,4 @@ public enum OrderEventType {
 	POINT_USAGE_UPDATED("포인트 사용량 수정");
 
 	private final String description;
-
-	OrderEventType(String description) {
-		this.description = description;
-	}
 }
