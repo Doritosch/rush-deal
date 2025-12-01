@@ -1,4 +1,4 @@
-package com.rushcrew.order.domain.reservation;
+package com.rushcrew.order.domain.repository;
 
 public interface OrderReservationRepository {
 }
