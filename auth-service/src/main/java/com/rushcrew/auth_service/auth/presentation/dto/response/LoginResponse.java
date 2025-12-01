@@ -1,15 +1,15 @@
 package com.rushcrew.auth_service.auth.presentation.dto.response;
 
-import com.rushcrew.auth_service.auth.application.result.SignUpResult;
+import com.rushcrew.auth_service.auth.application.result.LoginResult;
 
-public record SignUpResponse(
+public record LoginResponse(
     Long userId,
     String email,
     String name,
     String accessToken
 ) {
-    public static SignUpResponse fromResult(SignUpResult result) {
-        return new SignUpResponse(
+    public static LoginResponse fromResult(LoginResult result) {
+        return new LoginResponse(
             result.userId(),
             result.email(),
             result.name(),
