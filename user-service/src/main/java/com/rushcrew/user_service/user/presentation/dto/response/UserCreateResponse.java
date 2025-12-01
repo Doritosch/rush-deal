@@ -8,7 +8,7 @@ public record UserCreateResponse(
     String name,
     String role
 ) {
-    public static UserCreateResponse from(UserCreateResult result) {
+    public static UserCreateResponse fromResult(UserCreateResult result) {
         return new UserCreateResponse(
             result.userId(),
             result.email(),

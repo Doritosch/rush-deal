@@ -2,9 +2,13 @@ package com.rushcrew.user_service.user.presentation;
 
 import com.rushcrew.user_service.user.application.UserService;
 import com.rushcrew.user_service.user.application.command.UserCreateCommand;
+import com.rushcrew.user_service.user.application.command.VerifyPasswordCommand;
 import com.rushcrew.user_service.user.application.result.UserCreateResult;
+import com.rushcrew.user_service.user.application.result.VerifyPasswordResult;
 import com.rushcrew.user_service.user.presentation.dto.request.UserCreateRequest;
+import com.rushcrew.user_service.user.presentation.dto.request.VerifyPasswordRequest;
 import com.rushcrew.user_service.user.presentation.dto.response.UserCreateResponse;
+import com.rushcrew.user_service.user.presentation.dto.response.VerifyPasswordResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +32,17 @@ public class UserController {
 
         UserCreateResult result = userService.createUser(command);
 
-        return ResponseEntity.ok(UserCreateResponse.from(result));
+        return ResponseEntity.ok(UserCreateResponse.fromResult(result));
+    }
+
+    @PostMapping("/verify-password")
+    public ResponseEntity<VerifyPasswordResponse> verifyPassword(
+        @RequestBody VerifyPasswordRequest request
+    ) {
+        VerifyPasswordCommand command = request.toCommand();
+
+        VerifyPasswordResult result = userService.verifyPassword(command);
+
+        return ResponseEntity.ok(VerifyPasswordResponse.fromResult(result));
     }
 }
