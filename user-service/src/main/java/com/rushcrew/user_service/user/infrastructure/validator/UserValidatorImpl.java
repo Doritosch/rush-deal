@@ -13,7 +13,7 @@ public class UserValidatorImpl implements UserValidator {
 
     // TODO 글로벌 예외 처리 적용 후 커스텀 예외로 변경
     @Override
-    public void validateSignup(String email) {
+    public void validateEmailUniqueness(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
         }
