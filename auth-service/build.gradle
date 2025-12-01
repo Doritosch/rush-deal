@@ -1,4 +1,4 @@
-description = 'User Service for rush-deal Project'
+description = 'Auth Service for rush-deal Project'
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
@@ -7,18 +7,26 @@ dependencies {
 	// eureka
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
-	// jpa
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-
 	// database
 	runtimeOnly 'org.postgresql:postgresql'
 
-	// validation
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// jpa
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
 	// security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	testImplementation 'org.springframework.security:spring-security-test'
+
+	// validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// feign client
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+	// jjwt
+	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
