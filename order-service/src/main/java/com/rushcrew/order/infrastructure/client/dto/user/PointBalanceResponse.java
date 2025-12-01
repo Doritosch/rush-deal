@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PointBalanceResponse {
 	private Long userId;
-	private BigDecimal availablePoints;
-	private BigDecimal totalPoints;
+	private BigDecimal balance;
+	// private BigDecimal availablePoints; // 사용 가능한 포인트
+	// private BigDecimal totalPoints; // 전체 포인트
 }
