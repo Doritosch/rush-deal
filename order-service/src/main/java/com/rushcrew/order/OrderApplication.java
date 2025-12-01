@@ -13,7 +13,7 @@ import org.springframework.context.annotation.ComponentScan;
 	"com.rushcrew.common"
 })
 @EntityScan(basePackages = {
-	"com.rushcrew.queue",
+	"com.rushcrew.order",
 	"com.rushcrew.common"
 })
 public class OrderApplication {
