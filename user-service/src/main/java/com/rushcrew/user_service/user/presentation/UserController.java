@@ -10,6 +10,7 @@ import com.rushcrew.user_service.user.presentation.dto.request.VerifyPasswordReq
 import com.rushcrew.user_service.user.presentation.dto.response.UserCreateResponse;
 import com.rushcrew.user_service.user.presentation.dto.response.VerifyPasswordResponse;
 import jakarta.validation.Valid;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,8 +32,10 @@ public class UserController {
         UserCreateCommand command = request.toCommand();
 
         UserCreateResult result = userService.createUser(command);
+        
+        URI location =  URI.create("/api/v1/users/" + result.userId());
 
-        return ResponseEntity.ok(UserCreateResponse.fromResult(result));
+        return ResponseEntity.created(location).body(UserCreateResponse.from(result));
     }
 
     @PostMapping("/verify-password")
