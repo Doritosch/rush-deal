@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateOrderRequestDto {
+public class CreateOrderRequest {
 
 	@NotBlank(message = "타임딜 ID는 필수입니다")
 	private String timeDealId;
@@ -46,12 +46,6 @@ public class CreateOrderRequestDto {
 
 		@NotBlank(message = "타임딜 재고 ID는 필수입니다")
 		private String timeDealStockId;
-
-		@NotBlank(message = "상품 ID는 필수입니다")
-		private String productId;
-
-		@NotBlank(message = "옵션 ID는 필수입니다")
-		private String optionId;
 
 		@NotNull(message = "수량은 필수입니다")
 		@Min(value = 1, message = "수량은 1개 이상이어야 합니다")
