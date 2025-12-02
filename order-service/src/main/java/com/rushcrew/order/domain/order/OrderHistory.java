@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.hibernate.annotations.Type;
 
+import com.rushcrew.common.entity.BaseEntity;
 import com.rushcrew.order.domain.order.enums.OrderEventType;
 import com.rushcrew.order.domain.order.enums.OrderStatus;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
@@ -30,7 +31,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-public class OrderHistory {
+public class OrderHistory extends BaseEntity {
 
 	@Id
 	private UUID orderHistoryId;

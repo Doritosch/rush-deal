@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
+import com.rushcrew.common.entity.BaseEntity;
 import com.rushcrew.order.domain.order.enums.ReservationStatus;
 
 import jakarta.persistence.Column;
@@ -27,7 +28,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-public class OrderReservation {
+public class OrderReservation extends BaseEntity {
 
 	@Id
 	private UUID orderReservationId;
