@@ -1,4 +1,4 @@
-package com.rushcrew.order.application.Handler;
+package com.rushcrew.order.application.handler;
 
 import org.springframework.stereotype.Component;
 
