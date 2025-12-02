@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.rushcrew.order_service.order.application.command.RequestPaymentCommand;
 import com.rushcrew.order_service.order.application.command.RequestPaymentResult;
+import com.rushcrew.order_service.order.application.error.OrderErrorCode;
 import com.rushcrew.order_service.order.application.exception.InvalidOrderStateException;
 import com.rushcrew.order_service.order.application.exception.OrderNotFoundException;
 import com.rushcrew.order_service.order.application.exception.UnauthorizedException;
@@ -40,7 +41,7 @@ public class PaymentService {
 		// 4. 예약 재고 만료되지 않았는지
 		for (OrderReservation reservation : order.getReservations()) {
 			if (reservation.isExpired()) {
-				throw new InvalidOrderStateException("재고 예약이 만료되었습니다. 주문을 다시 생성해주세요.");
+				throw new InvalidOrderStateException(OrderErrorCode.RESERVATION_EXPIRED);
 			}
 		}
 		// 5. Saga ID 생성

@@ -7,9 +7,8 @@ public class InvalidOrderStateException extends BusinessException {
 	public InvalidOrderStateException() {
 		super(OrderErrorCode.INVALID_ORDER_STATE);
 	}
-
-	public InvalidOrderStateException(String message) {
-		super(OrderErrorCode.INVALID_ORDER_STATE, message);
+	public InvalidOrderStateException(OrderErrorCode orderErrorCode) {
+		super(OrderErrorCode.RESERVATION_EXPIRED);
 	}
 }
 
