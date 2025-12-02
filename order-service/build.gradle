@@ -21,6 +21,9 @@ dependencies {
     // 자체 공통 모듈
     implementation 'com.github.RushCrew:rush-deal-common:v0.0.7'
 
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'
 
