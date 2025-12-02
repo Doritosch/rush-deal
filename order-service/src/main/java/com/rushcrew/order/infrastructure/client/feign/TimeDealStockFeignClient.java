@@ -1,6 +1,5 @@
 package com.rushcrew.order.infrastructure.client.feign;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.cloud.openfeign.FeignClient;
@@ -11,11 +10,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.rushcrew.order.infrastructure.client.TimeDealStockServiceClient;
-import com.rushcrew.order.infrastructure.client.dto.timedeal.StockStatusResponse;
 import com.rushcrew.order.infrastructure.client.dto.timedeal.StockReservationRequest;
 import com.rushcrew.order.infrastructure.client.dto.timedeal.StockReservationResponse;
 import com.rushcrew.order.infrastructure.client.dto.timedeal.TimeDealResponse;
-import com.rushcrew.order.infrastructure.client.dto.timedeal.TimeDealStockResponse;
+import com.rushcrew.order.infrastructure.client.dto.timedeal.TimeDealStockDetailResponse;
 
 @FeignClient(name = "timedeal-service")
 public interface TimeDealStockFeignClient extends TimeDealStockServiceClient {
@@ -26,7 +24,7 @@ public interface TimeDealStockFeignClient extends TimeDealStockServiceClient {
 
 	@GetMapping("/api/v1/timedeal-stocks/{timeDealStockId}")
 	@Override
-	TimeDealStockResponse getTimeDealStock(@PathVariable("timeDealStockId") UUID timeDealStockId);
+	TimeDealStockDetailResponse getTimeDealStockDetail(@PathVariable("timeDealStockId") UUID timeDealStockId);
 
 	@PostMapping("/api/v1/timedeal-stocks/reserve")
 	@Override

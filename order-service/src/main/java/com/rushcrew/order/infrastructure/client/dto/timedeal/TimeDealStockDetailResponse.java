@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TimeDealStockResponse {
+public class TimeDealStockDetailResponse {
 	private UUID timeDealStockId;
 	private String timeDealId;
 	private String productId;
@@ -20,4 +20,14 @@ public class TimeDealStockResponse {
 	private Integer reservedStock;      // 예약된 재고
 	private Integer soldStock;          // 판매 완료된 재고
 	private String status;
+
+	// 상품 정보 - 타임딜 서비스가 상품 서비스에서 조회해서 포함시켜줌
+	private String productName;
+	private String productDescription;
+	private String productPrice; // 원가
+	private String category;
+	private String optionName;
+	private String sellerId;
+	private String sellerName;
+	private boolean isactive;
 }
