@@ -5,8 +5,8 @@ import java.math.BigDecimal;
 import org.springframework.stereotype.Component;
 
 import com.rushcrew.order.application.exception.NotEnoughPointException;
-import com.rushcrew.order.infrastructure.client.UserServiceClient;
-import com.rushcrew.order.infrastructure.client.dto.user.PointBalanceResponse;
+import com.rushcrew.order.application.port.dto.PointInfo;
+import com.rushcrew.order.application.port.out.UserPort;
 
 import lombok.RequiredArgsConstructor;
 
@@ -14,13 +14,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PointValidator {
 
-	private final UserServiceClient userServiceClient;
+	private final UserPort userPort;
 
 	public void validate(Long userId, BigDecimal pointUsed) {
 		if (pointUsed == null || pointUsed.compareTo(BigDecimal.ZERO) <= 0) {
 			return; // 포인트 사용 X
 		}
-		PointBalanceResponse balance = userServiceClient.getPointBalance(userId);
+		PointInfo balance = userPort.getPointBalance(userId);
 		if (balance.getBalance().compareTo(pointUsed) < 0) {
 			throw new NotEnoughPointException();
 		}

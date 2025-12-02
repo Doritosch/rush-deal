@@ -1,4 +1,4 @@
-package com.rushcrew.order.infrastructure.messaging.event;
+package com.rushcrew.order.infrastructure.adapter.out.messaging.event;
 
 import java.time.Instant;
 

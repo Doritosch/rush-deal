@@ -6,8 +6,8 @@ import org.springframework.stereotype.Component;
 
 import com.rushcrew.order.application.command.CreateOrderCommand;
 import com.rushcrew.order.application.exception.PurchaseLimitExceededException;
+import com.rushcrew.order.application.port.dto.TimeDealInfo;
 import com.rushcrew.order.domain.repository.OrderRepository;
-import com.rushcrew.order.infrastructure.client.dto.timedeal.TimeDealResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,7 +21,7 @@ public class PurchaseLimitValidator {
 		Long userId,
 		String timeDealId,
 		List<CreateOrderCommand.OrderItemCommand> items,
-		TimeDealResponse timeDeal
+		TimeDealInfo timeDeal
 	) {
 		// 요청 수량 합계
 		int requestQuantity = items.stream()
