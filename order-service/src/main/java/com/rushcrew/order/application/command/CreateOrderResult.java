@@ -21,7 +21,7 @@ public class CreateOrderResult {
 	private BigDecimal finalAmount;
 	private Instant orderedAt;
 	private Instant reservationExpiresAt; // 예약 만료 시간: 15분 후
-	private List<OrderItemResult> orderitemList;
+	private List<OrderItemResult> orderItems;
 
 	@Getter
 	@Builder

@@ -16,7 +16,7 @@ public class CreateOrderCommand {
 
 	private Long userId;
 	private String timeDealId;
-	private List<OrderItemCommand> orderItemList;
+	private List<OrderItemCommand> orderItems;
 	private BigDecimal pointUsed;
 	private ShippingInfo shippingInfo;
 

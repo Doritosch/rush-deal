@@ -1,5 +1,6 @@
 package com.rushcrew.order.infrastructure.client.dto.timedeal;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
@@ -24,7 +25,7 @@ public class TimeDealStockDetailResponse {
 	// 상품 정보 - 타임딜 서비스가 상품 서비스에서 조회해서 포함시켜줌
 	private String productName;
 	private String productDescription;
-	private String productPrice; // 원가
+	private BigDecimal productPrice; // 원가
 	private String category;
 	private String optionName;
 	private String sellerId;
