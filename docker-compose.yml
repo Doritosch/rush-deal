@@ -19,5 +19,21 @@ services:
       timeout: 5s
       retries: 5
 
+  rushdeal_queue_redis: # 서비스 이름은 rushdeal_redis로 설정합니다.
+    image: redis:7-alpine
+    container_name: rushdeal_queue_redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379" # 6379가 Redis 기본 포트이나, 호스트 포트를 6380으로 설정하여 기존 충돌을 피합니다.
+    volumes:
+      - rushdeal_queue_redis_data:/data # 데이터 영속성을 위한 볼륨
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
 volumes:
   rushdeal_pg_data:
+  rushdeal_queue_redis_data:
+
