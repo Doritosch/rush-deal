@@ -3,17 +3,21 @@ package com.rushcrew.queue.presentation;
 import com.rushcrew.common.dto.ApiResponse;
 import com.rushcrew.queue.application.command.CreatePolicyCommand;
 import com.rushcrew.queue.application.command.SearchPolicyCommand;
+import com.rushcrew.queue.application.command.UpdatePolicyCommand;
 import com.rushcrew.queue.application.dto.PageQuery;
-import com.rushcrew.queue.application.dto.PolicyQueryResponse;
+import com.rushcrew.queue.application.dto.QueuePolicyResponse;
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import com.rushcrew.queue.presentation.dto.request.CreatePolicyRequest;
+import com.rushcrew.queue.presentation.dto.request.UpdatePolicyRequest;
 import com.rushcrew.queue.presentation.dto.response.CreatePolicyResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -66,15 +70,32 @@ public class QueuePolicyController {
      * 타임딜 정책 정보 조회 (단건)
      */
     @GetMapping("/{policy-id}")
-    public ResponseEntity<ApiResponse<PolicyQueryResponse>> getPolicyInfo(
+    public ResponseEntity<ApiResponse<QueuePolicyResponse>> getPolicyInfo(
         @PathVariable UUID policyId
     ) {
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("TODO"));
     }
 
+    /**
+     * MASTER 권한만 가능
+     * 타임딜 정책 수정
+     */
+    @PatchMapping("/{policy-id}")
+    public ResponseEntity<ApiResponse<QueuePolicyResponse>> updatePolicy(
+        @PathVariable UUID policyId,
+        @RequestBody UpdatePolicyRequest request
+    ) {
+        UpdatePolicyCommand command = request.toCommand();
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("TODO"));
+    }
 
-
-
-
-
+    /**
+     * 타임딜 정책 삭제
+     */
+    @DeleteMapping("/{policy-id}")
+    public ResponseEntity<ApiResponse<Void>> deletePolicy(
+        @PathVariable UUID policyId
+    ) {
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
+    }
 }
