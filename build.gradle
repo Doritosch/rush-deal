@@ -33,7 +33,6 @@ subprojects {
 
     repositories {
         mavenCentral()
-        maven { url 'https://jitpack.io' }
     }
 
     // Spring Cloud BOM (Bill of Materials) 버전 관리용 변수 선언
@@ -56,8 +55,5 @@ subprojects {
         // 테스트 시에도 Lombok 사용 가능하도록
         testCompileOnly 'org.projectlombok:lombok'
         testAnnotationProcessor 'org.projectlombok:lombok'
-
-        // 자체 공통 모듈
-        implementation 'com.github.RushCrew:rush-deal-common:v0.0.7'
     }
 }
