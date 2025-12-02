@@ -2,8 +2,10 @@ package com.rushcrew.queue.domain.entity;
 
 import com.rushcrew.common.entity.BaseEntity;
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
-import com.rushcrew.queue.domain.enums.QueueStatus;
+import com.rushcrew.queue.domain.vo.TimePeriod;
+import com.rushcrew.queue.domain.vo.TrafficSetting;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -44,36 +46,22 @@ public class QueuePolicy extends BaseEntity {
     @Column(name = "status", nullable = false)
     private QueuePolicyStatus status;
 
-    @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    // vo 적용
+    @Embedded
+    private TimePeriod timePeriod;
 
-    @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
+    @Embedded
+    private TrafficSetting trafficSetting;
 
-    // 활성 허용 인원
-    @Column(name = "limit_size", nullable = false)
-    private Integer limitSize;
-
-    // 활성 체크 주기 (몇 초 마다 확인해서 들여보낼 지 주기)
-    @Column(name = "queue_gap", nullable = false)
-    private Integer queueGap;
-
-    // 토큰 유효 시 (Active 토큰의 만료 시간 (예: 300초))
-    @Column(name = "ttl", nullable = false)
-    private Integer ttl;
-
-    public static QueuePolicy create(UUID productId, String timeDealName, QueueStatus status,
+    public static QueuePolicy create(UUID productId, String timeDealName, QueuePolicyStatus status,
         LocalDateTime startTime, LocalDateTime endTime, Integer limitSize, Integer queueGap,
         Integer ttl) {
         return QueuePolicy.builder()
             .productId(productId)
             .timeDealName(timeDealName)
             .status(status)
-            .startTime(startTime)
-            .endTime(endTime)
-            .limitSize(limitSize)
-            .queueGap(queueGap)
-            .ttl(ttl)
+            .timePeriod(new TimePeriod(startTime, endTime))
+            .trafficSetting(new TrafficSetting(limitSize, queueGap, ttl))
             .build();
     }
 }
