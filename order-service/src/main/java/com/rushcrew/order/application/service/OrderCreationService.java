@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import com.rushcrew.order.application.command.CreateOrderCommand;
 import com.rushcrew.order.application.command.CreateOrderResult;
 import com.rushcrew.order.application.exception.StockDepletedException;
+import com.rushcrew.order.application.port.dto.StockReservationResult;
+import com.rushcrew.order.application.port.dto.TimeDealInfo;
+import com.rushcrew.order.application.port.dto.TimeDealStockDetail;
 import com.rushcrew.order.application.validator.OrderItemValidator;
 import com.rushcrew.order.application.validator.PurchaseLimitValidator;
 import com.rushcrew.order.application.validator.QueueTokenValidator;
@@ -25,13 +28,8 @@ import com.rushcrew.order.domain.repository.OrderRepository;
 import com.rushcrew.order.domain.vo.ProductSnapshot;
 import com.rushcrew.order.application.port.out.QueuePort;
 import com.rushcrew.order.application.port.out.TimeDealStockPort;
-import com.rushcrew.order.infrastructure.dto.timedeal.StockReservationRequest;
-import com.rushcrew.order.infrastructure.dto.timedeal.StockReservationResponse;
-import com.rushcrew.order.infrastructure.dto.timedeal.TimeDealResponse;
-import com.rushcrew.order.infrastructure.dto.timedeal.TimeDealStockDetailResponse;
-import com.rushcrew.order.infrastructure.adapter.out.lock.DistributedLockManager;
 import com.rushcrew.order.application.port.out.OrderEventPort;
-import com.rushcrew.order.infrastructure.adapter.out.messaging.event.StockDepletedEvent;
+import com.rushcrew.order.infrastructure.adapter.out.lock.DistributedLockManager;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -45,13 +43,13 @@ public class OrderCreationService {
 	// Repositories
 	private final OrderRepository orderRepository;
 
-	// External Clients
-	private final TimeDealStockPort timeDealStockClient;
-	private final QueuePort queueServiceClient;
+	// Port
+	private final TimeDealStockPort timeDealStockPort;
+	private final QueuePort queuePort;
+	private final OrderEventPort orderEventPort;
 
 	// Infrastructure
 	private final DistributedLockManager lockManager;
-	private final OrderEventPort eventPublisher;
 
 	// Validators
 	private final QueueTokenValidator queueTokenValidator;
@@ -60,16 +58,14 @@ public class OrderCreationService {
 	private final PurchaseLimitValidator purchaseLimitValidator;
 	private final TimeDealStockValidator timeDealStockValidator;
 
-	/**
-	 * 주문 생성 메인 로직
-	 */
+
 	@Transactional
 	public CreateOrderResult createOrder(CreateOrderCommand command) {
 
 		// 1. 대기열 토큰 검증
 		queueTokenValidator.validate(command.getTimeDealId(), command.getUserId());
 		// 2. 타임딜 정보 조회 및 검증
-		TimeDealResponse timeDeal = timeDealStockClient.getTimeDeal(command.getTimeDealId());
+		TimeDealInfo timeDeal = timeDealStockPort.getTimeDeal(command.getTimeDealId());
 		timeDealValidator.validate(timeDeal);
 		// 3. 중복 상품 검증
 		orderItemValidator.validate(command.getOrderItems());
@@ -100,11 +96,8 @@ public class OrderCreationService {
 		// 8. 주문 저장
 		Order savedOrder = orderRepository.save(order);
 		// 9. 대기열 토큰 TTL 연장 (15분)
-		queueServiceClient.extendTokenTtl(
-			command.getTimeDealId(),
-			command.getUserId(),
-			900
-		);
+		queuePort.extendTokenTtl(command.getTimeDealId(), command.getUserId(), 900);
+
 		return mapToResult(savedOrder);
 	}
 
@@ -112,7 +105,7 @@ public class OrderCreationService {
 	// 타임딜 서비스에서 상품 정보를 포함한 재고 상세 정보 조회
 	private List<OrderItem> reserveStocksAndCreateOrderItems(
 		CreateOrderCommand command,
-		TimeDealResponse timeDeal
+		TimeDealInfo timeDeal
 	) {
 		List<OrderItem> orderItems = new ArrayList<>();
 
@@ -127,28 +120,23 @@ public class OrderCreationService {
 				TimeUnit.SECONDS,
 				() -> {
 					// 1. 타임딜 재고 상세 정보 조회 (상품 정보 포함)
-					TimeDealStockDetailResponse stockDetail = timeDealStockClient
+					TimeDealStockDetail stockDetail = timeDealStockPort
 						.getTimeDealStockDetail(timeDealStockId);
 
 					// 2. 상품 활성 상태 검증
 					timeDealStockValidator.validate(stockDetail);
 
 					// 3. 재고 예약 요청
-					StockReservationRequest reserveRequest = StockReservationRequest.builder()
-						.timeDealStockId(timeDealStockId)
-						.quantity(itemCommand.getQuantity())
-						.userId(command.getUserId())
-						.build();
-
-					StockReservationResponse reserveResponse =
-						timeDealStockClient.reserveStock(reserveRequest);
-
-					if (!reserveResponse.isSuccess()) {
-						// 재고 부족 - 품절 처리
+					StockReservationResult result = timeDealStockPort.reserveStock(
+							timeDealStockId,
+							itemCommand.getQuantity(),
+							command.getUserId()
+						);
+					if (!result.isSuccess()) {
 						handleStockDepletion(
 							command.getTimeDealId(),
 							command.getUserId(),
-							reserveResponse.getAvailableStock()
+							result.getAvailableStock()
 						);
 						throw new StockDepletedException();
 					}
@@ -189,17 +177,12 @@ public class OrderCreationService {
 
 	// 재고 소진 처리
 	private void handleStockDepletion(String timeDealId, Long userId, Integer availableStock) {
-		StockDepletedEvent event = StockDepletedEvent.builder()
-			.timeDealId(timeDealId)
-			.userId(userId)
-			.availableStock(availableStock)
-			.timestamp(Instant.now())
-			.build();
-
-		eventPublisher.publishStockDepletedEvent(event);
-
-		log.warn("Stock depleted: timeDeal={}, user={}, available={}",
-			timeDealId, userId, availableStock);
+		orderEventPort.publishStockDepletedEvent(
+			timeDealId,
+			userId,
+			availableStock,
+			Instant.now()
+		);
 	}
 
 	// 주문 결과 매핑
