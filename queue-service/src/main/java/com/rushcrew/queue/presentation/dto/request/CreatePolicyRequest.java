@@ -2,6 +2,8 @@ package com.rushcrew.queue.presentation.dto.request;
 
 import com.rushcrew.queue.application.command.CreatePolicyCommand;
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
+import com.rushcrew.queue.domain.vo.TimePeriod;
+import com.rushcrew.queue.domain.vo.TrafficSetting;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
@@ -32,15 +34,16 @@ public record CreatePolicyRequest(
     Integer ttl
 ) {
     public CreatePolicyCommand toCommand() {
+        // vo 생성 시 유효성 검증
+        TimePeriod timePeriod = new TimePeriod(startTime, endTime);
+        TrafficSetting traffic = new TrafficSetting(limitSize, queueGap, ttl);
+
         return CreatePolicyCommand.builder()
             .productId(productId)
             .dealName(dealName)
             .status(status)
-            .startTime(startTime)
-            .endTime(endTime)
-            .limitSize(limitSize)
-            .queueGap(queueGap)
-            .ttl(ttl)
+            .timePeriod(timePeriod)
+            .trafficSetting(traffic)
             .build();
     }
 }

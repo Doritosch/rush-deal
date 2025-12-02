@@ -1,7 +1,8 @@
 package com.rushcrew.queue.application.command;
 
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
-import java.time.LocalDateTime;
+import com.rushcrew.queue.domain.vo.TimePeriod;
+import com.rushcrew.queue.domain.vo.TrafficSetting;
 import java.util.UUID;
 import lombok.Builder;
 
@@ -10,11 +11,8 @@ public record UpdatePolicyCommand(
     UUID productId,
     String timeDealName,
     QueuePolicyStatus status,
-    LocalDateTime startTime,
-    LocalDateTime endTime,
-    Integer limitSize,
-    Integer queueGap,
-    Integer ttl
+    TimePeriod timePeriod,
+    TrafficSetting trafficSetting
 ) {
 
 }
