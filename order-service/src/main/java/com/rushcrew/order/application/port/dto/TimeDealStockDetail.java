@@ -16,7 +16,7 @@ public class TimeDealStockDetail {
 	private Integer availableStock;     // 주문 가능한 재고
 	private Integer reservedStock;      // 예약된 재고
 	private Integer soldStock;          // 판매 완료된 재고
-	private String status;
+	private TimeDealStatus status;
 
 	// 상품 정보
 	private String productId;
