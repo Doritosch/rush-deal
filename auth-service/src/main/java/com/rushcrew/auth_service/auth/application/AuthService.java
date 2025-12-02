@@ -1,10 +1,13 @@
 package com.rushcrew.auth_service.auth.application;
 
 import com.rushcrew.auth_service.auth.application.client.UserClient;
+import com.rushcrew.auth_service.auth.application.command.LoginCommand;
 import com.rushcrew.auth_service.auth.application.command.SignUpCommand;
 import com.rushcrew.auth_service.auth.application.port.TokenProvider;
+import com.rushcrew.auth_service.auth.application.result.LoginResult;
 import com.rushcrew.auth_service.auth.application.result.SignUpResult;
 import com.rushcrew.auth_service.auth.application.result.UserCreateResult;
+import com.rushcrew.auth_service.auth.application.result.VerifyPasswordResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +31,23 @@ public class AuthService {
         );
 
         return new SignUpResult(
+            result.userId(),
+            result.email(),
+            result.name(),
+            accessToken
+        );
+    }
+
+    public LoginResult login(LoginCommand command) {
+        VerifyPasswordResult result = userClient.verifyPassword(command);
+
+        String accessToken = accessTokenProvider.generateToken(
+            result.userId(),
+            result.email(),
+            result.role()
+        );
+
+        return new LoginResult(
             result.userId(),
             result.email(),
             result.name(),
