@@ -1,4 +1,4 @@
-package com.rushcrew.order.infrastructure.client.dto.timedeal;
+package com.rushcrew.order.application.port.dto;
 
 public enum TimeDealStatus {
 	SCHEDULED,
