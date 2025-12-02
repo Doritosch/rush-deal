@@ -1,4 +1,4 @@
-package com.rushcrew.order.infrastructure.client.dto.timedeal;
+package com.rushcrew.order.infrastructure.dto.timedeal;
 
 import java.util.UUID;
 

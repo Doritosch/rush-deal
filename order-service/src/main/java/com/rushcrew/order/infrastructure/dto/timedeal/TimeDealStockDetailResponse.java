@@ -1,15 +1,13 @@
-package com.rushcrew.order.infrastructure.client.dto.timedeal;
+package com.rushcrew.order.infrastructure.dto.timedeal;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TimeDealStockDetailResponse {
@@ -20,7 +18,7 @@ public class TimeDealStockDetailResponse {
 	private Integer availableStock;     // 주문 가능한 재고
 	private Integer reservedStock;      // 예약된 재고
 	private Integer soldStock;          // 판매 완료된 재고
-	private String status;
+	private TimeDealResponseStatus status;
 
 	// 상품 정보 - 타임딜 서비스가 상품 서비스에서 조회해서 포함시켜줌
 	private String productName;

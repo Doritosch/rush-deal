@@ -1,4 +1,4 @@
-package com.rushcrew.order.infrastructure.client.dto.user;
+package com.rushcrew.order.infrastructure.dto.user;
 
 import java.math.BigDecimal;
 
@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class PointBalanceResponse {
