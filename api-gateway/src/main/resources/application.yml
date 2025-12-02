@@ -34,3 +34,9 @@ jwt:
     secret: ${JWT_ACCESS_SECRET}
     expiration: ${JWT_ACCESS_EXPIRED}
 
+
+gateway:
+  public-paths:
+    - /api/v1/auth/signup
+    - /api/v1/auth/login
+    - /actuator/health
