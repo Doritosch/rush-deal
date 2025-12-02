@@ -1,6 +1,5 @@
 package com.rushcrew.product.domain.entity;
 
-import com.rushcrew.product.presentation.dto.request.CreateOptionRequest;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -39,11 +38,11 @@ public class ProductOption {
     @Column(nullable = false)
     private String color;
 
-    public static ProductOption create(Product product, CreateOptionRequest request) {
+    public static ProductOption of(Product product, String size, String color) {
         return ProductOption.builder()
             .product(product)
-            .size(request.size())
-            .color(request.color())
+            .size(size)
+            .color(color)
             .build();
     }
 }

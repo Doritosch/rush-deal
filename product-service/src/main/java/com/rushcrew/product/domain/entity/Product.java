@@ -1,10 +1,10 @@
 package com.rushcrew.product.domain.entity;
 
+import com.rushcrew.product.application.command.CreateProductCommand;
 import com.rushcrew.product.domain.vo.Category;
 import com.rushcrew.product.domain.vo.Price;
 import com.rushcrew.product.domain.vo.ProductInfo;
 import com.rushcrew.product.domain.vo.SellerId;
-import com.rushcrew.product.presentation.dto.request.CreateProductRequest;
 import com.rushcrew.product.presentation.dto.request.UpdateProductRequest;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -55,7 +55,7 @@ public class Product {
     private ProductInfo productInfo;
 
     @Embedded
-    @AttributeOverride(name = "price", column = @Column(nullable = false))
+    @AttributeOverride(name = "amount", column = @Column(name = "price", nullable = false))
     private Price price;
 
     @Column(name = "is_active", nullable = false)
@@ -70,17 +70,18 @@ public class Product {
     @Builder.Default
     private List<ProductOption> options = new ArrayList<>();
 
-    public static Product create(CreateProductRequest request) {
+    public static Product create(CreateProductCommand command) {
         return Product.builder()
-            .userId(SellerId.of(request.userId()))
-            .productInfo(ProductInfo.of(request.productName(), request.description()))
-            .price(Price.of(request.price()))
-            .category(request.category())
+            .userId(command.sellerId())
+            .companyName(command.companyName())
+            .productInfo(command.productInfo())
+            .price(command.price())
+            .category(command.category())
             .build();
     }
 
-    public void addOption(ProductOption option) {
-        this.options.add(option);
+    public void addOption(String size, String color) {
+        this.options.add(ProductOption.of(this, size, color));
     }
 
     public void update(UpdateProductRequest request) {
