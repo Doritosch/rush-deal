@@ -1,11 +1,12 @@
 package com.rushcrew.product.domain.entity;
 
+import com.rushcrew.common.entity.BaseEntity;
 import com.rushcrew.product.application.command.CreateProductCommand;
+import com.rushcrew.product.application.command.UpdateProductCommand;
 import com.rushcrew.product.domain.vo.Category;
 import com.rushcrew.product.domain.vo.Price;
 import com.rushcrew.product.domain.vo.ProductInfo;
 import com.rushcrew.product.domain.vo.SellerId;
-import com.rushcrew.product.presentation.dto.request.UpdateProductRequest;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.CascadeType;
@@ -34,7 +35,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-public class Product {
+public class Product extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -84,14 +85,18 @@ public class Product {
         this.options.add(ProductOption.of(this, size, color));
     }
 
-    public void update(UpdateProductRequest request) {
-        if (request.companyName() != null) {
-            this.companyName = request.companyName();
-        }
-        if (request.category() != null) {
-            this.category = request.category();
-        }
-        ProductInfo.of(request.productName(), request.description());
-        Price.of(request.price());
+    public void update(UpdateProductCommand command) {
+        if (command.companyName() != null) this.companyName = command.companyName();
+        if (command.category() != null) this.category = command.category();
+        updateProductInfo(command.productName(), command.description());
+        this.price = command.price() != null ? Price.of(command.price()) : this.price;
+    }
+
+    private void updateProductInfo(String newName, String newDescription) {
+        String updatedName = newName != null ? newName : this.productInfo.getName();
+        String updatedDescription =
+            newDescription != null ? newDescription : this.productInfo.getDescription();
+
+        this.productInfo = ProductInfo.of(updatedName, updatedDescription);
     }
 }

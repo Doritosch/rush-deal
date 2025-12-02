@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProductRepositoryAdapter implements ProductRepository {
 
-    private final JpaProductRepository jpaProductRepository;
+    private final ProductJpaRepository jpaProductRepository;
 
     @Override
     public Product save(Product product) {
@@ -19,7 +19,7 @@ public class ProductRepositoryAdapter implements ProductRepository {
     }
 
     @Override
-    public Optional<Product> findById(UUID productId) {
-        return jpaProductRepository.findById(productId);
+    public Optional<Product> findByIdAndDeletedAtIsNull(UUID productId) {
+        return jpaProductRepository.findByIdAndDeletedAtIsNull(productId);
     }
 }
