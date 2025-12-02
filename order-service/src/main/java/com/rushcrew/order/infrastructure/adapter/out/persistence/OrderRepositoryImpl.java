@@ -1,4 +1,4 @@
-package com.rushcrew.order.infrastructure.persistence;
+package com.rushcrew.order.infrastructure.adapter.out.persistence;
 
 import java.util.Optional;
 import java.util.UUID;

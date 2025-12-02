@@ -23,15 +23,15 @@ import com.rushcrew.order.domain.order.OrderItem;
 import com.rushcrew.order.domain.order.OrderReservation;
 import com.rushcrew.order.domain.repository.OrderRepository;
 import com.rushcrew.order.domain.vo.ProductSnapshot;
-import com.rushcrew.order.infrastructure.client.QueueServiceClient;
-import com.rushcrew.order.infrastructure.client.TimeDealStockServiceClient;
-import com.rushcrew.order.infrastructure.client.dto.timedeal.StockReservationRequest;
-import com.rushcrew.order.infrastructure.client.dto.timedeal.StockReservationResponse;
-import com.rushcrew.order.infrastructure.client.dto.timedeal.TimeDealResponse;
-import com.rushcrew.order.infrastructure.client.dto.timedeal.TimeDealStockDetailResponse;
-import com.rushcrew.order.infrastructure.lock.DistributedLockManager;
-import com.rushcrew.order.infrastructure.messaging.OrderEventPublisher;
-import com.rushcrew.order.infrastructure.messaging.event.StockDepletedEvent;
+import com.rushcrew.order.application.port.out.QueuePort;
+import com.rushcrew.order.application.port.out.TimeDealStockPort;
+import com.rushcrew.order.infrastructure.dto.timedeal.StockReservationRequest;
+import com.rushcrew.order.infrastructure.dto.timedeal.StockReservationResponse;
+import com.rushcrew.order.infrastructure.dto.timedeal.TimeDealResponse;
+import com.rushcrew.order.infrastructure.dto.timedeal.TimeDealStockDetailResponse;
+import com.rushcrew.order.infrastructure.adapter.out.lock.DistributedLockManager;
+import com.rushcrew.order.application.port.out.OrderEventPort;
+import com.rushcrew.order.infrastructure.adapter.out.messaging.event.StockDepletedEvent;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -46,12 +46,12 @@ public class OrderCreationService {
 	private final OrderRepository orderRepository;
 
 	// External Clients
-	private final TimeDealStockServiceClient timeDealStockClient;
-	private final QueueServiceClient queueServiceClient;
+	private final TimeDealStockPort timeDealStockClient;
+	private final QueuePort queueServiceClient;
 
 	// Infrastructure
 	private final DistributedLockManager lockManager;
-	private final OrderEventPublisher eventPublisher;
+	private final OrderEventPort eventPublisher;
 
 	// Validators
 	private final QueueTokenValidator queueTokenValidator;

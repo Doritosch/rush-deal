@@ -1,4 +1,4 @@
-package com.rushcrew.order.infrastructure.client.feign.config;
+package com.rushcrew.order.infrastructure.adapter.out.client.feign.config;
 
 import org.springframework.context.annotation.Configuration;
 

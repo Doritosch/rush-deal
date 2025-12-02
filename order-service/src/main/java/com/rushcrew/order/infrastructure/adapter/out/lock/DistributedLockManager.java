@@ -1,4 +1,4 @@
-package com.rushcrew.order.infrastructure.lock;
+package com.rushcrew.order.infrastructure.adapter.out.lock;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
