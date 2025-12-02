@@ -4,6 +4,7 @@ import com.rushcrew.common.dto.ApiResponse;
 import com.rushcrew.queue.application.command.CreatePolicyCommand;
 import com.rushcrew.queue.application.command.SearchPolicyCommand;
 import com.rushcrew.queue.application.dto.PageQuery;
+import com.rushcrew.queue.application.dto.PolicyQueryResponse;
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import com.rushcrew.queue.presentation.dto.request.CreatePolicyRequest;
 import com.rushcrew.queue.presentation.dto.response.CreatePolicyResponse;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,6 +58,17 @@ public class QueuePolicyController {
 
         PageQuery pageQuery = PageQuery.of(page, size, sortBy, sortDirection);
         SearchPolicyCommand command = SearchPolicyCommand.of(productId, QueuePolicyStatus.valueOf(status));
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("TODO"));
+    }
+
+    /**
+     * MASTER 권한만 가능
+     * 타임딜 정책 정보 조회 (단건)
+     */
+    @GetMapping("/{policy-id}")
+    public ResponseEntity<ApiResponse<PolicyQueryResponse>> getPolicyInfo(
+        @PathVariable UUID policyId
+    ) {
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("TODO"));
     }
 
