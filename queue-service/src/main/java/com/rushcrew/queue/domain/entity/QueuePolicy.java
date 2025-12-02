@@ -46,10 +46,11 @@ public class QueuePolicy extends BaseEntity {
     @Column(name = "status", nullable = false)
     private QueuePolicyStatus status;
 
-    // vo 적용
+    // vo 적용 (운영시간)
     @Embedded
     private TimePeriod timePeriod;
 
+    // vo 적용 (활성 허용 인원, 활성 체크 주기, ttl)
     @Embedded
     private TrafficSetting trafficSetting;
 

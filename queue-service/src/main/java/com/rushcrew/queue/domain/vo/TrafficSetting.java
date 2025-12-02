@@ -31,8 +31,8 @@ public class TrafficSetting {
             throw new IllegalArgumentException("활성 체크 주기는 1초 이상이어야 합니다.");
         }
 
-        if (ttl == null || ttl < 10) {
-            throw new IllegalArgumentException("TTL은 최소 10초 이상이어야 합니다.");
+        if (ttl == null || ttl <= 60) {
+            throw new IllegalArgumentException("TTL은 최소 60초 이상이어야 합니다.");
         }
         this.limitSize = limitSize;
         this.queueGap = queueGap;
