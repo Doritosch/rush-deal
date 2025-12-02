@@ -29,7 +29,7 @@ import com.rushcrew.order.domain.vo.ProductSnapshot;
 import com.rushcrew.order.application.port.out.QueuePort;
 import com.rushcrew.order.application.port.out.TimeDealStockPort;
 import com.rushcrew.order.application.port.out.OrderEventPort;
-import com.rushcrew.order.infrastructure.adapter.out.lock.DistributedLockManager;
+// import com.rushcrew.order.infrastructure.adapter.out.lock.DistributedLockManager;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +49,7 @@ public class OrderCreationService {
 	private final OrderEventPort orderEventPort;
 
 	// Infrastructure
-	private final DistributedLockManager lockManager;
+	// private final DistributedLockManager lockManager;
 
 	// Validators
 	private final QueueTokenValidator queueTokenValidator;
@@ -103,6 +103,77 @@ public class OrderCreationService {
 
 	// 재고 예약 + OrderItem 생성
 	// 타임딜 서비스에서 상품 정보를 포함한 재고 상세 정보 조회
+	// private List<OrderItem> reserveStocksAndCreateOrderItems(
+	// 	CreateOrderCommand command,
+	// 	TimeDealInfo timeDeal
+	// ) {
+	// 	List<OrderItem> orderItems = new ArrayList<>();
+	//
+	// 	for (CreateOrderCommand.OrderItemCommand itemCommand : command.getOrderItems()) {
+	// 		UUID timeDealStockId = UUID.fromString(itemCommand.getTimeDealStockId());
+	// 		String lockKey = "stock:" + timeDealStockId + ":lock";
+	//
+	// 		OrderItem orderItem = lockManager.executeWithLock(
+	// 			lockKey,
+	// 			5, // 5초 대기
+	// 			3, // 3초 TTL
+	// 			TimeUnit.SECONDS,
+	// 			() -> {
+	// 				// 1. 타임딜 재고 상세 정보 조회 (상품 정보 포함)
+	// 				TimeDealStockDetail stockDetail = timeDealStockPort
+	// 					.getTimeDealStockDetail(timeDealStockId);
+	//
+	// 				// 2. 상품 활성 상태 검증
+	// 				timeDealStockValidator.validate(stockDetail);
+	//
+	// 				// 3. 재고 예약 요청
+	// 				StockReservationResult result = timeDealStockPort.reserveStock(
+	// 						timeDealStockId,
+	// 						itemCommand.getQuantity(),
+	// 						command.getUserId()
+	// 					);
+	// 				if (!result.isSuccess()) {
+	// 					handleStockDepletion(
+	// 						command.getTimeDealId(),
+	// 						command.getUserId(),
+	// 						result.getAvailableStock()
+	// 					);
+	// 					throw new StockDepletedException();
+	// 				}
+	//
+	// 				// 4. ProductSnapshot 생성 (타임딜 서비스에서 받은 정보로)
+	// 				ProductSnapshot snapshot = ProductSnapshot.builder()
+	// 					.timeDealStockId(timeDealStockId.toString())
+	// 					.productId(stockDetail.getProductId())
+	// 					.productName(stockDetail.getProductName())
+	// 					.productDescription(stockDetail.getProductDescription())
+	// 					.optionId(stockDetail.getOptionId())
+	// 					.optionName(stockDetail.getOptionName())
+	// 					.sellerId(stockDetail.getSellerId())
+	// 					.sellerName(stockDetail.getSellerName())
+	// 					.originalPrice(stockDetail.getProductPrice())
+	// 					.timeDealId(timeDeal.getTimeDealId())
+	// 					.timeDealTitle(timeDeal.getTitle())
+	// 					.discountRate(timeDeal.getDiscountRate())
+	// 					.category(stockDetail.getCategory())
+	// 					.build();
+	//
+	// 				// 5. OrderItem 생성
+	// 				return OrderItem.create(
+	// 					timeDealStockId,
+	// 					itemCommand.getQuantity(),
+	// 					stockDetail.getProductPrice(),
+	// 					timeDeal.getDiscountPrice(),
+	// 					snapshot
+	// 				);
+	// 			}
+	// 		);
+	//
+	// 		orderItems.add(orderItem);
+	// 	}
+	//
+	// 	return orderItems;
+	// }
 	private List<OrderItem> reserveStocksAndCreateOrderItems(
 		CreateOrderCommand command,
 		TimeDealInfo timeDeal
@@ -111,62 +182,53 @@ public class OrderCreationService {
 
 		for (CreateOrderCommand.OrderItemCommand itemCommand : command.getOrderItems()) {
 			UUID timeDealStockId = UUID.fromString(itemCommand.getTimeDealStockId());
-			String lockKey = "stock:" + timeDealStockId + ":lock";
 
-			OrderItem orderItem = lockManager.executeWithLock(
-				lockKey,
-				5, // 5초 대기
-				3, // 3초 TTL
-				TimeUnit.SECONDS,
-				() -> {
-					// 1. 타임딜 재고 상세 정보 조회 (상품 정보 포함)
-					TimeDealStockDetail stockDetail = timeDealStockPort
-						.getTimeDealStockDetail(timeDealStockId);
+			// 1. 타임딜 재고 상세 정보 조회 (상품 정보 포함)
+			TimeDealStockDetail stockDetail = timeDealStockPort
+				.getTimeDealStockDetail(timeDealStockId);
 
-					// 2. 상품 활성 상태 검증
-					timeDealStockValidator.validate(stockDetail);
+			// 2. 상품 활성 상태 검증
+			timeDealStockValidator.validate(stockDetail);
 
-					// 3. 재고 예약 요청
-					StockReservationResult result = timeDealStockPort.reserveStock(
-							timeDealStockId,
-							itemCommand.getQuantity(),
-							command.getUserId()
-						);
-					if (!result.isSuccess()) {
-						handleStockDepletion(
-							command.getTimeDealId(),
-							command.getUserId(),
-							result.getAvailableStock()
-						);
-						throw new StockDepletedException();
-					}
+			// 3. 재고 예약 요청
+			StockReservationResult result = timeDealStockPort.reserveStock(
+				timeDealStockId,
+				itemCommand.getQuantity(),
+				command.getUserId()
+			);
+			if (!result.isSuccess()) {
+				handleStockDepletion(
+					command.getTimeDealId(),
+					command.getUserId(),
+					result.getAvailableStock()
+				);
+				throw new StockDepletedException();
+			}
 
-					// 4. ProductSnapshot 생성 (타임딜 서비스에서 받은 정보로)
-					ProductSnapshot snapshot = ProductSnapshot.builder()
-						.timeDealStockId(timeDealStockId.toString())
-						.productId(stockDetail.getProductId())
-						.productName(stockDetail.getProductName())
-						.productDescription(stockDetail.getProductDescription())
-						.optionId(stockDetail.getOptionId())
-						.optionName(stockDetail.getOptionName())
-						.sellerId(stockDetail.getSellerId())
-						.sellerName(stockDetail.getSellerName())
-						.originalPrice(stockDetail.getProductPrice())
-						.timeDealId(timeDeal.getTimeDealId())
-						.timeDealTitle(timeDeal.getTitle())
-						.discountRate(timeDeal.getDiscountRate())
-						.category(stockDetail.getCategory())
-						.build();
+			// 4. ProductSnapshot 생성
+			ProductSnapshot snapshot = ProductSnapshot.builder()
+				.timeDealStockId(timeDealStockId.toString())
+				.productId(stockDetail.getProductId())
+				.productName(stockDetail.getProductName())
+				.productDescription(stockDetail.getProductDescription())
+				.optionId(stockDetail.getOptionId())
+				.optionName(stockDetail.getOptionName())
+				.sellerId(stockDetail.getSellerId())
+				.sellerName(stockDetail.getSellerName())
+				.originalPrice(stockDetail.getProductPrice())
+				.timeDealId(timeDeal.getTimeDealId())
+				.timeDealTitle(timeDeal.getTitle())
+				.discountRate(timeDeal.getDiscountRate())
+				.category(stockDetail.getCategory())
+				.build();
 
-					// 5. OrderItem 생성
-					return OrderItem.create(
-						timeDealStockId,
-						itemCommand.getQuantity(),
-						stockDetail.getProductPrice(),
-						timeDeal.getDiscountPrice(),
-						snapshot
-					);
-				}
+			// 5. OrderItem 생성
+			OrderItem orderItem = OrderItem.create(
+				timeDealStockId,
+				itemCommand.getQuantity(),
+				stockDetail.getProductPrice(),
+				timeDeal.getDiscountPrice(),
+				snapshot
 			);
 
 			orderItems.add(orderItem);
@@ -174,6 +236,7 @@ public class OrderCreationService {
 
 		return orderItems;
 	}
+
 
 	// 재고 소진 처리
 	private void handleStockDepletion(String timeDealId, Long userId, Integer availableStock) {
