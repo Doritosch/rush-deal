@@ -1,6 +1,6 @@
-package com.rushcrew.order.infrastructure.client;
+package com.rushcrew.order.application.port.out;
 
-public interface QueueServiceClient {
+public interface QueuePort {
 
 	// 대기열 토큰 유효성 검증
 	boolean validateQueueToken(String timeDealId, Long userId);
