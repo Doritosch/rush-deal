@@ -25,6 +25,6 @@ public class OrderEventPublisher implements OrderEventPort {
 			.timestamp(timestamp)
 			.build();
 
-		kafkaTemplate.send("stock-depleted-event", event);
+		kafkaTemplate.send("stock.depleted.event", event);
 	}
 }
