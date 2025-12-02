@@ -1,6 +1,7 @@
 package com.rushcrew.order.domain.order;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 
 import org.hibernate.annotations.Type;
@@ -116,7 +117,7 @@ public class OrderItem {
 		// (원가 - 할인가) / 원가 x 100
 		BigDecimal discount = unitPrice.subtract(discountPrice);
 		return discount
-			.divide(unitPrice, 2, BigDecimal.ROUND_HALF_UP)
+			.divide(unitPrice, 2, RoundingMode.HALF_UP)
 			.multiply(BigDecimal.valueOf(100));
 	}
 

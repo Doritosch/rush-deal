@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import com.rushcrew.order.domain.order.enums.OrderEventType;
 import com.rushcrew.order.domain.order.enums.OrderStatus;
+import com.rushcrew.order.domain.vo.OrderAmount;
 import com.rushcrew.order.domain.vo.ShippingInfo;
 
 import jakarta.persistence.CascadeType;
@@ -40,15 +41,8 @@ public class Order {
 	@Column(nullable = false)
 	private Long userId;
 
-	@Column(nullable = false, precision = 12, scale = 2)
-	private BigDecimal totalAmount;
-
-	@Column(nullable = false, precision = 12, scale = 2)
-	@Builder.Default
-	private BigDecimal pointUsed = BigDecimal.ZERO;
-
-	@Column(nullable = false, precision = 12, scale = 2)
-	private BigDecimal finalAmount;
+	@Embedded
+	private OrderAmount amount;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 20)
@@ -78,7 +72,7 @@ public class Order {
 	@Builder.Default
 	private List<OrderReservation> reservations = new ArrayList<>();
 
-	@OneToMany(mappedBy = "order")
+	@OneToMany(mappedBy = "order", cascade = CascadeType.PERSIST)
 	@Builder.Default
 	private List<OrderHistory> histories = new ArrayList<>();
 
@@ -92,18 +86,12 @@ public class Order {
 			.map(OrderItem::getSubtotal)
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
 
-		BigDecimal finalAmount = totalAmount.subtract(pointUsed);
-
-		if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
-			throw new IllegalArgumentException("최종 결제 금액은 0보다 작을 수 없습니다.");
-		}
+		OrderAmount amount = OrderAmount.create(totalAmount, pointUsed);
 
 		Order order = Order.builder()
 			.orderId(UUID.randomUUID())
 			.userId(userId)
-			.totalAmount(totalAmount)
-			.pointUsed(pointUsed)
-			.finalAmount(finalAmount)
+			.amount(amount)
 			.status(OrderStatus.PENDING)
 			.shippingInfo(shippingInfo)
 			.orderedAt(Instant.now())
@@ -134,30 +122,14 @@ public class Order {
 	// 포인트 사용량 수정 (PENDING 상태에서만 가능 - 결제 전)
 	public void updatePointUsed(BigDecimal newPointUsed) {
 		this.status.validateCanUpdatePointUsed();
-		if (newPointUsed == null || newPointUsed.compareTo(BigDecimal.ZERO) < 0) {
-			throw new IllegalArgumentException("포인트 사용량은 0 이상이어야 합니다.");
-		}
-		if (newPointUsed.compareTo(this.totalAmount) > 0) {
-			throw new IllegalArgumentException(
-				"포인트 사용량은 주문 금액을 초과할 수 없습니다. (포인트 사용량: %s, 주문 금액: %s)".formatted(newPointUsed, this.totalAmount)
-			);
-		}
-		BigDecimal oldPointUsed = this.pointUsed;
-		this.pointUsed = newPointUsed;
-		recalculateFinalAmount(); // 최종 금액 재계산
+		BigDecimal oldPointUsed = this.amount.getPointUsed();
+		this.amount = this.amount.updatePointUsed(newPointUsed);
 		addHistory(
 			OrderEventType.POINT_USAGE_UPDATED,
 			status,
 			status,
 			"포인트 사용량 변경: %s --> %s".formatted(oldPointUsed, newPointUsed)
 		);
-	}
-
-	public void recalculateFinalAmount() {
-		this.finalAmount = this.totalAmount.subtract(this.pointUsed);
-		if (this.finalAmount.compareTo(BigDecimal.ZERO) < 0) {
-			throw new IllegalStateException("최종 결제 금액은 0보다 작을 수 없습니다.");
-		}
 	}
 
 	// 결제 전 주문 취소
@@ -291,6 +263,23 @@ public class Order {
 
 	public boolean canUpdatePointUsed() {
 		return this.status.canUpdatePointUsed();
+	}
+
+
+	// ============================================
+	//         편의 메서드 (OrderAmount 위임)
+	// ============================================
+
+	public BigDecimal getTotalAmount() {
+		return amount.getTotalAmount();
+	}
+
+	public BigDecimal getPointUsed() {
+		return amount.getPointUsed();
+	}
+
+	public BigDecimal getFinalAmount() {
+		return amount.getFinalAmount();
 	}
 
 }

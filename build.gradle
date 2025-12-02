@@ -33,6 +33,7 @@ subprojects {
 
     repositories {
         mavenCentral()
+        maven { url 'https://jitpack.io' }
     }
 
     // Spring Cloud BOM (Bill of Materials) 버전 관리용 변수 선언
