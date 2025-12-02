@@ -17,10 +17,24 @@ spring:
         format_sql: true
         default_schema: order_schema
 
-  # 스키마 자동 생성
   sql:
     init:
       mode: always
+
+  kafka:
+    bootstrap-servers: rushdeal_kafka:9092
+    consumer:
+      group-id: order-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+  data:
+    redis:
+      host: rushdeal_order_redis
+      port: 6379
 
 server:
   port: 8050
