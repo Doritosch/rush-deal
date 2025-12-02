@@ -1,4 +1,4 @@
-package com.rushcrew.order.infrastructure.client.feign;
+package com.rushcrew.order.infrastructure.adapter.out.client.feign;
 
 import java.util.UUID;
 
@@ -9,36 +9,31 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.rushcrew.order.infrastructure.client.TimeDealStockServiceClient;
-import com.rushcrew.order.infrastructure.client.dto.timedeal.StockReservationRequest;
-import com.rushcrew.order.infrastructure.client.dto.timedeal.StockReservationResponse;
-import com.rushcrew.order.infrastructure.client.dto.timedeal.TimeDealResponse;
-import com.rushcrew.order.infrastructure.client.dto.timedeal.TimeDealStockDetailResponse;
+import com.rushcrew.order.application.port.out.TimeDealStockPort;
+import com.rushcrew.order.infrastructure.dto.timedeal.StockReservationRequest;
+import com.rushcrew.order.infrastructure.dto.timedeal.StockReservationResponse;
+import com.rushcrew.order.infrastructure.dto.timedeal.TimeDealResponse;
+import com.rushcrew.order.infrastructure.dto.timedeal.TimeDealStockDetailResponse;
 
 @FeignClient(name = "timedeal-service")
-public interface TimeDealStockFeignClient extends TimeDealStockServiceClient {
+public interface TimeDealStockFeignClient {
 
 	@GetMapping("/api/v1/timedeals/{timeDealId}")
-	@Override
 	TimeDealResponse getTimeDeal(@PathVariable("timeDealId") String timeDealId);
 
 	@GetMapping("/api/v1/timedeal-stocks/{timeDealStockId}")
-	@Override
 	TimeDealStockDetailResponse getTimeDealStockDetail(@PathVariable("timeDealStockId") UUID timeDealStockId);
 
 	@PostMapping("/api/v1/timedeal-stocks/reserve")
-	@Override
 	StockReservationResponse reserveStock(@RequestBody StockReservationRequest request);
 
 	@PostMapping("/api/v1/timedeal-stocks/{timeDealStockId}/confirm")
-	@Override
 	void confirmReservation(
 		@PathVariable("timeDealStockId") UUID timeDealStockId,
 		@RequestParam("quantity") Integer quantity
 	);
 
 	@PostMapping("/api/v1/timedeal-stocks/{timeDealStockId}/cancel")
-	@Override
 	void cancelReservation(
 		@PathVariable("timeDealStockId") UUID timeDealStockId,
 		@RequestParam("quantity") Integer quantity
