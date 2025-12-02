@@ -1,0 +1,32 @@
+description = 'Queue Service for rush-deal Project'
+
+repositories {
+	mavenCentral()
+	maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+//	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// 자체 공통 모듈
+	implementation 'com.github.RushCrew:rush-deal-common:v0.0.7'
+
+	// 서비스 간 통신 위한 Feign Client
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+	// Redis / Redisson
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.redisson:redisson-spring-boot-starter:3.20.0'
+
+	// Eureka 클라이언트
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
