@@ -55,14 +55,13 @@ public class QueuePolicy extends BaseEntity {
     private TrafficSetting trafficSetting;
 
     public static QueuePolicy create(UUID productId, String timeDealName, QueuePolicyStatus status,
-        LocalDateTime startTime, LocalDateTime endTime, Integer limitSize, Integer queueGap,
-        Integer ttl) {
+        TimePeriod timePeriod, TrafficSetting trafficSetting) {
         return QueuePolicy.builder()
             .productId(productId)
             .timeDealName(timeDealName)
             .status(status)
-            .timePeriod(new TimePeriod(startTime, endTime))
-            .trafficSetting(new TrafficSetting(limitSize, queueGap, ttl))
+            .timePeriod(timePeriod)
+            .trafficSetting(trafficSetting)
             .build();
     }
 }

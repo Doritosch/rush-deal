@@ -6,6 +6,7 @@ import com.rushcrew.queue.application.command.SearchPolicyCommand;
 import com.rushcrew.queue.application.command.UpdatePolicyCommand;
 import com.rushcrew.queue.application.dto.PageQuery;
 import com.rushcrew.queue.application.dto.QueuePolicyResponse;
+import com.rushcrew.queue.application.service.QueuePolicyService;
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import com.rushcrew.queue.presentation.dto.request.CreatePolicyRequest;
 import com.rushcrew.queue.presentation.dto.request.UpdatePolicyRequest;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,21 +31,28 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/queue/policies")
 public class QueuePolicyController {
 
+    private final QueuePolicyService queuePolicyService;
+
     // API Gateway에서 인증 후, USER ID와 ROLE을 헤더에 담아 전달
     private static final String USER_ID_HEADER = "X-User-Id";
     private static final String USER_ROLE_HEADER = "X-User-Role";
 
-    public QueuePolicyController() {}
+    public QueuePolicyController(QueuePolicyService queuePolicyService) {
+        this.queuePolicyService = queuePolicyService;
+    }
 
     /**
      * 타임딜 정책 생성 : MASTER 권한만 가능
      */
     @PostMapping
     public ResponseEntity<ApiResponse<CreatePolicyResponse>> registerPolicy(
-        @Valid @RequestBody CreatePolicyRequest request
+        @Valid @RequestBody CreatePolicyRequest request,
+        @RequestHeader(USER_ID_HEADER) Long currUserId,
+        @RequestHeader(USER_ROLE_HEADER) String role
     ) {
         CreatePolicyCommand command = request.toCommand();
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("TODO"));
+        CreatePolicyResponse response = queuePolicyService.createQueuePolicy(command, currUserId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
     /**
