@@ -1,20 +1,25 @@
 package com.rushcrew.user_service.user.application;
 
 import com.rushcrew.user_service.user.application.command.UserCreateCommand;
+import com.rushcrew.user_service.user.application.command.VerifyPasswordCommand;
 import com.rushcrew.user_service.user.application.result.UserCreateResult;
+import com.rushcrew.user_service.user.application.result.VerifyPasswordResult;
 import com.rushcrew.user_service.user.domain.entity.User;
 import com.rushcrew.user_service.user.domain.enums.UserRole;
 import com.rushcrew.user_service.user.domain.repository.UserRepository;
+import com.rushcrew.user_service.user.domain.service.UserReader;
 import com.rushcrew.user_service.user.domain.service.UserValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserValidator userValidator;
+    private final UserReader userReader;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -41,6 +46,20 @@ public class UserService {
             savedUser.getEmail(),
             savedUser.getName(),
             savedUser.getRole().name()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public VerifyPasswordResult verifyPassword(VerifyPasswordCommand command) {
+        User user = userReader.getUserByEmail(command.email());
+
+        userValidator.validatePassword(user, command.password());
+
+        return new VerifyPasswordResult(
+            user.getUserId(),
+            user.getEmail(),
+            user.getName(),
+            user.getRole().name()
         );
     }
 }
