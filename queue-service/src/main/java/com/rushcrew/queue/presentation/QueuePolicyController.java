@@ -11,6 +11,7 @@ import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import com.rushcrew.queue.presentation.dto.request.CreatePolicyRequest;
 import com.rushcrew.queue.presentation.dto.request.UpdatePolicyRequest;
 import com.rushcrew.queue.presentation.dto.response.CreatePolicyResponse;
+import com.rushcrew.queue.presentation.mapper.QueuePolicyPresentationMapper;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.data.domain.Sort;
@@ -32,13 +33,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class QueuePolicyController {
 
     private final QueuePolicyService queuePolicyService;
+    private final QueuePolicyPresentationMapper presentationMapper;
 
     // API Gateway에서 인증 후, USER ID와 ROLE을 헤더에 담아 전달
     private static final String USER_ID_HEADER = "X-User-Id";
     private static final String USER_ROLE_HEADER = "X-User-Role";
 
-    public QueuePolicyController(QueuePolicyService queuePolicyService) {
+    public QueuePolicyController(QueuePolicyService queuePolicyService,
+        QueuePolicyPresentationMapper presentationMapper) {
         this.queuePolicyService = queuePolicyService;
+        this.presentationMapper = presentationMapper;
     }
 
     /**
@@ -51,7 +55,8 @@ public class QueuePolicyController {
         @RequestHeader(USER_ROLE_HEADER) String role
     ) {
         CreatePolicyCommand command = request.toCommand();
-        CreatePolicyResponse response = queuePolicyService.createQueuePolicy(command, currUserId);
+        QueuePolicyResponse result = queuePolicyService.createQueuePolicy(command, currUserId);
+        CreatePolicyResponse response = presentationMapper.toCreatePolicyResponse(result);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 

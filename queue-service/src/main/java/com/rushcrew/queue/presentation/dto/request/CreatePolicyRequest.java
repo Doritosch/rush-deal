@@ -11,9 +11,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record CreatePolicyRequest(
-    // TODO : 추후 추가 예정
-//    Long userId,
-//    UserRole role,
     @NotNull(message = "상품 ID는 필수입니다")
     UUID productId,
     @NotBlank(message = "타임딜 제목은 필수입니다")

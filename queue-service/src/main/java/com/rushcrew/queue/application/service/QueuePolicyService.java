@@ -1,10 +1,10 @@
 package com.rushcrew.queue.application.service;
 
 import com.rushcrew.queue.application.command.CreatePolicyCommand;
+import com.rushcrew.queue.application.dto.QueuePolicyResponse;
 import com.rushcrew.queue.application.port.in.QueuePolicyPort;
 import com.rushcrew.queue.domain.entity.QueuePolicy;
 import com.rushcrew.queue.domain.repository.QueuePolicyRepository;
-import com.rushcrew.queue.presentation.dto.response.CreatePolicyResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +22,7 @@ public class QueuePolicyService implements QueuePolicyPort {
      */
     @Override
     @Transactional
-    public CreatePolicyResponse createQueuePolicy(CreatePolicyCommand command, Long userId) {
+    public QueuePolicyResponse createQueuePolicy(CreatePolicyCommand command, Long userId) {
         // TODO: 권한 유효성 검사
 
         // 중복 정책 검증 (해당 상품에 정책이 이미 있는지 검증)
@@ -39,6 +39,6 @@ public class QueuePolicyService implements QueuePolicyPort {
         );
 
         QueuePolicy saved = queuePolicyRepository.save(queuePolicy);
-        return CreatePolicyResponse.from(saved);
+        return QueuePolicyResponse.from(saved);
     }
 }
