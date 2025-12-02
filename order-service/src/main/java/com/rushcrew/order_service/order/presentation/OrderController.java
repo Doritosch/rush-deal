@@ -4,11 +4,11 @@ import java.util.stream.Collectors;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.rushcrew.common.dto.ApiResponse;
-import com.rushcrew.order_service.global.util.JwtUtils;
 import com.rushcrew.order_service.order.application.command.CreateOrderCommand;
 import com.rushcrew.order_service.order.application.command.CreateOrderResult;
 import com.rushcrew.order_service.order.application.handler.CreateOrderCommandHandler;
@@ -28,12 +28,12 @@ public class OrderController {
 	private final CreateOrderCommandHandler createOrderCommandHandler;
 
 	@PostMapping
-	// @PreAuthorize("hasAnyRole('USER', 'MASTER', 'SELLER')")
 	public ApiResponse<CreateOrderResponse> createOrder(
-		@Valid @RequestBody CreateOrderRequest request
+		@Valid @RequestBody CreateOrderRequest request,
+		@RequestHeader("X-User-Id") Long userId,
+		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
-		Long userId = JwtUtils.getCurrentUserId();
-		// String role = JwtUtils.getCurrentUserRole();
+		log.info("Creating order: userId={}, role={}, timeDealId={}", userId, role, request.getTimeDealId());
 
 		CreateOrderCommand command = CreateOrderCommand.builder()
 			.userId(userId)
