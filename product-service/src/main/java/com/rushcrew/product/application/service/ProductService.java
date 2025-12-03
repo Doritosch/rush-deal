@@ -13,4 +13,6 @@ public interface ProductService {
     UpdateProductResult updateProduct(UUID productId, UpdateProductCommand command);
 
     void disableProduct(UUID productId);
+
+    void enableProduct(UUID productId);
 }

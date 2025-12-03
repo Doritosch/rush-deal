@@ -54,4 +54,12 @@ public class ProductController {
         productService.disableProduct(productId);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{productId}/enable")
+    public ResponseEntity<Void> enableProduct(
+        @PathVariable UUID productId
+    ) {
+        productService.enableProduct(productId);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -58,6 +58,14 @@ public class ProductServiceImpl implements ProductService {
         product.deactivate();
     }
 
+    @Override
+    @Transactional
+    public void enableProduct(UUID productId) {
+        Product product = findAndValidateProduct(productId);
+        checkPermission(product);
+        product.activate();
+    }
+
     // 유효성 검증한 product 반환
     private Product findAndValidateProduct(UUID productId) {
         // TODO: 요청한 사용자 userRole이 ADMIN or SELLEER인지 확인하는 로직 추가 예정

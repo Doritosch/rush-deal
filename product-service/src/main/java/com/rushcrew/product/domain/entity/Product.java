@@ -109,4 +109,8 @@ public class Product extends BaseEntity {
     public void deactivate() {
         this.isActive = false;
     }
+
+    public void activate() {
+        this.isActive = true;
+    }
 }
