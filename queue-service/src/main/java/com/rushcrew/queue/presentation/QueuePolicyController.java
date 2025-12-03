@@ -5,12 +5,13 @@ import com.rushcrew.queue.application.command.CreatePolicyCommand;
 import com.rushcrew.queue.application.command.SearchPolicyCommand;
 import com.rushcrew.queue.application.command.UpdatePolicyCommand;
 import com.rushcrew.queue.application.dto.PageQuery;
-import com.rushcrew.queue.application.dto.QueuePolicyResponse;
+import com.rushcrew.queue.application.dto.QueuePolicyQueryResponse;
 import com.rushcrew.queue.application.service.QueuePolicyService;
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import com.rushcrew.queue.presentation.dto.request.CreatePolicyRequest;
 import com.rushcrew.queue.presentation.dto.request.UpdatePolicyRequest;
 import com.rushcrew.queue.presentation.dto.response.CreatePolicyResponse;
+import com.rushcrew.queue.presentation.dto.response.QueuePolicyResponse;
 import com.rushcrew.queue.presentation.mapper.QueuePolicyPresentationMapper;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -55,7 +56,7 @@ public class QueuePolicyController {
         @RequestHeader(USER_ROLE_HEADER) String role
     ) {
         CreatePolicyCommand command = request.toCommand();
-        QueuePolicyResponse result = queuePolicyService.createQueuePolicy(command, currUserId);
+        QueuePolicyQueryResponse result = queuePolicyService.createQueuePolicy(command, currUserId);
         CreatePolicyResponse response = presentationMapper.toCreatePolicyResponse(result);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
@@ -87,7 +88,9 @@ public class QueuePolicyController {
     public ResponseEntity<ApiResponse<QueuePolicyResponse>> getPolicyInfo(
         @PathVariable UUID policyId
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("TODO"));
+        QueuePolicyQueryResponse result = queuePolicyService.getQueuePolicyInfo(policyId);
+        QueuePolicyResponse response = presentationMapper.toQueuePolicyResponse(result);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
     }
 
     /**
@@ -95,7 +98,7 @@ public class QueuePolicyController {
      * 타임딜 정책 수정
      */
     @PatchMapping("/{policy-id}")
-    public ResponseEntity<ApiResponse<QueuePolicyResponse>> updatePolicy(
+    public ResponseEntity<ApiResponse<QueuePolicyQueryResponse>> updatePolicy(
         @PathVariable UUID policyId,
         @RequestBody UpdatePolicyRequest request
     ) {

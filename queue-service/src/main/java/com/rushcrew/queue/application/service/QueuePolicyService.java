@@ -1,10 +1,13 @@
 package com.rushcrew.queue.application.service;
 
 import com.rushcrew.queue.application.command.CreatePolicyCommand;
-import com.rushcrew.queue.application.dto.QueuePolicyResponse;
+import com.rushcrew.queue.application.dto.QueuePolicyQueryResponse;
 import com.rushcrew.queue.application.port.in.QueuePolicyPort;
 import com.rushcrew.queue.domain.entity.QueuePolicy;
 import com.rushcrew.queue.domain.repository.QueuePolicyRepository;
+import com.rushcrew.queue.presentation.mapper.QueuePolicyPresentationMapper;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,9 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class QueuePolicyService implements QueuePolicyPort {
 
     private final QueuePolicyRepository queuePolicyRepository;
+    private final QueuePolicyPresentationMapper queuePolicyPresentationMapper;
 
-    public QueuePolicyService(QueuePolicyRepository queuePolicyRepository) {
+    public QueuePolicyService(QueuePolicyRepository queuePolicyRepository,
+        QueuePolicyPresentationMapper queuePolicyPresentationMapper) {
         this.queuePolicyRepository = queuePolicyRepository;
+        this.queuePolicyPresentationMapper = queuePolicyPresentationMapper;
     }
 
     /**
@@ -22,7 +28,7 @@ public class QueuePolicyService implements QueuePolicyPort {
      */
     @Override
     @Transactional
-    public QueuePolicyResponse createQueuePolicy(CreatePolicyCommand command, Long userId) {
+    public QueuePolicyQueryResponse createQueuePolicy(CreatePolicyCommand command, Long userId) {
         // TODO: 권한 유효성 검사
 
         // 중복 정책 검증 (해당 상품에 정책이 이미 있는지 검증)
@@ -39,6 +45,22 @@ public class QueuePolicyService implements QueuePolicyPort {
         );
 
         QueuePolicy saved = queuePolicyRepository.save(queuePolicy);
-        return QueuePolicyResponse.from(saved);
+        return QueuePolicyQueryResponse.from(saved);
+    }
+
+    /**
+     * 특정 타임딜 정책 조회
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public QueuePolicyQueryResponse getQueuePolicyInfo(UUID policyId) {
+        // TODO: 권한 유효성 검사
+        QueuePolicy queuePolicy = getQueuePolicy(policyId);
+        return QueuePolicyQueryResponse.from(queuePolicy);
+    }
+
+    private QueuePolicy getQueuePolicy(UUID queuePolicyId) {
+        return queuePolicyRepository.findById(queuePolicyId)
+            .orElseThrow(() -> new NoSuchElementException("타임딜 정책 정보를 찾을 수 없습니다."));
     }
 }

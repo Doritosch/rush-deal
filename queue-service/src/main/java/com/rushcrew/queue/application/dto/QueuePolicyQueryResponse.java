@@ -7,7 +7,7 @@ import java.util.UUID;
 import lombok.Builder;
 
 @Builder
-public record QueuePolicyResponse(
+public record QueuePolicyQueryResponse(
     UUID policyId,
     UUID productId,
     String timeDealName,
@@ -18,8 +18,8 @@ public record QueuePolicyResponse(
     Integer queueGap,
     Integer ttl
 ) {
-    public static QueuePolicyResponse from(QueuePolicy queuePolicy) {
-        return QueuePolicyResponse.builder()
+    public static QueuePolicyQueryResponse from(QueuePolicy queuePolicy) {
+        return QueuePolicyQueryResponse.builder()
             .policyId(queuePolicy.getPolicyId())
             .productId(queuePolicy.getProductId())
             .timeDealName(queuePolicy.getTimeDealName())
