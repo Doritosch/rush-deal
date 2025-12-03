@@ -9,7 +9,8 @@ public enum QueueErrorCode implements ErrorCode {
     POLICY_NOT_FOUND(HttpStatus.NOT_FOUND, "POLICY_NOT_FOUND", "타임딜 정책 정보를 찾을 수 없습니다."),
     POLICY_ALREADY_EXISTS(HttpStatus.CONFLICT,  "POLICY_ALREADY_EXISTS", "해당 상품에 대한 대기열 정책이 이미 존재합니다."),
     FORBIDDEN_ACCESS(HttpStatus.FORBIDDEN, "FORBIDDEN_ACCESS", "접근 권한이 없습니다."),
-    POLICY_ALREADY_DELETED(HttpStatus.NOT_FOUND, "POLICY_ALREADY_DELETED", "이미 삭제된 정책 정보입니다.")
+    POLICY_ALREADY_DELETED(HttpStatus.NOT_FOUND, "POLICY_ALREADY_DELETED", "이미 삭제된 정책 정보입니다."),
+    ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "ROLE_NOT_EXISTS", "유효하지 않은 권한입니다."),
 
 
     ;

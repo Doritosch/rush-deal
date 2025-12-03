@@ -9,13 +9,10 @@ import com.rushcrew.queue.application.dto.QueuePolicyQueryResponse;
 import com.rushcrew.queue.application.port.in.QueuePolicyPort;
 import com.rushcrew.queue.application.validator.QueuePolicyValidator;
 import com.rushcrew.queue.common.QueueErrorCode;
-import com.rushcrew.queue.common.exception.NotFoundException;
 import com.rushcrew.queue.domain.dto.SearchPolicyCondition;
 import com.rushcrew.queue.domain.entity.QueuePolicy;
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import com.rushcrew.queue.domain.repository.QueuePolicyRepository;
-import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -130,13 +127,13 @@ public class QueuePolicyService implements QueuePolicyPort {
         QueuePolicy queuePolicy = getQueuePolicy(policyId);
 
         if (queuePolicy.isDeleted()) {
-            throw new NotFoundException(QueueErrorCode.POLICY_ALREADY_DELETED);
+            throw new BusinessException(QueueErrorCode.POLICY_ALREADY_DELETED);
         }
         queuePolicy.softDelete(userId);
     }
 
     private QueuePolicy getQueuePolicy(UUID queuePolicyId) {
         return queuePolicyRepository.findById(queuePolicyId)
-            .orElseThrow(() -> new NotFoundException(QueueErrorCode.POLICY_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(QueueErrorCode.POLICY_NOT_FOUND));
     }
 }

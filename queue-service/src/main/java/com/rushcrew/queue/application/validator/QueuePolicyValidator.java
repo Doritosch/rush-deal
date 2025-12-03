@@ -1,6 +1,7 @@
 package com.rushcrew.queue.application.validator;
 
-import com.rushcrew.queue.common.exception.PermissionDeniedException;
+import com.rushcrew.common.exception.BusinessException;
+import com.rushcrew.queue.common.QueueErrorCode;
 import com.rushcrew.queue.domain.enums.UserRole;
 import org.springframework.stereotype.Component;
 
@@ -16,11 +17,11 @@ public class QueuePolicyValidator {
         try {
             userRole = UserRole.valueOf(role);
         } catch (IllegalArgumentException e) {
-            throw new PermissionDeniedException("유효하지 않은 권한입니다.");
+            throw new BusinessException(QueueErrorCode.ROLE_NOT_EXISTS);
         }
 
         if (userRole != UserRole.MASTER) {
-            throw new PermissionDeniedException("해당 작업을 수행할 권한이 없습니다. (ROLE:" + role + ")");
+            throw new BusinessException(QueueErrorCode.FORBIDDEN_ACCESS);
         }
     }
 }
