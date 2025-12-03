@@ -22,7 +22,7 @@ spring:
       mode: always
 
   kafka:
-    bootstrap-servers: localhost:29092
+    bootstrap-servers: localhost:9092
     consumer:
       group-id: order-service
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
