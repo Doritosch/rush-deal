@@ -1,15 +1,15 @@
 package com.rushcrew.user_service.user.presentation.dto.response;
 
-import com.rushcrew.user_service.user.application.result.UserCreateResult;
+import com.rushcrew.user_service.user.application.result.VerifyPasswordResult;
 
-public record UserCreateResponse(
+public record VerifyPasswordResponse(
     Long userId,
     String email,
     String name,
     String role
 ) {
-    public static UserCreateResponse fromResult(UserCreateResult result) {
-        return new UserCreateResponse(
+    public static VerifyPasswordResponse fromResult(VerifyPasswordResult result) {
+        return new VerifyPasswordResponse(
             result.userId(),
             result.email(),
             result.name(),
