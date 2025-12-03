@@ -6,12 +6,10 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.order_service.order.application.command.RequestPaymentCommand;
 import com.rushcrew.order_service.order.application.command.RequestPaymentResult;
 import com.rushcrew.order_service.order.application.error.OrderErrorCode;
-import com.rushcrew.order_service.order.application.exception.InvalidOrderStateException;
-import com.rushcrew.order_service.order.application.exception.OrderNotFoundException;
-import com.rushcrew.order_service.order.application.exception.UnauthorizedException;
 import com.rushcrew.order_service.order.application.port.out.PaymentEventPort;
 import com.rushcrew.order_service.order.domain.entity.Order;
 import com.rushcrew.order_service.order.domain.entity.OrderReservation;
@@ -29,19 +27,19 @@ public class PaymentService {
 	public RequestPaymentResult requestPayment(RequestPaymentCommand command) {
 		// 1. 주문 조회
 		Order order = orderRepository.findById(command.getOrderId())
-			.orElseThrow(() -> new OrderNotFoundException());
+			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 		// 2. 본인 주문인지
 		if (!order.isOwnedBy(command.getUserId())) {
-			throw new UnauthorizedException();
+			throw new BusinessException(OrderErrorCode.UNAUTHORIZED);
 		}
 		// 3. 주문 상태 PENDING 인지
 		if (!order.canPay()) {
-			throw new InvalidOrderStateException();
+			throw new BusinessException(OrderErrorCode.INVALID_ORDER_STATE);
 		}
 		// 4. 예약 재고 만료되지 않았는지
 		for (OrderReservation reservation : order.getReservations()) {
 			if (reservation.isExpired()) {
-				throw new InvalidOrderStateException(OrderErrorCode.RESERVATION_EXPIRED);
+				throw new BusinessException(OrderErrorCode.RESERVATION_EXPIRED);
 			}
 		}
 		// 5. Saga ID 생성

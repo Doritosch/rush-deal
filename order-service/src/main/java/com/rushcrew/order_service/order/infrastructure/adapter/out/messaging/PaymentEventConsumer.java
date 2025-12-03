@@ -7,7 +7,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.rushcrew.order_service.order.application.exception.OrderNotFoundException;
+import com.rushcrew.common.exception.BusinessException;
+import com.rushcrew.order_service.order.application.error.OrderErrorCode;
 import com.rushcrew.order_service.order.application.port.out.OrderEventPort;
 import com.rushcrew.order_service.order.application.port.out.PaymentEventPort;
 import com.rushcrew.order_service.order.application.port.out.TimeDealStockPort;
@@ -35,7 +36,7 @@ public class PaymentEventConsumer {
 	@Transactional
 	public void handlePointDeducted(PointDeductedEvent event) {
 		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
-			.orElseThrow(() -> new OrderNotFoundException());
+			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 		// 결제 요청 이벤트 발행
 		paymentEventPort.publishPaymentRequested(
 			event.getOrderId(),
@@ -54,7 +55,7 @@ public class PaymentEventConsumer {
 	@Transactional
 	public void handlePointDeductionFailed(PointDeductionFailedEvent event) {
 		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
-			.orElseThrow(() -> new OrderNotFoundException());
+			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 
 		// 각 예약에 대한 재고 복구 요청
 		for (OrderReservation reservation : order.getReservations()) {
@@ -76,7 +77,7 @@ public class PaymentEventConsumer {
 	@Transactional
 	public void handlePaymentCompleted(PaymentCompletedEvent event) {
 		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
-			.orElseThrow(() -> new OrderNotFoundException());
+			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 
 		// 주문 상태 변경: PENDING → PAID
 		order.completePayment();
@@ -97,7 +98,7 @@ public class PaymentEventConsumer {
 	@Transactional
 	public void handlePaymentFailed(PaymentFailedEvent event) {
 		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
-			.orElseThrow(() -> new OrderNotFoundException());
+			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 
 		// 포인트 환불 요청 (사용한 포인트 있으면)
 		if (order.getPointUsed().compareTo(java.math.BigDecimal.ZERO) > 0) {

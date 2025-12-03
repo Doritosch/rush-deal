@@ -10,9 +10,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.order_service.order.application.command.CreateOrderCommand;
 import com.rushcrew.order_service.order.application.command.CreateOrderResult;
-import com.rushcrew.order_service.order.application.exception.StockDepletedException;
+import com.rushcrew.order_service.order.application.error.OrderErrorCode;
 import com.rushcrew.order_service.order.application.port.dto.StockReservationResult;
 import com.rushcrew.order_service.order.application.port.dto.TimeDealInfo;
 import com.rushcrew.order_service.order.application.port.dto.TimeDealStockDetail;
@@ -139,7 +140,7 @@ public class OrderCreationService {
 							command.getUserId(),
 							result.getAvailableStock()
 						);
-						throw new StockDepletedException();
+						throw new BusinessException(OrderErrorCode.STOCK_DEPLETED);
 					}
 
 					// 4. ProductSnapshot 생성 (타임딜 서비스에서 받은 정보로)

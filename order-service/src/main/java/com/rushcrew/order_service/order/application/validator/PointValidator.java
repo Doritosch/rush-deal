@@ -4,7 +4,8 @@ import java.math.BigDecimal;
 
 import org.springframework.stereotype.Component;
 
-import com.rushcrew.order_service.order.application.exception.NotEnoughPointException;
+import com.rushcrew.common.exception.BusinessException;
+import com.rushcrew.order_service.order.application.error.OrderErrorCode;
 import com.rushcrew.order_service.order.application.port.dto.PointInfo;
 import com.rushcrew.order_service.order.application.port.out.UserPort;
 
@@ -22,7 +23,7 @@ public class PointValidator {
 		}
 		PointInfo balance = userPort.getPointBalance(userId);
 		if (balance.getBalance().compareTo(pointUsed) < 0) {
-			throw new NotEnoughPointException();
+			throw new BusinessException(OrderErrorCode.NOT_ENOUGH_POINTS);
 		}
 	}
 }
