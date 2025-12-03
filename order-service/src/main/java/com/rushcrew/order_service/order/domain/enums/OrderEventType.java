@@ -13,7 +13,9 @@ public enum OrderEventType {
 	CANCELLED_BEFORE_PAYMENT("결제 전 취소"),
 	CANCELLED_AFTER_PAYMENT("결제 후 취소"),
 	REFUNDED("구매확정 후 환불"),
-	POINT_USAGE_UPDATED("포인트 사용량 수정");
+	POINT_USAGE_UPDATED("포인트 사용량 수정"),
+	POINT_DEDUCTION_FAILED("포인트 차감 실"),
+	PAYMENT_FAILED("결제 실패");
 
 	private final String description;
 }

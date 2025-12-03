@@ -50,25 +50,18 @@ public class PaymentEventConsumer {
 		);
 	}
 
-	// 포인트 차감 실패 이벤트 처리: 주문 취소 + 재고 복구
+	// 포인트 차감 실패 이벤트 처리: 주문 취소 X + 재고 복구 X + 주문 PENDING 상태 유지 + 주문 이력 기록
 	@KafkaListener(topics = "point.deduction.failed", groupId = "order-service")
 	@Transactional
 	public void handlePointDeductionFailed(PointDeductionFailedEvent event) {
 		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
 			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
-
-		// 각 예약에 대한 재고 복구 요청
-		for (OrderReservation reservation : order.getReservations()) {
-			timeDealStockPort.restoreStock(
-				reservation.getTimeDealStockId(),
-				reservation.getQuantity(),
-				event.getOrderId(),
-				"포인트 차감 실패: " + event.getReason()
-			);
-			reservation.cancel();
-		}
-		// 결제 전 주문 취소
-		order.cancelBeforePayment("포인트 차감 실패: " + event.getReason());
+		// 포인트 차감 실패 이력 기록
+		String reason = "포인트 차감 실패: %s (필요: %s원, 보유: %s원)"
+			.formatted(event.getReason(),
+			event.getRequiredAmount(),
+			event.getCurrentBalance());
+		order.recordPointDeductionFailed(reason);
 		orderRepository.save(order);
 	}
 

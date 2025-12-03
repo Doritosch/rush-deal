@@ -20,7 +20,7 @@ public class PointDeductionFailedEvent {
 	private String orderId;
 	private String sagaId;
 	private String reason;
-	private BigDecimal requiredAmount;
+	private BigDecimal requiredAmount;	// 사용 요청한 포인트(필요한 포인트)
 	private BigDecimal currentBalance;
 	private Instant timestamp;
 }

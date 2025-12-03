@@ -143,6 +143,16 @@ public class Order extends BaseEntity {
 		);
 	}
 
+	// 포인트 차감 실패 이력 기록
+	public void recordPointDeductionFailed(String reason) {
+		addHistory(
+			OrderEventType.POINT_DEDUCTION_FAILED,
+			this.status,
+			this.status,  // 상태는 PENDING 유지
+			reason
+		);
+	}
+
 	// 결제 전 주문 취소
 	public void cancelBeforePayment(String reason) {
 		this.status.validateCanCancelBeforePayment();
