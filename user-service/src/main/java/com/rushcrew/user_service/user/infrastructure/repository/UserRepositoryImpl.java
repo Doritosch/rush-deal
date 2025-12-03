@@ -20,4 +20,16 @@ public class UserRepositoryImpl implements UserRepository {
     public User save(User user) {
         return userJpaRepository.save(user);
     }
+
+    @Override
+    public User getByEmail(String email) {
+        return userJpaRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("유저가 존재하지 않습니다."));
+    }
+
+    @Override
+    public User getById(Long id) {
+        return userJpaRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("해당하는 유저가 존재하지 않습니다"));
+    }
 }
