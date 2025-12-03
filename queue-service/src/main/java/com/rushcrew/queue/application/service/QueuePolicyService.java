@@ -60,10 +60,10 @@ public class QueuePolicyService implements QueuePolicyPort {
     @Transactional(readOnly = true)
     public Page<QueuePolicyQueryResponse> searchPolicies(PageQuery query, SearchPolicyCommand command,
         Long userId, String role) {
-
+        QueuePolicyStatus status = command.getQueuePolicyStatus();
         SearchPolicyCondition condition = new SearchPolicyCondition(
             command.productId(),
-            QueuePolicyStatus.valueOf(command.status())
+            status
         );
 
         // TODO: 권한 허용 체크
@@ -123,12 +123,9 @@ public class QueuePolicyService implements QueuePolicyPort {
         queuePolicy.softDelete(userId);
     }
 
-    /**
-     * 타임딜 정책 삭제
-     */
-
     private QueuePolicy getQueuePolicy(UUID queuePolicyId) {
         return queuePolicyRepository.findById(queuePolicyId)
             .orElseThrow(() -> new NoSuchElementException("타임딜 정책 정보를 찾을 수 없습니다."));
     }
+
 }
