@@ -1,14 +1,20 @@
 package com.rushcrew.queue.application.service;
 
 import com.rushcrew.queue.application.command.CreatePolicyCommand;
+import com.rushcrew.queue.application.command.SearchPolicyCommand;
 import com.rushcrew.queue.application.command.UpdatePolicyCommand;
+import com.rushcrew.queue.application.dto.PageQuery;
 import com.rushcrew.queue.application.dto.QueuePolicyQueryResponse;
 import com.rushcrew.queue.application.port.in.QueuePolicyPort;
+import com.rushcrew.queue.domain.dto.SearchPolicyCondition;
 import com.rushcrew.queue.domain.entity.QueuePolicy;
+import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import com.rushcrew.queue.domain.repository.QueuePolicyRepository;
-import com.rushcrew.queue.presentation.mapper.QueuePolicyPresentationMapper;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +50,35 @@ public class QueuePolicyService implements QueuePolicyPort {
 
         QueuePolicy saved = queuePolicyRepository.save(queuePolicy);
         return QueuePolicyQueryResponse.from(saved);
+    }
+
+    /**
+     * 타임딜 정책 목록 페이징 조회
+     * Application DTO인 QueuePolicyQueryResponse의 Page를 반환
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<QueuePolicyQueryResponse> searchPolicies(PageQuery query, SearchPolicyCommand command,
+        Long userId, String role) {
+
+        SearchPolicyCondition condition = new SearchPolicyCondition(
+            command.productId(),
+            QueuePolicyStatus.valueOf(command.status())
+        );
+
+        // TODO: 권한 허용 체크
+
+        PageRequest pageable = query.toPageable();
+
+        // specification 동적 쿼리 반환
+        Page<QueuePolicy> policyPage = queuePolicyRepository.findAllByCondition(
+            condition.productId(),
+            condition.status(),
+            pageable
+        );
+
+        // Page 변환하여 반환
+        return policyPage.map(QueuePolicyQueryResponse::from);
     }
 
     /**
