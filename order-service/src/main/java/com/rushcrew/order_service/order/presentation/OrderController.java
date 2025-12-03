@@ -46,7 +46,6 @@ public class OrderController {
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER", "SELLER");
-
 		CreateOrderCommand command = CreateOrderCommand.builder()
 			.userId(userId)
 			.timeDealId(request.getTimeDealId())
@@ -61,7 +60,6 @@ public class OrderController {
 			.build();
 
 		CreateOrderResult result = createOrderCommandHandler.handle(command);
-
 		CreateOrderResponse response = CreateOrderResponse.from(result);
 
 		return ApiResponse.success(response);
@@ -86,7 +84,6 @@ public class OrderController {
 			.build();
 
 		RequestPaymentResult result = requestPaymentCommandHandler.handle(command);
-
 		RequestPaymentResponse response = RequestPaymentResponse.from(result);
 
 		return ApiResponse.success(response);
