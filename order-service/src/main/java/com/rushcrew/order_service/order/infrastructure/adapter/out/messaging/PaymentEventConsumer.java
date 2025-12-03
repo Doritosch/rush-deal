@@ -43,7 +43,7 @@ public class PaymentEventConsumer {
 			order.getTotalAmount(),
 			event.getDeductedAmount(),
 			order.getFinalAmount(),
-			"CARD",	// TODO: 실제 결제 수단
+			"CARD",	// TODO: Order에 paymentMethod 필드 추가
 			event.getSagaId(), 
 			Instant.now()
 		);
@@ -56,13 +56,19 @@ public class PaymentEventConsumer {
 		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
 			.orElseThrow(() -> new OrderNotFoundException());
 
-		// 결제 전 주문 취소
-		order.cancelBeforePayment("포인트 차감 실패: " + event.getReason());
-
 		// 각 예약에 대한 재고 복구 요청
 		for (OrderReservation reservation : order.getReservations()) {
-			// TODO: 재구 복구 로직 (Port 추가)
+			timeDealStockPort.restoreStock(
+				reservation.getTimeDealStockId(),
+				reservation.getQuantity(),
+				event.getOrderId(),
+				"포인트 차감 실패: " + event.getReason()
+			);
+			reservation.cancel();
 		}
+		// 결제 전 주문 취소
+		order.cancelBeforePayment("포인트 차감 실패: " + event.getReason());
+		orderRepository.save(order);
 	}
 
 	// 결제 완료 이벤트 처리: 주문 상태 변경 + 재고 확정 요청
@@ -74,12 +80,14 @@ public class PaymentEventConsumer {
 
 		// 주문 상태 변경: PENDING → PAID
 		order.completePayment();
-		orderRepository.save(order);
-
-		// 각 예약에 대해 재고 예약 확정 요청
+		// 각 예약에 대해 재고 예약 확정 요청 RESERVED -> SOLD
 		for (OrderReservation reservation : order.getReservations()) {
+			timeDealStockPort.confirmStock(
+				reservation.getTimeDealStockId(),
+				reservation.getQuantity(),
+				event.getOrderId()
+			);
 			reservation.confirm();
-			// TODO: 타임딜 서비스에 재고 확정 요청 (Port 추가 필요)
 		}
 		orderRepository.save(order);
 	}
@@ -91,16 +99,20 @@ public class PaymentEventConsumer {
 		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
 			.orElseThrow(() -> new OrderNotFoundException());
 
-		// 포인트 환불 요청
+		// 포인트 환불 요청 (사용한 포인트 있으면)
 		if (order.getPointUsed().compareTo(java.math.BigDecimal.ZERO) > 0) {
 			// TODO: 포인트 환불 이벤트 발행 (Port 추가 필요)
 		}
-
 		// 재고 복구 요청
 		for (OrderReservation reservation : order.getReservations()) {
-			// TODO: 재고 복구 이벤트 발행
+			timeDealStockPort.restoreStock(
+				reservation.getTimeDealStockId(),
+				reservation.getQuantity(),
+				event.getOrderId(),
+				"결제 실패: " + event.getFailureReason()
+			);
+			reservation.cancel();
 		}
-
 		// 주문 취소
 		order.cancelBeforePayment("결제 실패: " + event.getFailureReason());
 		orderRepository.save(order);
