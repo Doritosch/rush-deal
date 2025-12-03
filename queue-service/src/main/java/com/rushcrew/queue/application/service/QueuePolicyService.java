@@ -16,12 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class QueuePolicyService implements QueuePolicyPort {
 
     private final QueuePolicyRepository queuePolicyRepository;
-    private final QueuePolicyPresentationMapper queuePolicyPresentationMapper;
 
-    public QueuePolicyService(QueuePolicyRepository queuePolicyRepository,
-        QueuePolicyPresentationMapper queuePolicyPresentationMapper) {
+    public QueuePolicyService(QueuePolicyRepository queuePolicyRepository) {
         this.queuePolicyRepository = queuePolicyRepository;
-        this.queuePolicyPresentationMapper = queuePolicyPresentationMapper;
     }
 
     /**
@@ -66,7 +63,7 @@ public class QueuePolicyService implements QueuePolicyPort {
      */
     @Override
     @Transactional
-    public QueuePolicyQueryResponse updateQueuePolicy(UpdatePolicyCommand command, UUID policyId, Long userId, String role {
+    public QueuePolicyQueryResponse updateQueuePolicy(UpdatePolicyCommand command, UUID policyId, Long userId, String role) {
         // TODO: 권한 유효성 검사
 
         QueuePolicy queuePolicy = getQueuePolicy(policyId);
@@ -76,6 +73,24 @@ public class QueuePolicyService implements QueuePolicyPort {
             queuePolicy.getTrafficSetting());
         return QueuePolicyQueryResponse.from(queuePolicy);
     }
+
+    /**
+     * 타임딜 정책 삭제 : MASTER 권한만 가능
+     * */
+    @Override
+    @Transactional
+    public void deleteQueuePolicy(UUID policyId, Long userId, String role) {
+        QueuePolicy queuePolicy = getQueuePolicy(policyId);
+
+        if (queuePolicy.isDeleted()) {
+            throw new NoSuchElementException("이미 삭제된 정책 정보입니다.");
+        }
+        queuePolicy.softDelete(userId);
+    }
+
+    /**
+     * 타임딜 정책 삭제
+     */
 
     private QueuePolicy getQueuePolicy(UUID queuePolicyId) {
         return queuePolicyRepository.findById(queuePolicyId)

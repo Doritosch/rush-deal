@@ -15,4 +15,6 @@ public interface QueuePolicyPort {
     QueuePolicyQueryResponse getQueuePolicyInfo(UUID policyId, Long userId, String role);
 
     QueuePolicyQueryResponse updateQueuePolicy(UpdatePolicyCommand command, UUID policyId, Long userId, String role);
+
+    void deleteQueuePolicy(UUID policyId, Long userId, String role);
 }

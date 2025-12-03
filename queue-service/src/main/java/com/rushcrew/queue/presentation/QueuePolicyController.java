@@ -118,8 +118,11 @@ public class QueuePolicyController {
      */
     @DeleteMapping("/{policy-id}")
     public ResponseEntity<ApiResponse<Void>> deletePolicy(
-        @PathVariable UUID policyId
+        @PathVariable UUID policyId,
+        @RequestHeader(USER_ID_HEADER) Long currUserId,
+        @RequestHeader(USER_ROLE_HEADER) String role
     ) {
+        queuePolicyService.deleteQueuePolicy(policyId, currUserId, role);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
     }
 }
