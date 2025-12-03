@@ -12,14 +12,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.rushcrew.common.dto.ApiResponse;
 import com.rushcrew.order_service.global.util.RoleChecker;
+import com.rushcrew.order_service.order.application.command.ConfirmPurchaseCommand;
+import com.rushcrew.order_service.order.application.command.ConfirmPurchaseResult;
 import com.rushcrew.order_service.order.application.command.CreateOrderCommand;
 import com.rushcrew.order_service.order.application.command.CreateOrderResult;
 import com.rushcrew.order_service.order.application.command.RequestPaymentCommand;
 import com.rushcrew.order_service.order.application.command.RequestPaymentResult;
+import com.rushcrew.order_service.order.application.handler.ConfirmPurchaseCommandHandler;
 import com.rushcrew.order_service.order.application.handler.CreateOrderCommandHandler;
 import com.rushcrew.order_service.order.application.handler.RequestPaymentCommandHandler;
 import com.rushcrew.order_service.order.presentation.dto.request.CreateOrderRequest;
 import com.rushcrew.order_service.order.presentation.dto.request.RequestPaymentRequest;
+import com.rushcrew.order_service.order.presentation.dto.response.ConfirmPurchaseResponse;
 import com.rushcrew.order_service.order.presentation.dto.response.CreateOrderResponse;
 import com.rushcrew.order_service.order.presentation.dto.response.RequestPaymentResponse;
 
@@ -35,6 +39,7 @@ public class OrderController {
 
 	private final CreateOrderCommandHandler createOrderCommandHandler;
 	private final RequestPaymentCommandHandler requestPaymentCommandHandler;
+	private final ConfirmPurchaseCommandHandler confirmPurchaseCommandHandler;
 
 	/*
 	* 주문 생성 API
@@ -86,6 +91,26 @@ public class OrderController {
 
 		RequestPaymentResult result = requestPaymentCommandHandler.handle(command);
 		RequestPaymentResponse response = RequestPaymentResponse.from(result);
+
+		return ApiResponse.success(response);
+	}
+
+	/*
+	* 구매확정 API
+	* */
+	@PostMapping("/{orderId}/confirm")
+	public ApiResponse<ConfirmPurchaseResponse> confirmPurchase(
+		@PathVariable UUID orderId,
+		@RequestHeader("X-User-Id") Long userId,
+		@RequestHeader(value = "X-User-Role", required = false) String role
+	) {
+		RoleChecker.checkRole(role, "USER", "MASTER");
+		ConfirmPurchaseCommand command = ConfirmPurchaseCommand.builder()
+			.orderId(orderId)
+			.userId(userId)
+			.build();
+		ConfirmPurchaseResult result = confirmPurchaseCommandHandler.handle(command);
+		ConfirmPurchaseResponse response = ConfirmPurchaseResponse.from(result);
 
 		return ApiResponse.success(response);
 	}
