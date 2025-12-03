@@ -25,7 +25,7 @@ public record CreateProductRequest(
     @NotNull @PositiveOrZero
     Long price,
 
-    @NotBlank
+    @NotNull
     Category category,
 
     @NotEmpty @Valid

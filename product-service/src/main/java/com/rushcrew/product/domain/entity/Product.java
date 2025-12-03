@@ -1,11 +1,12 @@
 package com.rushcrew.product.domain.entity;
 
-import com.rushcrew.product.application.command.CreateProductCommand;
+import com.rushcrew.common.entity.BaseEntity;
+import com.rushcrew.product.domain.model.CreateProductParams;
+import com.rushcrew.product.domain.model.UpdateProductParams;
 import com.rushcrew.product.domain.vo.Category;
 import com.rushcrew.product.domain.vo.Price;
 import com.rushcrew.product.domain.vo.ProductInfo;
 import com.rushcrew.product.domain.vo.SellerId;
-import com.rushcrew.product.presentation.dto.request.UpdateProductRequest;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.CascadeType;
@@ -34,7 +35,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-public class Product {
+public class Product extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -70,28 +71,38 @@ public class Product {
     @Builder.Default
     private List<ProductOption> options = new ArrayList<>();
 
-    public static Product create(CreateProductCommand command) {
-        return Product.builder()
-            .userId(command.sellerId())
-            .companyName(command.companyName())
-            .productInfo(command.productInfo())
-            .price(command.price())
-            .category(command.category())
+    public static Product create(CreateProductParams params) {
+        Product product = Product.builder()
+            .userId(params.sellerId())
+            .companyName(params.companyName())
+            .productInfo(params.productInfo())
+            .price(params.price())
+            .category(params.category())
             .build();
+
+        params.optionCommands().forEach(option ->
+            product.addOption(option.size(), option.color()));
+
+        return product;
     }
 
     public void addOption(String size, String color) {
         this.options.add(ProductOption.of(this, size, color));
     }
 
-    public void update(UpdateProductRequest request) {
-        if (request.companyName() != null) {
-            this.companyName = request.companyName();
-        }
-        if (request.category() != null) {
-            this.category = request.category();
-        }
-        ProductInfo.of(request.productName(), request.description());
-        Price.of(request.price());
+    public void update(UpdateProductParams params) {
+        if (params.companyName() != null) this.companyName = params.companyName();
+        if (params.category() != null) this.category = params.category();
+        updateProductInfo(params.productName(), params.description());
+        this.price = params.price() != null ? Price.of(params.price()) : this.price;
+    }
+
+    private void updateProductInfo(String newName, String newDescription) {
+        if(newName == null && newDescription == null) return;
+        String updatedName = newName != null ? newName : this.productInfo.getName();
+        String updatedDescription =
+            newDescription != null ? newDescription : this.productInfo.getDescription();
+
+        this.productInfo = ProductInfo.of(updatedName, updatedDescription);
     }
 }
