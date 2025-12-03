@@ -86,9 +86,11 @@ public class QueuePolicyController {
      */
     @GetMapping("/{policy-id}")
     public ResponseEntity<ApiResponse<QueuePolicyResponse>> getPolicyInfo(
-        @PathVariable UUID policyId
+        @PathVariable UUID policyId,
+        @RequestHeader(USER_ID_HEADER) Long currUserId,
+        @RequestHeader(USER_ROLE_HEADER) String role
     ) {
-        QueuePolicyQueryResponse result = queuePolicyService.getQueuePolicyInfo(policyId);
+        QueuePolicyQueryResponse result = queuePolicyService.getQueuePolicyInfo(policyId, currUserId, role);
         QueuePolicyResponse response = presentationMapper.toQueuePolicyResponse(result);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
     }
@@ -98,12 +100,17 @@ public class QueuePolicyController {
      * 타임딜 정책 수정
      */
     @PatchMapping("/{policy-id}")
-    public ResponseEntity<ApiResponse<QueuePolicyQueryResponse>> updatePolicy(
+    public ResponseEntity<ApiResponse<QueuePolicyResponse>> updatePolicy(
         @PathVariable UUID policyId,
-        @RequestBody UpdatePolicyRequest request
+        @RequestBody UpdatePolicyRequest request,
+        @RequestHeader(USER_ID_HEADER) Long currUserId,
+        @RequestHeader(USER_ROLE_HEADER) String role
     ) {
         UpdatePolicyCommand command = request.toCommand();
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("TODO"));
+        QueuePolicyQueryResponse result = queuePolicyService.updateQueuePolicy(command, policyId,
+            currUserId, role);
+        QueuePolicyResponse response = presentationMapper.toQueuePolicyResponse(result);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.rushcrew.queue.application.service;
 
 import com.rushcrew.queue.application.command.CreatePolicyCommand;
+import com.rushcrew.queue.application.command.UpdatePolicyCommand;
 import com.rushcrew.queue.application.dto.QueuePolicyQueryResponse;
 import com.rushcrew.queue.application.port.in.QueuePolicyPort;
 import com.rushcrew.queue.domain.entity.QueuePolicy;
@@ -53,9 +54,26 @@ public class QueuePolicyService implements QueuePolicyPort {
      */
     @Override
     @Transactional(readOnly = true)
-    public QueuePolicyQueryResponse getQueuePolicyInfo(UUID policyId) {
+    public QueuePolicyQueryResponse getQueuePolicyInfo(UUID policyId, Long userId, String role) {
         // TODO: 권한 유효성 검사
         QueuePolicy queuePolicy = getQueuePolicy(policyId);
+        return QueuePolicyQueryResponse.from(queuePolicy);
+    }
+
+    /**
+     * 타임딜 정책 정보 수정
+     * 권한 : 마스터(MASTER)
+     */
+    @Override
+    @Transactional
+    public QueuePolicyQueryResponse updateQueuePolicy(UpdatePolicyCommand command, UUID policyId, Long userId, String role {
+        // TODO: 권한 유효성 검사
+
+        QueuePolicy queuePolicy = getQueuePolicy(policyId);
+        queuePolicy.update(queuePolicy.getTimeDealName(),
+            queuePolicy.getStatus(),
+            queuePolicy.getTimePeriod(),
+            queuePolicy.getTrafficSetting());
         return QueuePolicyQueryResponse.from(queuePolicy);
     }
 

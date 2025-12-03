@@ -13,7 +13,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -64,4 +63,17 @@ public class QueuePolicy extends BaseEntity {
             .trafficSetting(trafficSetting)
             .build();
     }
+
+    /**
+     * 타임딜 정보 업데이트
+     */
+    public void update(String timeDealName, QueuePolicyStatus status,
+        TimePeriod timePeriod, TrafficSetting trafficSetting) {
+         this.timeDealName = timeDealName;
+         this.status = status;
+         this.timePeriod = timePeriod;
+         this.trafficSetting = trafficSetting;
+    }
+
+
 }
