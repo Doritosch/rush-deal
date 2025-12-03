@@ -46,4 +46,12 @@ public class ProductController {
         UpdateProductResult result = productService.updateProduct(productId, command);
         return ResponseEntity.ok(UpdateProductResponse.from(result));
     }
+
+    @PostMapping("/{productId}/disable")
+    public ResponseEntity<Void> disableProduct(
+        @PathVariable UUID productId
+    ) {
+        productService.disableProduct(productId);
+        return ResponseEntity.noContent().build();
+    }
 }

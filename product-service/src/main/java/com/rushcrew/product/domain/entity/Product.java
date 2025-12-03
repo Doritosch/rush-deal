@@ -105,4 +105,8 @@ public class Product extends BaseEntity {
 
         this.productInfo = ProductInfo.of(updatedName, updatedDescription);
     }
+
+    public void deactivate() {
+        this.isActive = false;
+    }
 }
