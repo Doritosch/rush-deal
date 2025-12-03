@@ -1,7 +1,6 @@
 package com.rushcrew.queue.application.validator;
 
 import com.rushcrew.queue.common.exception.PermissionDeniedException;
-import com.rushcrew.queue.domain.entity.QueuePolicy;
 import com.rushcrew.queue.domain.enums.UserRole;
 import org.springframework.stereotype.Component;
 
@@ -9,15 +8,19 @@ import org.springframework.stereotype.Component;
 public class QueuePolicyValidator {
 
     /**
-     * 타임딜 정책 생성 권한 : MASTER
+     * MASTER 권한 검증
      */
-    public void hasCreatePermission(Long currUserId, String role) {
+    public void validateMasterRole(Long currUserId, String role) {
         // TODO : currUserId 관련 추가 검증 절차
-        UserRole userRole = UserRole.valueOf(role);
-
-        if (userRole.equals(UserRole.MASTER)) {
-            return;
+        UserRole userRole;
+        try {
+            userRole = UserRole.valueOf(role);
+        } catch (IllegalArgumentException e) {
+            throw new PermissionDeniedException("유효하지 않은 권한입니다.");
         }
-        throw new PermissionDeniedException("타임딜 정책을 생성할 권한이 없습니다. (ROLE:" + role + ")");
+
+        if (userRole != UserRole.MASTER) {
+            throw new PermissionDeniedException("해당 작업을 수행할 권한이 없습니다. (ROLE:" + role + ")");
+        }
     }
 }

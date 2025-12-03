@@ -93,7 +93,7 @@ public class QueuePolicyController {
      */
     @GetMapping("/{policy-id}")
     public ResponseEntity<ApiResponse<QueuePolicyResponse>> getPolicyInfo(
-        @PathVariable UUID policyId,
+        @PathVariable("policy-id") UUID policyId,
         @RequestHeader(USER_ID_HEADER) Long currUserId,
         @RequestHeader(USER_ROLE_HEADER) String role
     ) {
@@ -108,7 +108,7 @@ public class QueuePolicyController {
      */
     @PatchMapping("/{policy-id}")
     public ResponseEntity<ApiResponse<QueuePolicyResponse>> updatePolicy(
-        @PathVariable UUID policyId,
+        @PathVariable("policy-id") UUID policyId,
         @RequestBody UpdatePolicyRequest request,
         @RequestHeader(USER_ID_HEADER) Long currUserId,
         @RequestHeader(USER_ROLE_HEADER) String role
@@ -125,7 +125,7 @@ public class QueuePolicyController {
      */
     @DeleteMapping("/{policy-id}")
     public ResponseEntity<ApiResponse<Void>> deletePolicy(
-        @PathVariable UUID policyId,
+        @PathVariable("policy-id") UUID policyId,
         @RequestHeader(USER_ID_HEADER) Long currUserId,
         @RequestHeader(USER_ROLE_HEADER) String role
     ) {
