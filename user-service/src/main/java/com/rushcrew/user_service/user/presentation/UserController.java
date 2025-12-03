@@ -47,7 +47,7 @@ public class UserController {
 
     @PostMapping("/verify-password")
     public ResponseEntity<VerifyPasswordResponse> verifyPassword(
-        @RequestBody VerifyPasswordRequest request
+        @Valid @RequestBody VerifyPasswordRequest request
     ) {
         VerifyPasswordCommand command = request.toCommand();
 
