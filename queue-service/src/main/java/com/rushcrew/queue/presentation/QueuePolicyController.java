@@ -58,7 +58,7 @@ public class QueuePolicyController {
         @RequestHeader(USER_ROLE_HEADER) String role
     ) {
         CreatePolicyCommand command = request.toCommand();
-        QueuePolicyQueryResponse result = queuePolicyService.createQueuePolicy(command, currUserId);
+        QueuePolicyQueryResponse result = queuePolicyService.createQueuePolicy(command, currUserId, role);
         CreatePolicyResponse response = presentationMapper.toCreatePolicyResponse(result);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }

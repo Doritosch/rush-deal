@@ -1,11 +1,14 @@
 package com.rushcrew.queue.application.service;
 
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.queue.application.command.CreatePolicyCommand;
 import com.rushcrew.queue.application.command.SearchPolicyCommand;
 import com.rushcrew.queue.application.command.UpdatePolicyCommand;
 import com.rushcrew.queue.application.dto.PageQuery;
 import com.rushcrew.queue.application.dto.QueuePolicyQueryResponse;
 import com.rushcrew.queue.application.port.in.QueuePolicyPort;
+import com.rushcrew.queue.application.validator.QueuePolicyValidator;
+import com.rushcrew.queue.common.QueueErrorCode;
 import com.rushcrew.queue.domain.dto.SearchPolicyCondition;
 import com.rushcrew.queue.domain.entity.QueuePolicy;
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
@@ -22,9 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class QueuePolicyService implements QueuePolicyPort {
 
     private final QueuePolicyRepository queuePolicyRepository;
+    private final QueuePolicyValidator queuePolicyValidator;
 
-    public QueuePolicyService(QueuePolicyRepository queuePolicyRepository) {
+    public QueuePolicyService(QueuePolicyRepository queuePolicyRepository,
+        QueuePolicyValidator queuePolicyValidator) {
         this.queuePolicyRepository = queuePolicyRepository;
+        this.queuePolicyValidator = queuePolicyValidator;
     }
 
     /**
@@ -32,12 +38,13 @@ public class QueuePolicyService implements QueuePolicyPort {
      */
     @Override
     @Transactional
-    public QueuePolicyQueryResponse createQueuePolicy(CreatePolicyCommand command, Long userId) {
-        // TODO: 권한 유효성 검사
+    public QueuePolicyQueryResponse createQueuePolicy(CreatePolicyCommand command, Long userId, String role) {
+        // 권한 유효성 검사
+        queuePolicyValidator.hasCreatePermission(userId, role);
 
         // 중복 정책 검증 (해당 상품에 정책이 이미 있는지 검증)
         if (queuePolicyRepository.findByProductId(command.productId()).isPresent()) {
-            throw new IllegalArgumentException("해당 상품에 대한 대기열 정책이 이미 존재합니다.");
+            throw new BusinessException(QueueErrorCode.POLICY_ALREADY_EXISTS);
         }
 
         QueuePolicy queuePolicy = QueuePolicy.create(
@@ -127,5 +134,4 @@ public class QueuePolicyService implements QueuePolicyPort {
         return queuePolicyRepository.findById(queuePolicyId)
             .orElseThrow(() -> new NoSuchElementException("타임딜 정책 정보를 찾을 수 없습니다."));
     }
-
 }
