@@ -43,8 +43,8 @@ public class PaymentEventConsumer {
 			order.getTotalAmount(),
 			event.getDeductedAmount(),
 			order.getFinalAmount(),
-			"CARD",	// TODO: Order에 paymentMethod 필드 추가
-			event.getSagaId(), 
+			order.getPaymentMethod(),
+			event.getSagaId(),
 			Instant.now()
 		);
 	}

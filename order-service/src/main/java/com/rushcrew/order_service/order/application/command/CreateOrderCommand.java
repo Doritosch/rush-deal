@@ -19,6 +19,7 @@ public class CreateOrderCommand {
 	private List<OrderItemCommand> orderItems;
 	private BigDecimal pointUsed;
 	private ShippingInfo shippingInfo;
+	private String paymentMethod;
 
 	@Getter
 	@Builder

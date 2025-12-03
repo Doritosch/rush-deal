@@ -57,6 +57,7 @@ public class OrderController {
 				.collect(Collectors.toList()))
 			.pointUsed(request.getPointUsed())
 			.shippingInfo(request.getShippingInfo().toShippingInfo())
+			.paymentMethod(request.getPaymentMethod())
 			.build();
 
 		CreateOrderResult result = createOrderCommandHandler.handle(command);

@@ -83,7 +83,8 @@ public class OrderCreationService {
 			command.getUserId(),
 			orderItems,
 			command.getPointUsed(),
-			command.getShippingInfo()
+			command.getShippingInfo(),
+			command.getPaymentMethod()
 		);
 		// 7. 주문 예약 정보 추가
 		for (CreateOrderCommand.OrderItemCommand itemCommand : command.getOrderItems()) {
