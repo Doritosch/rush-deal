@@ -6,6 +6,8 @@ import com.rushcrew.product.application.result.CreateProductResult;
 import com.rushcrew.product.application.result.UpdateProductResult;
 import com.rushcrew.product.application.service.ProductService;
 import com.rushcrew.product.domain.entity.Product;
+import com.rushcrew.product.domain.model.CreateProductParams;
+import com.rushcrew.product.domain.model.UpdateProductParams;
 import com.rushcrew.product.domain.repository.ProductRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +25,12 @@ public class ProductServiceImpl implements ProductService {
     public CreateProductResult createProduct(CreateProductCommand command) {
         // TODO: 요청한 사용자 userRole이 ADMIN or SELLEER인지 확인하는 로직 추가 예정
 
-        Product product = Product.create(command);
-        command.optionCommands().forEach(optionCommand ->
-            product.addOption(optionCommand.size(), optionCommand.color())
+        CreateProductParams params = new CreateProductParams(
+            command.sellerId(), command.companyName(), command.productInfo(),
+            command.price(), command.category(), command.optionCommands()
         );
 
+        Product product = Product.create(params);
         Product newProduct = productRepository.save(product);
         return CreateProductResult.from(newProduct);
     }
@@ -36,7 +39,11 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public UpdateProductResult updateProduct(UUID productId, UpdateProductCommand command) {
         Product product = findAndValidateProduct(productId);
-        product.update(command);
+        UpdateProductParams params = new UpdateProductParams(
+            command.companyName(), command.category(), command.price(),
+            command.productName(), command.description()
+        );
+        product.update(params);
 
         return UpdateProductResult.from(product);
     }

@@ -23,7 +23,7 @@ public record CreateProductCommand(
             ProductInfo.of(request.productName(), request.description()),
             Price.of(request.price()),
             request.category(),
-            request.optionRequests().stream().map(CreateOptionCommand::from).toList()
+            CreateOptionCommand.fromList(request.optionRequests())
         );
     }
 }

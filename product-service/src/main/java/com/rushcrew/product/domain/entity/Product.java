@@ -1,8 +1,8 @@
 package com.rushcrew.product.domain.entity;
 
 import com.rushcrew.common.entity.BaseEntity;
-import com.rushcrew.product.application.command.CreateProductCommand;
-import com.rushcrew.product.application.command.UpdateProductCommand;
+import com.rushcrew.product.domain.model.CreateProductParams;
+import com.rushcrew.product.domain.model.UpdateProductParams;
 import com.rushcrew.product.domain.vo.Category;
 import com.rushcrew.product.domain.vo.Price;
 import com.rushcrew.product.domain.vo.ProductInfo;
@@ -71,28 +71,34 @@ public class Product extends BaseEntity {
     @Builder.Default
     private List<ProductOption> options = new ArrayList<>();
 
-    public static Product create(CreateProductCommand command) {
-        return Product.builder()
-            .userId(command.sellerId())
-            .companyName(command.companyName())
-            .productInfo(command.productInfo())
-            .price(command.price())
-            .category(command.category())
+    public static Product create(CreateProductParams params) {
+        Product product = Product.builder()
+            .userId(params.sellerId())
+            .companyName(params.companyName())
+            .productInfo(params.productInfo())
+            .price(params.price())
+            .category(params.category())
             .build();
+
+        params.optionCommands().forEach(option ->
+            product.addOption(option.size(), option.color()));
+
+        return product;
     }
 
     public void addOption(String size, String color) {
         this.options.add(ProductOption.of(this, size, color));
     }
 
-    public void update(UpdateProductCommand command) {
-        if (command.companyName() != null) this.companyName = command.companyName();
-        if (command.category() != null) this.category = command.category();
-        updateProductInfo(command.productName(), command.description());
-        this.price = command.price() != null ? Price.of(command.price()) : this.price;
+    public void update(UpdateProductParams params) {
+        if (params.companyName() != null) this.companyName = params.companyName();
+        if (params.category() != null) this.category = params.category();
+        updateProductInfo(params.productName(), params.description());
+        this.price = params.price() != null ? Price.of(params.price()) : this.price;
     }
 
     private void updateProductInfo(String newName, String newDescription) {
+        if(newName == null && newDescription == null) return;
         String updatedName = newName != null ? newName : this.productInfo.getName();
         String updatedDescription =
             newDescription != null ? newDescription : this.productInfo.getDescription();
