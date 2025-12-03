@@ -1,8 +1,10 @@
 package com.rushcrew.user_service.user.application;
 
 import com.rushcrew.user_service.user.application.command.UserCreateCommand;
+import com.rushcrew.user_service.user.application.command.UserUpdateCommand;
 import com.rushcrew.user_service.user.application.command.VerifyPasswordCommand;
 import com.rushcrew.user_service.user.application.result.UserCreateResult;
+import com.rushcrew.user_service.user.application.result.UserResult;
 import com.rushcrew.user_service.user.application.result.VerifyPasswordResult;
 import com.rushcrew.user_service.user.domain.entity.User;
 import com.rushcrew.user_service.user.domain.enums.UserRole;
@@ -19,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserValidator userValidator;
-    private final UserReader userReader;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -62,4 +63,14 @@ public class UserService {
             user.getRole().name()
         );
     }
+    public UserResult getUser(Long userId) {
+        User user = userRepository.getById(userId);
+
+        return new UserResult(
+            user.getUserId(),
+            user.getEmail(),
+            user.getName()
+        );
+    }
+
 }
