@@ -113,4 +113,10 @@ public class Product extends BaseEntity {
     public void activate() {
         this.isActive = true;
     }
+
+    public void delete(Long userId) {
+        this.deactivate();
+        this.softDelete(userId);
+        this.getOptions().forEach(option -> option.softDelete(userId));
+    }
 }

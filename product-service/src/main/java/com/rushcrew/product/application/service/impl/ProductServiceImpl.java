@@ -66,6 +66,16 @@ public class ProductServiceImpl implements ProductService {
         product.activate();
     }
 
+    @Override
+    @Transactional
+    public void deleteProduct(UUID productId) {
+        Product product = findAndValidateProduct(productId);
+        checkPermission(product);
+
+        // TODO: 추후에 사용자 정보 가지고 오면 주석처리 풀 예정
+//        product.delete(userId);
+    }
+
     // 유효성 검증한 product 반환
     private Product findAndValidateProduct(UUID productId) {
         // TODO: 요청한 사용자 userRole이 ADMIN or SELLEER인지 확인하는 로직 추가 예정

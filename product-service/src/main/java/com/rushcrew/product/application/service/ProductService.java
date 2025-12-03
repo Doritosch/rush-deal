@@ -15,4 +15,6 @@ public interface ProductService {
     void disableProduct(UUID productId);
 
     void enableProduct(UUID productId);
+
+    void deleteProduct(UUID productId);
 }
