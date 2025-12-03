@@ -9,7 +9,6 @@ import com.rushcrew.user_service.user.application.result.VerifyPasswordResult;
 import com.rushcrew.user_service.user.domain.entity.User;
 import com.rushcrew.user_service.user.domain.enums.UserRole;
 import com.rushcrew.user_service.user.domain.repository.UserRepository;
-import com.rushcrew.user_service.user.domain.service.UserReader;
 import com.rushcrew.user_service.user.domain.service.UserValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,12 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserService {
 
     private final UserValidator userValidator;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional
     public UserCreateResult createUser(UserCreateCommand command) {
         userValidator.validateEmailUniqueness(command.email());
 
@@ -50,9 +51,8 @@ public class UserService {
         );
     }
 
-    @Transactional(readOnly = true)
-    public VerifyPasswordResult verifyPassword(VerifyPasswordCommand command) {
-        User user = userReader.getUserByEmail(command.email());
+        public VerifyPasswordResult verifyPassword(VerifyPasswordCommand command) {
+        User user = userRepository.getByEmail(command.email());
 
         userValidator.validatePassword(user, command.password());
 
@@ -63,6 +63,7 @@ public class UserService {
             user.getRole().name()
         );
     }
+
     public UserResult getUser(Long userId) {
         User user = userRepository.getById(userId);
 
@@ -73,4 +74,12 @@ public class UserService {
         );
     }
 
+    @Transactional
+    public void updateUser(UserUpdateCommand command) {
+        User user = userRepository.getById(command.userId());
+
+        String encodedPassword = passwordEncoder.encode(command.password());
+
+        user.updateUser(encodedPassword, command.name());
+    }
 }
