@@ -1,8 +1,10 @@
 package com.rushcrew.product.application.result;
 
 import com.rushcrew.product.domain.entity.Product;
+import java.util.UUID;
 
 public record ProductResult(
+    UUID productId,
     String companyName,
     String productName,
     String description,
@@ -11,6 +13,7 @@ public record ProductResult(
 
     public static ProductResult from(Product product) {
         return new ProductResult(
+            product.getId(),
             product.getCompanyName(),
             product.getProductInfo().getName(),
             product.getProductInfo().getDescription(),

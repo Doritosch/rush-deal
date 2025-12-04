@@ -1,8 +1,10 @@
 package com.rushcrew.product.presentation.dto.response;
 
 import com.rushcrew.product.application.result.ProductResult;
+import java.util.UUID;
 
 public record ProductResponse(
+    UUID productId,
     String companyName,
     String productName,
     String description,
@@ -11,6 +13,7 @@ public record ProductResponse(
 
     public static ProductResponse from(ProductResult result) {
         return new ProductResponse(
+            result.productId(),
             result.companyName(),
             result.productName(),
             result.description(),

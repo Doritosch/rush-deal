@@ -19,6 +19,7 @@ public interface ProductJpaRepository extends JpaRepository<Product, UUID> {
 
     @Query(value = """
                 SELECT new com.rushcrew.product.application.result.ProductResult(
+                          p.id,
                           p.companyName,
                           p.productInfo.name,
                           p.productInfo.description,
