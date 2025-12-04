@@ -10,9 +10,11 @@ public interface QueueRepository {
     /**
      * Redis의 대기열에 Sorted Set (ZSet) 타입으로 저장
      * Score에 타임스탬프를 사용하는 구조 (선착순 진입 순서 보장)
+     * 진입 정책(Fast Track) : 현재 활성(Active) 상태인 토큰 수가 100개 미만이면 곧바로 활성열로 추가
+     * 100개 이상일 경우, 대기열로 추가
      * @param token
      */
-    boolean register(QueueToken token, LocalDateTime dealEndTime);
+    boolean register(QueueToken token, LocalDateTime dealEndTime, Integer activeTtl);
 
     /**
      * 토큰 활성화 (대기열 -> 활성열)
@@ -30,6 +32,22 @@ public interface QueueRepository {
      * @return
      */
     boolean isActivatedToken(UUID productId, TokenId tokenId);
+
+    /**
+     * 현재 활성화된 인원 수 조회 (Set Size)
+     * @param productId
+     * @return
+     */
+    Long countActiveTokens(UUID productId);
+
+    /**
+     * 대기열 토큰 소유권 검증 (본인 확인)
+     * @param productId
+     * @param userId
+     * @param token
+     * @return
+     */
+    boolean verifyTokenOwner(UUID productId, Long userId, String token);
 
     /**
      * 토큰 상태/대기 순번 확인 (ZSet rank -> polling)

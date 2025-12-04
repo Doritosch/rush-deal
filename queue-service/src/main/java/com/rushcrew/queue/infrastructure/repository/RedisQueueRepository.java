@@ -5,6 +5,7 @@ import com.rushcrew.queue.domain.repository.QueueRepository;
 import com.rushcrew.queue.domain.vo.TokenId;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -22,6 +23,11 @@ public class RedisQueueRepository implements QueueRepository {
     private static final String WAITING_KEY = "queue:wait:product:%s";
     private static final String ACTIVE_KEY = "queue:active:product:%s";
     private static final String USER_INDEX_KEY = "queue:user:product:%s:%s"; // String (중복방지용)
+    private static final String ACTIVE_TOKEN_KEY = "queue:activeToken:%s:%s"; // String (개별 활성 토큰 TTL 관리용)
+
+    // FAST TRACK(대기열 진입 정책) 기준 인원 (100인 미만이면 대기열 토큰 생성 시 바로 활성열로 이동)
+    // TODO: 추후 QueuePolicy (정책 DB)에서 관리하도록 수정 예정
+    private static final Long MAX_ACTIVE_COUNT = 100L;
 
     public RedisQueueRepository(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -31,12 +37,13 @@ public class RedisQueueRepository implements QueueRepository {
      * 대기열 등록 (ZSet : Sorted Set)
      */
     @Override
-    public boolean register(QueueToken token, LocalDateTime dealEndTime) {
+    public boolean register(QueueToken token, LocalDateTime dealEndTime, Integer activeTtl) {
         // TTL 계산 : (이벤트 종료 시간 - 현재 시간)
         long secondsUntilClose = Duration.between(LocalDateTime.now(), dealEndTime).getSeconds();
 
         if (secondsUntilClose < 0) {
             // 이미 종료된 이벤트면 진입 불가 처리
+            log.warn("[QUEUE:ERROR] 이미 종료된 이벤트입니다. productId={}", token.getProductId());
             return false;
         }
 
@@ -53,29 +60,23 @@ public class RedisQueueRepository implements QueueRepository {
 
         if (Objects.equals(isNewUser, Boolean.FALSE)) {
             // 이미 대기 중인 유저
+            log.warn("[QUEUE:ERROR] 이미 대기 중인 사용자입니다. userId={}", token.getUserId());
             return false;
         }
 
-        // 대기열 추가 : ZSet에 등록
-        try {
-            double score = System.currentTimeMillis();
-            redisTemplate.opsForZSet().add(
-                getWaitingKey(token.getProductId()),
-                token.getId().getValue().toString(),
-                score
-            );
-            return true;
-        } catch (Exception e) {
-            // 보상 트랜잭션 : ZSet 저장 실패 시, 중복 방지 키(userIndexKey)도 삭제해줘야 유저가 다시 시도 가능
-            log.error("[QUEUE:REDIS:ERROR] 대기열 등록 실패로 인한 롤백 수행: userId={}, tokenId={}", token.getUserId(), token.getId());
-            redisTemplate.delete(userIndexKey);
-            throw e;
+        // FAST TRACK 판단 : 활성열 인원 조회
+        Long activeCount = countActiveTokens(token.getProductId());
+        if (activeCount != null && activeCount < MAX_ACTIVE_COUNT) {
+            // [Fast Track] 대기 없이 바로 활성 상태 진입
+            return registerFastTrack(token, dealEndTime, activeTtl, userIndexKey);
+        } else {
+            // 대기열 등록 (ZSet)
+            return registerWaitingQueue(token, userIndexKey);
         }
     }
 
     @Override
     public void activateTokens(UUID productId, List<String> tokens) {
-
     }
 
     @Override
@@ -84,6 +85,14 @@ public class RedisQueueRepository implements QueueRepository {
             .isMember(getActiveKey(productId),
                 tokenId.getValue().toString()
             ));
+    }
+
+    /**
+     * 활성 토큰 수 확인
+     */
+    @Override
+    public Long countActiveTokens(UUID productId) {
+        return redisTemplate.opsForSet().size(getActiveKey(productId));
     }
 
     @Override
@@ -108,6 +117,7 @@ public class RedisQueueRepository implements QueueRepository {
     /**
      * 본인 확인 (대기열 토큰 소유권 검증)
      */
+    @Override
     public boolean verifyTokenOwner(UUID productId, Long userId, String token) {
         // redis에 저장된 해당 유저 토큰 조회
         String savedToken = redisTemplate.opsForValue().get(
@@ -116,6 +126,62 @@ public class RedisQueueRepository implements QueueRepository {
 
         // 저장된 토큰 없거나, 요청 토큰과 다르면 본인 아님
         return savedToken != null && savedToken.equals(token);
+    }
+
+    /**
+     * Fast Track: 즉시 활성열 등록
+     */
+    private boolean registerFastTrack(QueueToken token, LocalDateTime dealEndTime, Integer activeTtl,
+        String userIndexKey) {
+        // ActiveKey(활성열 키) 생성
+        String activeKey = getActiveKey(token.getProductId());
+        try {
+            // active set에 추가
+            redisTemplate.opsForSet().add(
+                activeKey,
+                token.getId().getValue().toString()
+            );
+
+            // 활성 상태 등록 (Set 추가 + 개별 TTL 설정을 위한 Shadow Key 생성)
+            // Key: queue:activeToken:{productId}:{tokenId} / Value: userId
+            String activeTokenKey = getActiveTokenKey(token.getProductId(), token.getId().toString());
+            redisTemplate.opsForValue().set(
+                activeTokenKey,
+                token.getUserId().toString(),
+                Duration.of(activeTtl, ChronoUnit.SECONDS)
+            );
+            log.info("[QUEUE:REDIS] FAST TRACK 활성열 등록 성공: user={}, token={}", token.getUserId(), token.getId());
+            return true;
+        } catch (Exception e) {
+            // 롤백: 문제 발생 시 유저 인덱스 삭제 (재진입 허용)
+            // 보상 트랜잭션 : Set 저장 실패 시, 중복 방지 키(userIndexKey)와 activeKey도 삭제해줘야 유저가 다시 시도 가능
+            log.error("[QUEUE:REDIS:ERROR] FAST TRACK 활성열 진입 실패로 인한 롤백 수행: userId={}, tokenId={}", token.getUserId(), token.getId());
+            redisTemplate.delete(userIndexKey);
+            redisTemplate.opsForSet().remove(activeKey, token.getId().toString());
+            throw e;
+        }
+    }
+
+    /**
+     * 대기열 등록 (ZSet 등록)
+     */
+    private boolean registerWaitingQueue(QueueToken token, String userIndexKey) {
+        try {
+            // TODO: 추후 확인 -> System.currentTimeMillis()는 동시성 이슈가 미세하게 있을 수 있으므로 nanoTime 혼용 추천
+            double score = System.currentTimeMillis();
+            redisTemplate.opsForZSet().add(
+                getWaitingKey(token.getProductId()),
+                token.getId().getValue().toString(),
+                score
+            );
+            log.info("[QUEUE:REDIS] 대기열 진입 성공: user={}, score={}", token.getUserId(), score);
+            return true;
+        } catch (Exception e) {
+            // 보상 트랜잭션 : ZSet 저장 실패 시, 중복 방지 키(userIndexKey)도 삭제해줘야 유저가 다시 시도 가능
+            log.error("[QUEUE:REDIS:ERROR] 대기열 진입 실패로 인한 롤백 수행: userId={}, tokenId={}", token.getUserId(), token.getId());
+            redisTemplate.delete(userIndexKey);
+            throw e;
+        }
     }
 
     private String getWaitingKey(UUID productId) {
@@ -128,5 +194,10 @@ public class RedisQueueRepository implements QueueRepository {
 
     private String getUserIndexKey(UUID productId, Long userId) {
         return String.format(USER_INDEX_KEY, productId, userId);
+    }
+
+    // 개별 활성 토큰 검증용 키
+    private String getActiveTokenKey(UUID productId, String tokenId) {
+        return String.format(ACTIVE_TOKEN_KEY, productId, tokenId);
     }
 }

@@ -48,7 +48,8 @@ public class QueueService implements QueuePort {
         QueueToken queueToken = QueueToken.create(command.productId(), command.userId());
 
         // redis 대기열 저장소 저장 & 중복 진입 차단
-        boolean isSuccess = queueRepository.register(queueToken, policy.getTimePeriod().getEndTime());
+        boolean isSuccess = queueRepository.register(queueToken, policy.getTimePeriod().getEndTime(),
+            policy.getTrafficSetting().getTtl());
         if (!isSuccess) {
             // 이미 대기열에 있는 경우 예외 처리
             throw new IllegalStateException("이미 대기열에 등록된 사용자입니다.");
