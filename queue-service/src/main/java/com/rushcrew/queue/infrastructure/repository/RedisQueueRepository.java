@@ -4,6 +4,7 @@ import com.rushcrew.queue.domain.entity.QueueToken;
 import com.rushcrew.queue.domain.repository.QueueRepository;
 import com.rushcrew.queue.domain.vo.TokenId;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -24,17 +25,25 @@ public class RedisQueueRepository implements QueueRepository {
         this.redisTemplate = redisTemplate;
     }
 
-
     /**
      * 대기열 등록 (ZSet : Sorted Set)
      */
     @Override
-    public boolean register(QueueToken token) {
+    public boolean register(QueueToken token, LocalDateTime dealEndTime) {
+        // TTL 계산 : (이벤트 종료 시간 - 현재 시간)
+        long secondsUntilClose = Duration.between(LocalDateTime.now(), dealEndTime).getSeconds();
+
+        if (secondsUntilClose < 0) {
+            // 이미 종료된 이벤트면 진입 불가 처리
+            return false;
+        }
+
         // 중복 방지 : 유저별 대기열 키 생성 (SETNX)
-        // Key: queue:user:product:{productId}:{userId} -> Value: TokenUUID
+        // KEY: queue:user:product:{productId}:{userId} / VALUE: 토큰 UUID
         Boolean isNewUser = redisTemplate.opsForValue().setIfAbsent(
             getUserIndexKey(token.getProductId(), token.getUserId()),
-            token.getId().getValue().toString()
+            token.getId().getValue().toString(),
+            Duration.ofMinutes(secondsUntilClose) // TTL 설정: 타임딜 종료 시간에 맞춰 자동 만료
         );
 
         if (Objects.equals(isNewUser, Boolean.FALSE)) {
@@ -82,6 +91,19 @@ public class RedisQueueRepository implements QueueRepository {
             .score(getWaitingKey(productId),
                 tokenId.getValue().toString()
             );
+    }
+
+    /**
+     * 본인 확인 (대기열 토큰 소유권 검증)
+     */
+    public boolean verifyTokenOwner(UUID productId, Long userId, String token) {
+        // redis에 저장된 해당 유저 토큰 조회
+        String savedToken = redisTemplate.opsForValue().get(
+            getUserIndexKey(productId, userId)
+        );
+
+        // 저장된 토큰 없거나, 요청 토큰과 다르면 본인 아님
+        return savedToken != null && savedToken.equals(token);
     }
 
     private String getWaitingKey(UUID productId) {

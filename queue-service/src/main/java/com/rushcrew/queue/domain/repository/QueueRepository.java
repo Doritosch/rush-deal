@@ -2,6 +2,7 @@ package com.rushcrew.queue.domain.repository;
 
 import com.rushcrew.queue.domain.entity.QueueToken;
 import com.rushcrew.queue.domain.vo.TokenId;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,7 +12,7 @@ public interface QueueRepository {
      * Score에 타임스탬프를 사용하는 구조 (선착순 진입 순서 보장)
      * @param token
      */
-    boolean register(QueueToken token);
+    boolean register(QueueToken token, LocalDateTime dealEndTime);
 
     /**
      * 토큰 활성화 (대기열 -> 활성열)

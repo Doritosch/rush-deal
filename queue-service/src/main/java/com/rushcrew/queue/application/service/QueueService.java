@@ -9,14 +9,17 @@ import com.rushcrew.queue.domain.enums.QueueStatus;
 import com.rushcrew.queue.domain.repository.QueuePolicyRepository;
 import com.rushcrew.queue.domain.repository.QueueRepository;
 import com.rushcrew.queue.domain.vo.TokenId;
+import com.rushcrew.queue.infrastructure.repository.RedisQueueRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class QueueService implements QueuePort {
     private final QueueRepository queueRepository;
@@ -45,7 +48,7 @@ public class QueueService implements QueuePort {
         QueueToken queueToken = QueueToken.create(command.productId(), command.userId());
 
         // redis 대기열 저장소 저장 & 중복 진입 차단
-        boolean isSuccess = queueRepository.register(queueToken);
+        boolean isSuccess = queueRepository.register(queueToken, policy.getTimePeriod().getEndTime());
         if (!isSuccess) {
             // 이미 대기열에 있는 경우 예외 처리
             throw new IllegalStateException("이미 대기열에 등록된 사용자입니다.");
@@ -70,6 +73,13 @@ public class QueueService implements QueuePort {
      */
     @Override
     public QueueRedisResponse getQueueRank(UUID productId, String token, Long userId, String role) {
+        // 토큰 유효성 검증: 본인 확인 (대기열 토큰 소유권 검증)
+        boolean isOwner = ((RedisQueueRepository) queueRepository).verifyTokenOwner(productId, userId, token);
+        if (!isOwner) {
+            log.warn("[QUEUE:ERROR] 토큰 도용 시도 감지: User {}, Token {}", userId, token);
+            throw new SecurityException("토큰 소유자가 일치하지 않습니다.");
+        }
+
         TokenId tokenId = validateQueueToken(token);
 
         // 활성 상태 여부 확인
