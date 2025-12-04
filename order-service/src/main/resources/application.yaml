@@ -1,37 +1,50 @@
 spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
+      -
   application:
     name: order-service
 
   batch:
     jdbc:
-      initialize-schema: always # 배치 메타 테이블 자동 생성
+      initialize-schema: always
     job:
-      enabled: false  # 애플리케이션 시작 시 자동 실행 방지 (Quartz가 관리)
-
-  quartz:
-    job-store-type: jdbc  # DB에 스케줄 정보 저장
-    jdbc:
-      initialize-schema: always # Quartz 테이블 자동 생성
-    properties:
-      org:
-        quartz:
-          scheduler:
-            instanceName: OrderScheduler
-            instanceId: AUTO
-          jobStore:
-            class: org.quartz.impl.jdbcjobstore.JobStoreTX
-            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-            dataSource: quartzDataSource
-            tablePrefix: QRTZ_
-            isClustered: true  # 클러스터 모드 (다중 인스턴스 환경)
-          threadPool:
-            threadCount: 10
+      enabled: false
 
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never       # 스키마는 schema.sql로 생성
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: OrderScheduler
+            instanceId: AUTO
+
+          dataSource:
+            main:                          # ★ Quartz가 인식하는 이름
+              driver: org.postgresql.Driver
+              URL: ${DB_URL}
+              user: ${DB_USERNAME}
+              password: ${DB_PASSWORD}
+
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            dataSource: main               # ★ Quartz가 main datasource 사용
+            tablePrefix: quartz_schema.QRTZ_
+            isClustered: true
+
+          threadPool:
+            threadCount: 10
 
   jpa:
     hibernate:
@@ -40,11 +53,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        default_schema: order_schema
+        default_schema: order_schema     # ★ JPA는 order_schema 사용
 
   sql:
     init:
-      mode: always
+      mode: always                       # schema.sql 실행
 
   kafka:
     bootstrap-servers: localhost:9092
