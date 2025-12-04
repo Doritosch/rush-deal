@@ -53,7 +53,7 @@ public class OptionServiceImpl implements OptionService {
         productValidator.checkPermission(product);
 
         ProductOption option = productRepository.findOptionBySkuId(skuId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 옵션입니다."));
+            .orElseThrow(() -> new BusinessException(ProductErrorCode.INVALID_OPTION));
         UpdateOptionParams params = new UpdateOptionParams(command.size(), command.color());
 
         option.update(params);
@@ -68,7 +68,7 @@ public class OptionServiceImpl implements OptionService {
         productValidator.checkPermission(product);
 
         ProductOption option = productRepository.findOptionBySkuId(skuId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 옵션입니다."));
+            .orElseThrow(() -> new BusinessException(ProductErrorCode.INVALID_OPTION));
 //        option.softDelete(userId); TODO: 추후에 주석처리 풀 예정
     }
 }

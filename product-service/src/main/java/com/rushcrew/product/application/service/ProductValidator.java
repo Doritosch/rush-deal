@@ -1,6 +1,8 @@
 package com.rushcrew.product.application.service;
 
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.product.domain.entity.Product;
+import com.rushcrew.product.domain.exception.ProductErrorCode;
 import com.rushcrew.product.domain.repository.ProductRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +19,7 @@ public class ProductValidator {
         // TODO: 요청한 사용자 userRole이 ADMIN or SELLEER인지 확인하는 로직 추가 예정
 
         return productRepository.findByIdAndDeletedAtIsNull(productId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+            .orElseThrow(() -> new BusinessException(ProductErrorCode.INVALID_OPTION));
     }
 
     public void checkPermission(Product product) {

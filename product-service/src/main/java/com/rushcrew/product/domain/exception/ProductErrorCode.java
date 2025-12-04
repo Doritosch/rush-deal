@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ProductErrorCode implements ErrorCode {
     OPTION_LIST_EMPTY(HttpStatus.BAD_REQUEST, "PO-001", "최소 1개 이상의 옵션이 필요합니다."),
+    INVALID_OPTION(HttpStatus.NOT_FOUND, "PO-002", "존재하지 않는 옵션입니다."),
 
     ;
 
