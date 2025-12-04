@@ -11,7 +11,7 @@ public interface QueueRepository {
      * Score에 타임스탬프를 사용하는 구조 (선착순 진입 순서 보장)
      * @param token
      */
-    void register(QueueToken token);
+    boolean register(QueueToken token);
 
     /**
      * 토큰 활성화 (대기열 -> 활성열)

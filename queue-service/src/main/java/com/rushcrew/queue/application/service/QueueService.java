@@ -3,22 +3,28 @@ package com.rushcrew.queue.application.service;
 import com.rushcrew.queue.application.command.queue.EnterQueueCommand;
 import com.rushcrew.queue.application.dto.QueueRedisResponse;
 import com.rushcrew.queue.application.port.in.QueuePort;
+import com.rushcrew.queue.domain.entity.QueuePolicy;
 import com.rushcrew.queue.domain.entity.QueueToken;
 import com.rushcrew.queue.domain.enums.QueueStatus;
+import com.rushcrew.queue.domain.repository.QueuePolicyRepository;
 import com.rushcrew.queue.domain.repository.QueueRepository;
 import com.rushcrew.queue.domain.vo.TokenId;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class QueueService implements QueuePort {
     private final QueueRepository queueRepository;
+    private final QueuePolicyRepository queuePolicyRepository;
 
-    public QueueService(QueueRepository queueRepository) {
+    public QueueService(QueueRepository queueRepository, QueuePolicyRepository queuePolicyRepository) {
         this.queueRepository = queueRepository;
+        this.queuePolicyRepository = queuePolicyRepository;
     }
 
     /**
@@ -27,11 +33,23 @@ public class QueueService implements QueuePort {
      * 관리자가 정책을 등록하지 않은 상품은 대기열을 생성할 수 없음
      */
     @Override
+    @Transactional(readOnly = true)
     public QueueRedisResponse enterQueue(EnterQueueCommand command) {
+        // 대기열 정책 확인 (RDB 조회 - 상품 존재 여부 및 시간 확인)
+        QueuePolicy policy = queuePolicyRepository.findByProductId(command.productId())
+            .orElseThrow(() -> new NoSuchElementException("타임딜이 운영되지 않는 상품입니다."));
+
+        // TODO: 대기열 정책에서 대기열 진입 시간 확인 로직 추가 필요
+//        if (policy.isOpen()) {}
+
         QueueToken queueToken = QueueToken.create(command.productId(), command.userId());
 
-        // redis 대기열 저장소 저장
-        queueRepository.register(queueToken);
+        // redis 대기열 저장소 저장 & 중복 진입 차단
+        boolean isSuccess = queueRepository.register(queueToken);
+        if (!isSuccess) {
+            // 이미 대기열에 있는 경우 예외 처리
+            throw new IllegalStateException("이미 대기열에 등록된 사용자입니다.");
+        }
 
         // 현재 순번 조회
         Long waitingRank = queueRepository.getWaitingRank(command.productId(), queueToken.getId());
