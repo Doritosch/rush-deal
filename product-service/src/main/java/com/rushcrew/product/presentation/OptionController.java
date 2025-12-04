@@ -13,6 +13,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,5 +47,14 @@ public class OptionController {
         UpdateOptionCommand command = UpdateOptionCommand.from(request);
         UpdateOptionResult result = optionService.updateProductOption(productId, skuId, command);
         return ResponseEntity.ok(UpdateOptionResponse.from(result));
+    }
+
+    @DeleteMapping("/options/{skuId}")
+    public ResponseEntity<Void> DeleteProductOption(
+        @PathVariable UUID productId,
+        @PathVariable UUID skuId
+    ) {
+        optionService.deleteProductOption(productId, skuId);
+        return ResponseEntity.noContent().build();
     }
 }

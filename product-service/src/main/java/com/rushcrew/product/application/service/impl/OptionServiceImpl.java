@@ -60,4 +60,15 @@ public class OptionServiceImpl implements OptionService {
 
         return UpdateOptionResult.from(option);
     }
+
+    @Override
+    @Transactional
+    public void deleteProductOption(UUID productId, UUID skuId) {
+        Product product = productValidator.findAndValidateProduct(productId);
+        productValidator.checkPermission(product);
+
+        ProductOption option = productRepository.findOptionBySkuId(skuId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 옵션입니다."));
+//        option.softDelete(userId); TODO: 추후에 주석처리 풀 예정
+    }
 }

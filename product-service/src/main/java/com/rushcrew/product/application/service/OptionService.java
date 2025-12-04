@@ -12,4 +12,5 @@ public interface OptionService {
 
     UpdateOptionResult updateProductOption(UUID productId, UUID skuId, UpdateOptionCommand command);
 
+    void deleteProductOption(UUID productId, UUID skuId);
 }
