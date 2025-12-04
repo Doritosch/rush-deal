@@ -60,6 +60,7 @@ public class OrderCreationService {
 	private final TimeDealStockValidator timeDealStockValidator;
 
 
+	/* 주문 생성 */
 	@Transactional
 	public CreateOrderResult createOrder(CreateOrderCommand command) {
 
@@ -103,8 +104,10 @@ public class OrderCreationService {
 		return mapToResult(savedOrder);
 	}
 
-	// 재고 예약 + OrderItem 생성
-	// 타임딜 서비스에서 상품 정보를 포함한 재고 상세 정보 조회
+	/*
+	* 재고 예약 + OrderItem 생성
+	* 타임딜 서비스에서 상품 정보를 포함한 재고 상세 정보 조회
+	* */
 	private List<OrderItem> reserveStocksAndCreateOrderItems(
 		CreateOrderCommand command,
 		TimeDealInfo timeDeal
@@ -176,71 +179,8 @@ public class OrderCreationService {
 
 		return orderItems;
 	}
-	// private List<OrderItem> reserveStocksAndCreateOrderItems(
-	// 	CreateOrderCommand command,
-	// 	TimeDealInfo timeDeal
-	// ) {
-	// 	List<OrderItem> orderItems = new ArrayList<>();
-	//
-	// 	for (CreateOrderCommand.OrderItemCommand itemCommand : command.getOrderItems()) {
-	// 		UUID timeDealStockId = UUID.fromString(itemCommand.getTimeDealStockId());
-	//
-	// 		// 1. 타임딜 재고 상세 정보 조회 (상품 정보 포함)
-	// 		TimeDealStockDetail stockDetail = timeDealStockPort
-	// 			.getTimeDealStockDetail(timeDealStockId);
-	//
-	// 		// 2. 상품 활성 상태 검증
-	// 		timeDealStockValidator.validate(stockDetail);
-	//
-	// 		// 3. 재고 예약 요청
-	// 		StockReservationResult result = timeDealStockPort.reserveStock(
-	// 			timeDealStockId,
-	// 			itemCommand.getQuantity(),
-	// 			command.getUserId()
-	// 		);
-	// 		if (!result.isSuccess()) {
-	// 			handleStockDepletion(
-	// 				command.getTimeDealId(),
-	// 				command.getUserId(),
-	// 				result.getAvailableStock()
-	// 			);
-	// 			throw new StockDepletedException();
-	// 		}
-	//
-	// 		// 4. ProductSnapshot 생성
-	// 		ProductSnapshot snapshot = ProductSnapshot.builder()
-	// 			.timeDealStockId(timeDealStockId.toString())
-	// 			.productId(stockDetail.getProductId())
-	// 			.productName(stockDetail.getProductName())
-	// 			.productDescription(stockDetail.getProductDescription())
-	// 			.optionId(stockDetail.getOptionId())
-	// 			.optionName(stockDetail.getOptionName())
-	// 			.sellerId(stockDetail.getSellerId())
-	// 			.sellerName(stockDetail.getSellerName())
-	// 			.originalPrice(stockDetail.getProductPrice())
-	// 			.timeDealId(timeDeal.getTimeDealId())
-	// 			.timeDealTitle(timeDeal.getTitle())
-	// 			.discountRate(timeDeal.getDiscountRate())
-	// 			.category(stockDetail.getCategory())
-	// 			.build();
-	//
-	// 		// 5. OrderItem 생성
-	// 		OrderItem orderItem = OrderItem.create(
-	// 			timeDealStockId,
-	// 			itemCommand.getQuantity(),
-	// 			stockDetail.getProductPrice(),
-	// 			timeDeal.getDiscountPrice(),
-	// 			snapshot
-	// 		);
-	//
-	// 		orderItems.add(orderItem);
-	// 	}
-	//
-	// 	return orderItems;
-	// }
 
-
-	// 재고 소진 처리
+	/* 재고 소진 처리 */
 	private void handleStockDepletion(String timeDealId, Long userId, Integer availableStock) {
 		orderEventPort.publishStockDepletedEvent(
 			timeDealId,
@@ -250,7 +190,7 @@ public class OrderCreationService {
 		);
 	}
 
-	// 주문 결과 매핑
+	/* 주문 결과 매핑 */
 	private CreateOrderResult mapToResult(Order order) {
 		List<CreateOrderResult.OrderItemResult> itemResults = order.getOrderItems().stream()
 			.map(item -> CreateOrderResult.OrderItemResult.builder()

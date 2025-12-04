@@ -24,12 +24,13 @@ public class PaymentService {
 	private final OrderRepository orderRepository;
 	private final PaymentEventPort paymentEventPort;
 
+	/* 결제 요청 */
 	public RequestPaymentResult requestPayment(RequestPaymentCommand command) {
 		// 1. 주문 조회
-		Order order = orderRepository.findById(command.getOrderId())
+		Order order = orderRepository.findById(command.orderId())
 			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 		// 2. 본인 주문인지
-		if (!order.isOwnedBy(command.getUserId())) {
+		if (!order.isOwnedBy(command.userId())) {
 			throw new BusinessException(OrderErrorCode.UNAUTHORIZED);
 		}
 		// 3. 주문 상태 PENDING 인지
@@ -47,15 +48,15 @@ public class PaymentService {
 		// 6. 포인트 차감 요청 이벤트 발행
 		if (order.getPointUsed().compareTo(BigDecimal.ZERO) > 0) {
 			paymentEventPort.publishPointDeductionRequested(
-				command.getUserId(),
-				command.getOrderId().toString(),
+				command.userId(),
+				command.orderId().toString(),
 				order.getPointUsed(),
 				sagaId,
 				Instant.now()
 			);
 			// 포인트 차감 대기중
 			return RequestPaymentResult.builder()
-				.orderId(command.getOrderId())
+				.orderId(command.orderId())
 				.orderStatus(order.getStatus().name())
 				.finalAmount(order.getFinalAmount())
 				.pointUsed(order.getPointUsed())
@@ -67,18 +68,18 @@ public class PaymentService {
 		}
 		// 7. 포인트 사용 없으면 바로 결제 요청
 		paymentEventPort.publishPaymentRequested(
-			command.getOrderId().toString(),
-			command.getUserId(),
+			command.orderId().toString(),
+			command.userId(),
 			order.getTotalAmount(),
 			order.getPointUsed(),
 			order.getFinalAmount(),
-			command.getPaymentMethod(),
+			command.paymentMethod(),
 			sagaId,
 			Instant.now()
 		);
 
 		return RequestPaymentResult.builder()
-			.orderId(command.getOrderId())
+			.orderId(command.orderId())
 			.orderStatus(order.getStatus().name())
 			.finalAmount(order.getFinalAmount())
 			.pointUsed(order.getPointUsed())
