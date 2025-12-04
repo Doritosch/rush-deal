@@ -1,10 +1,14 @@
 package com.rushcrew.product.infrastructure.repostiory;
 
+import com.rushcrew.product.application.ProductFilter;
+import com.rushcrew.product.application.result.ProductResult;
 import com.rushcrew.product.domain.entity.Product;
 import com.rushcrew.product.domain.repository.ProductRepository;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,5 +25,11 @@ public class ProductRepositoryAdapter implements ProductRepository {
     @Override
     public Optional<Product> findByIdAndDeletedAtIsNull(UUID productId) {
         return jpaProductRepository.findByIdAndDeletedAtIsNull(productId);
+    }
+
+    @Override
+    public Page<ProductResult> searchEnabledProducts(ProductFilter productFilter,
+        Pageable pageable) {
+        return jpaProductRepository.searchEnabledProducts(productFilter, pageable);
     }
 }

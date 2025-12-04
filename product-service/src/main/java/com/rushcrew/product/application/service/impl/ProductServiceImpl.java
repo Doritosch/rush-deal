@@ -1,8 +1,10 @@
 package com.rushcrew.product.application.service.impl;
 
+import com.rushcrew.product.application.ProductFilter;
 import com.rushcrew.product.application.command.CreateProductCommand;
 import com.rushcrew.product.application.command.UpdateProductCommand;
 import com.rushcrew.product.application.result.CreateProductResult;
+import com.rushcrew.product.application.result.ProductResult;
 import com.rushcrew.product.application.result.UpdateProductResult;
 import com.rushcrew.product.application.service.ProductService;
 import com.rushcrew.product.domain.entity.Product;
@@ -11,6 +13,8 @@ import com.rushcrew.product.domain.model.UpdateProductParams;
 import com.rushcrew.product.domain.repository.ProductRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,6 +78,12 @@ public class ProductServiceImpl implements ProductService {
 
         // TODO: 추후에 사용자 정보 가지고 오면 주석처리 풀 예정
 //        product.delete(userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductResult> getProducts(ProductFilter productFilter, Pageable pageable) {
+        return productRepository.searchEnabledProducts(productFilter, pageable);
     }
 
     // 유효성 검증한 product 반환
