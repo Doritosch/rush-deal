@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.order_service.order.application.error.OrderErrorCode;
-import com.rushcrew.order_service.order.application.port.out.OrderEventPort;
 import com.rushcrew.order_service.order.application.port.out.PaymentEventPort;
 import com.rushcrew.order_service.order.application.port.out.TimeDealStockPort;
 import com.rushcrew.order_service.order.domain.entity.Order;
@@ -29,23 +28,22 @@ public class PaymentEventConsumer {
 	private final OrderRepository orderRepository;
 	private final PaymentEventPort paymentEventPort;
 	private final TimeDealStockPort timeDealStockPort;
-	private final OrderEventPort orderEventPort;
 
 	// 포인트 차감 성공 이벤트 처리: 포인트 차감 완료 후 결제 진행
 	@KafkaListener(topics = "point.deducted", groupId = "order-service")
 	@Transactional
 	public void handlePointDeducted(PointDeductedEvent event) {
-		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
+		Order order = orderRepository.findById(UUID.fromString(event.orderId()))
 			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 		// 결제 요청 이벤트 발행
 		paymentEventPort.publishPaymentRequested(
-			event.getOrderId(),
-			event.getUserId(), 
+			event.orderId(),
+			event.userId(),
 			order.getTotalAmount(),
-			event.getDeductedAmount(),
+			event.deductedAmount(),
 			order.getFinalAmount(),
 			order.getPaymentMethod(),
-			event.getSagaId(),
+			event.sagaId(),
 			Instant.now()
 		);
 	}
@@ -54,13 +52,13 @@ public class PaymentEventConsumer {
 	@KafkaListener(topics = "point.deduction.failed", groupId = "order-service")
 	@Transactional
 	public void handlePointDeductionFailed(PointDeductionFailedEvent event) {
-		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
+		Order order = orderRepository.findById(UUID.fromString(event.orderId()))
 			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 		// 포인트 차감 실패 이력 기록
 		String reason = "포인트 차감 실패: %s (필요: %s원, 보유: %s원)"
-			.formatted(event.getReason(),
-			event.getRequiredAmount(),
-			event.getCurrentBalance());
+			.formatted(event.reason(),
+			event.requiredAmount(),
+			event.currentBalance());
 		order.recordPointDeductionFailed(reason);
 		orderRepository.save(order);
 	}
@@ -69,7 +67,7 @@ public class PaymentEventConsumer {
 	@KafkaListener(topics = "payment.completed", groupId = "order-service")
 	@Transactional
 	public void handlePaymentCompleted(PaymentCompletedEvent event) {
-		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
+		Order order = orderRepository.findById(UUID.fromString(event.orderId()))
 			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 
 		// 주문 상태 변경: PENDING → PAID
@@ -79,7 +77,7 @@ public class PaymentEventConsumer {
 			timeDealStockPort.confirmStock(
 				reservation.getTimeDealStockId(),
 				reservation.getQuantity(),
-				event.getOrderId()
+				event.orderId()
 			);
 			reservation.confirm();
 		}
@@ -90,7 +88,7 @@ public class PaymentEventConsumer {
 	@KafkaListener(topics = "payment.failed", groupId = "order-service")
 	@Transactional
 	public void handlePaymentFailed(PaymentFailedEvent event) {
-		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
+		Order order = orderRepository.findById(UUID.fromString(event.orderId()))
 			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 
 		// 포인트 환불 요청 (사용한 포인트 있으면)
@@ -102,13 +100,13 @@ public class PaymentEventConsumer {
 			timeDealStockPort.restoreStock(
 				reservation.getTimeDealStockId(),
 				reservation.getQuantity(),
-				event.getOrderId(),
-				"결제 실패: " + event.getFailureReason()
+				event.orderId(),
+				"결제 실패: " + event.failurReason()
 			);
 			reservation.cancel();
 		}
 		// 주문 취소
-		order.cancelBeforePayment("결제 실패: " + event.getFailureReason());
+		order.cancelBeforePayment("결제 실패: " + event.failurReason());
 		orderRepository.save(order);
 	}
 
