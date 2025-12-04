@@ -26,6 +26,7 @@ public class QueueService implements QueuePort {
      */
     @Override
     public QueueRedisResponse enterQueue(EnterQueueCommand command) {
+        // TODO: ProductId 유효성 검증 필요
         QueueToken queueToken = QueueToken.create(command.productId(), command.userId());
 
         // redis 대기열 저장소 저장
@@ -50,6 +51,7 @@ public class QueueService implements QueuePort {
      */
     @Override
     public QueueRedisResponse getQueueRank(UUID productId, String token, Long userId, String role) {
+        // TODO: ProductId 유효성 검증 필요
         TokenId tokenId = TokenId.of(UUID.fromString(token));
 
         // 요청시간 LocalDateTime 타입으로 변환
