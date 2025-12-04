@@ -76,9 +76,10 @@ public class Order extends BaseEntity {
 	@Builder.Default
 	private List<OrderReservation> reservations = new ArrayList<>();
 
-	@OneToMany(mappedBy = "order", cascade = CascadeType.PERSIST)
+	@OneToMany(mappedBy = "order", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
 	@Builder.Default
 	private List<OrderHistory> histories = new ArrayList<>();
+
 
 
 	// ============================================

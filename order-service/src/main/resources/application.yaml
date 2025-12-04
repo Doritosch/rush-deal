@@ -2,13 +2,11 @@ spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
-      -
-  application:
-    name: order-service
 
   batch:
     jdbc:
-      initialize-schema: always
+      initialize-schema: never   # SQL 스크립트로 처리
+      table-prefix: order_schema.BATCH_   # 스키마 명시
     job:
       enabled: false
 
@@ -21,7 +19,7 @@ spring:
   quartz:
     job-store-type: jdbc
     jdbc:
-      initialize-schema: never       # 스키마는 schema.sql로 생성
+      initialize-schema: always   # Quartz 자동 초기화 사용
     properties:
       org:
         quartz:
@@ -30,7 +28,7 @@ spring:
             instanceId: AUTO
 
           dataSource:
-            main:                          # ★ Quartz가 인식하는 이름
+            main:
               driver: org.postgresql.Driver
               URL: ${DB_URL}
               user: ${DB_USERNAME}
@@ -39,9 +37,9 @@ spring:
           jobStore:
             class: org.quartz.impl.jdbcjobstore.JobStoreTX
             driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-            dataSource: main               # ★ Quartz가 main datasource 사용
             tablePrefix: quartz_schema.QRTZ_
             isClustered: true
+            useProperties: false
 
           threadPool:
             threadCount: 10
@@ -53,11 +51,15 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        default_schema: order_schema     # ★ JPA는 order_schema 사용
+        default_schema: order_schema
 
   sql:
     init:
-      mode: always                       # schema.sql 실행
+      mode: always
+      encoding: UTF-8
+      schema-locations:
+        - classpath:schema.sql
+        - classpath:sql/batch-schema.sql
 
   kafka:
     bootstrap-servers: localhost:9092
