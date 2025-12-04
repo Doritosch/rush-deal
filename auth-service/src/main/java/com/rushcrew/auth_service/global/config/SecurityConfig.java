@@ -1,4 +1,4 @@
-package com.rushcrew.auth_service.config;
+package com.rushcrew.auth_service.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
