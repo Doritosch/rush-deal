@@ -6,12 +6,15 @@ import com.rushcrew.queue.application.command.queue.EnterQueueCommand;
 import com.rushcrew.queue.application.dto.QueueRedisResponse;
 import com.rushcrew.queue.application.port.in.QueuePort;
 import com.rushcrew.queue.domain.enums.QueueStatus;
+import com.rushcrew.queue.presentation.dto.request.EnterQueueRequest;
 import com.rushcrew.queue.presentation.dto.response.QueueResponse;
+import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -37,11 +40,11 @@ public class QueueController {
      */
     @PostMapping("/enter")
     public ResponseEntity<ApiResponse<QueueResponse>> enterQueue(
-        @RequestParam UUID productId,
+        @Valid @RequestBody EnterQueueRequest request,
         @RequestHeader(USER_ID_HEADER) Long currUserId,
         @RequestHeader(USER_ROLE_HEADER) String role
     ) {
-        EnterQueueCommand command = EnterQueueCommand.of(productId, currUserId, role);
+        EnterQueueCommand command = EnterQueueCommand.of(request.productId(), currUserId, role);
         QueueRedisResponse redisResult = queuePort.enterQueue(command);
         QueueResponse response = toQueueResponse(redisResult);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
