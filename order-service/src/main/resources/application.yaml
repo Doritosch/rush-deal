@@ -2,6 +2,31 @@ spring:
   application:
     name: order-service
 
+  batch:
+    jdbc:
+      initialize-schema: always # 배치 메타 테이블 자동 생성
+    job:
+      enabled: false  # 애플리케이션 시작 시 자동 실행 방지 (Quartz가 관리)
+
+  quartz:
+    job-store-type: jdbc  # DB에 스케줄 정보 저장
+    jdbc:
+      initialize-schema: always # Quartz 테이블 자동 생성
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: OrderScheduler
+            instanceId: AUTO
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            dataSource: quartzDataSource
+            tablePrefix: QRTZ_
+            isClustered: true  # 클러스터 모드 (다중 인스턴스 환경)
+          threadPool:
+            threadCount: 10
+
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
