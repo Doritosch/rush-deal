@@ -1,6 +1,6 @@
 package com.rushcrew.queue.presentation.dto.request;
 
-import com.rushcrew.queue.application.command.CreatePolicyCommand;
+import com.rushcrew.queue.application.command.policy.CreatePolicyCommand;
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import com.rushcrew.queue.domain.vo.TimePeriod;
 import com.rushcrew.queue.domain.vo.TrafficSetting;

@@ -1,6 +1,6 @@
 package com.rushcrew.queue.application.service;
 
-import com.rushcrew.queue.application.command.EnterQueueCommand;
+import com.rushcrew.queue.application.command.queue.EnterQueueCommand;
 import com.rushcrew.queue.application.dto.QueueRedisResponse;
 import com.rushcrew.queue.application.port.in.QueuePort;
 import com.rushcrew.queue.domain.entity.QueueToken;
@@ -49,8 +49,8 @@ public class QueueService implements QueuePort {
      * 대기열 순번, 상태 조회 (polling)
      */
     @Override
-    public QueueRedisResponse getQueueRank(UUID productId, String tokenValue) {
-        TokenId tokenId = TokenId.of(UUID.fromString(tokenValue));
+    public QueueRedisResponse getQueueRank(UUID productId, String token, Long userId, String role) {
+        TokenId tokenId = TokenId.of(UUID.fromString(token));
 
         // 요청시간 LocalDateTime 타입으로 변환
         Long requestTime = getRequestTime(productId, tokenId);

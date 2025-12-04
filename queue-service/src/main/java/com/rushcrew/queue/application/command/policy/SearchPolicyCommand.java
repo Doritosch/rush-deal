@@ -1,4 +1,4 @@
-package com.rushcrew.queue.application.command;
+package com.rushcrew.queue.application.command.policy;
 
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import java.util.UUID;

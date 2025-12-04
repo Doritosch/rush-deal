@@ -2,7 +2,7 @@ package com.rushcrew.queue.presentation.controller;
 
 
 import com.rushcrew.common.dto.ApiResponse;
-import com.rushcrew.queue.application.command.EnterQueueCommand;
+import com.rushcrew.queue.application.command.queue.EnterQueueCommand;
 import com.rushcrew.queue.application.dto.QueueRedisResponse;
 import com.rushcrew.queue.application.port.in.QueuePort;
 import com.rushcrew.queue.domain.enums.QueueStatus;
@@ -44,6 +44,21 @@ public class QueueController {
         QueueRedisResponse redisResult = queuePort.enterQueue(command);
         QueueResponse response = toQueueResponse(redisResult);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
+    }
+
+    /**
+     * 대기열 순번 조회(Polling) API
+     */
+    @GetMapping("/rank")
+    public ResponseEntity<ApiResponse<QueueResponse>> getQueueRank(
+        @RequestParam UUID productId,
+        @RequestParam String token,
+        @RequestHeader(USER_ID_HEADER) Long currUserId,
+        @RequestHeader(USER_ROLE_HEADER) String role
+    ) {
+        QueueRedisResponse redisResult = queuePort.getQueueRank(productId, token, currUserId, role);
+        QueueResponse response = toQueueResponse(redisResult);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
     }
 
     // TODO: 추후 presenataion mapper 클래스로 이동 예정

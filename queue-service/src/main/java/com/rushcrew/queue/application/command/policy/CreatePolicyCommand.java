@@ -1,4 +1,4 @@
-package com.rushcrew.queue.application.command;
+package com.rushcrew.queue.application.command.policy;
 
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import com.rushcrew.queue.domain.vo.TimePeriod;
@@ -7,9 +7,9 @@ import java.util.UUID;
 import lombok.Builder;
 
 @Builder
-public record UpdatePolicyCommand(
+public record CreatePolicyCommand(
     UUID productId,
-    String timeDealName,
+    String dealName,
     QueuePolicyStatus status,
     TimePeriod timePeriod,
     TrafficSetting trafficSetting

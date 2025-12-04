@@ -1,4 +1,4 @@
-package com.rushcrew.queue.application.command;
+package com.rushcrew.queue.application.command.queue;
 
 import java.util.UUID;
 
