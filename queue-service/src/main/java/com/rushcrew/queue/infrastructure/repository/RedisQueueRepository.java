@@ -8,10 +8,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
+@Slf4j
 @Repository
 public class RedisQueueRepository implements QueueRepository {
 
@@ -38,10 +40,13 @@ public class RedisQueueRepository implements QueueRepository {
             return false;
         }
 
+        // redis 사용자 인덱스 키 생성
+        String userIndexKey = getUserIndexKey(token.getProductId(), token.getUserId());
+
         // 중복 방지 : 유저별 대기열 키 생성 (SETNX)
         // KEY: queue:user:product:{productId}:{userId} / VALUE: 토큰 UUID
         Boolean isNewUser = redisTemplate.opsForValue().setIfAbsent(
-            getUserIndexKey(token.getProductId(), token.getUserId()),
+            userIndexKey,
             token.getId().getValue().toString(),
             Duration.ofMinutes(secondsUntilClose) // TTL 설정: 타임딜 종료 시간에 맞춰 자동 만료
         );
@@ -52,13 +57,20 @@ public class RedisQueueRepository implements QueueRepository {
         }
 
         // 대기열 추가 : ZSet에 등록
-        double score = System.currentTimeMillis();
-        redisTemplate.opsForZSet().add(
+        try {
+            double score = System.currentTimeMillis();
+            redisTemplate.opsForZSet().add(
                 getWaitingKey(token.getProductId()),
                 token.getId().getValue().toString(),
                 score
             );
-        return true;
+            return true;
+        } catch (Exception e) {
+            // 보상 트랜잭션 : ZSet 저장 실패 시, 중복 방지 키(userIndexKey)도 삭제해줘야 유저가 다시 시도 가능
+            log.error("[QUEUE:REDIS:ERROR] 대기열 등록 실패로 인한 롤백 수행: userId={}, tokenId={}", token.getUserId(), token.getId());
+            redisTemplate.delete(userIndexKey);
+            throw e;
+        }
     }
 
     @Override
