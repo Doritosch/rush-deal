@@ -1,6 +1,7 @@
 package com.rushcrew.auth_service.auth.infrastructure.jwt;
 
-import com.rushcrew.auth_service.auth.application.port.TokenProvider;
+import com.rushcrew.auth_service.auth.application.port.AccessTokenProvider;
+import com.rushcrew.auth_service.auth.infrastructure.properties.JwtProperties;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class AccessTokenProvider implements TokenProvider {
+public class JwtAccessTokenProvider implements AccessTokenProvider {
 
     private final JwtProperties properties;
 
