@@ -23,10 +23,11 @@ public class QueueService implements QueuePort {
 
     /**
      * 대기열 진입
+     * TODO: product ID는 타임딜 정책(QueuePolicy) 테이블에서 유효성 검증
+     * 관리자가 정책을 등록하지 않은 상품은 대기열을 생성할 수 없음
      */
     @Override
     public QueueRedisResponse enterQueue(EnterQueueCommand command) {
-        // TODO: ProductId 유효성 검증 필요
         QueueToken queueToken = QueueToken.create(command.productId(), command.userId());
 
         // redis 대기열 저장소 저장
@@ -51,21 +52,16 @@ public class QueueService implements QueuePort {
      */
     @Override
     public QueueRedisResponse getQueueRank(UUID productId, String token, Long userId, String role) {
-        // TODO: ProductId 유효성 검증 필요
-        TokenId tokenId = TokenId.of(UUID.fromString(token));
+        TokenId tokenId = validateQueueToken(token);
 
-        // 요청시간 LocalDateTime 타입으로 변환
-        Long requestTime = getRequestTime(productId, tokenId);
-        LocalDateTime enteredAt = convertLocalDateTime(requestTime);
-
-        // 이미 활성상태인지 확인
+        // 활성 상태 여부 확인
         if (queueRepository.isActivatedToken(productId, tokenId)) {
             return QueueRedisResponse.builder()
                 .token(tokenId.getValue())
                 .productId(productId)
                 .rank(0L) // 활성 상태는 순번 0 (이미 활성열에 있으므로)
                 .status(QueueStatus.ACTIVE)
-                .enteredAt(enteredAt)
+                .enteredAt(LocalDateTime.now()) // 활성 상태일 때, 진입시간 현재시간으로 설정
                 .build();
         }
 
@@ -76,6 +72,10 @@ public class QueueService implements QueuePort {
             // Redis에 없으면 만료되었거나 잘못된 토큰
             throw new IllegalArgumentException("대기열에 존재하지 않는 토큰입니다.");
         }
+
+        // 요청시간 LocalDateTime 타입으로 변환
+        Long requestTime = getRequestTime(productId, tokenId);
+        LocalDateTime enteredAt = convertLocalDateTime(requestTime);
 
         return QueueRedisResponse.builder()
             .token(tokenId.getValue())
@@ -101,5 +101,16 @@ public class QueueService implements QueuePort {
         // 진입 요청 시간 반환
         Double score = queueRepository.getWaitingScore(productId, tokenId);
         return score != null ? score.longValue() : System.currentTimeMillis();
+    }
+
+    private TokenId validateQueueToken(String token) {
+        TokenId tokenId;
+        try {
+            tokenId = TokenId.of(UUID.fromString(token));
+        } catch (IllegalArgumentException e) {
+            // TODO : BUSINESSEXCEPTION으로 수정 필요
+            throw new IllegalArgumentException("잘못된 토큰 형식입니다.");
+        }
+        return tokenId;
     }
 }
