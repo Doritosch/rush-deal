@@ -53,7 +53,7 @@ public class OptionServiceImpl implements OptionService {
         productValidator.checkPermission(product);
 
         ProductOption option = productRepository.findOptionBySkuId(skuId)
-            .orElseThrow(() -> new BusinessException(ProductErrorCode.INVALID_OPTION));
+            .orElseThrow(() -> new BusinessException(ProductErrorCode.NOT_FOUND_OPTION));
         UpdateOptionParams params = new UpdateOptionParams(command.size(), command.color());
 
         option.update(params);
@@ -68,7 +68,7 @@ public class OptionServiceImpl implements OptionService {
         productValidator.checkPermission(product);
 
         ProductOption option = productRepository.findOptionBySkuId(skuId)
-            .orElseThrow(() -> new BusinessException(ProductErrorCode.INVALID_OPTION));
+            .orElseThrow(() -> new BusinessException(ProductErrorCode.NOT_FOUND_OPTION));
 //        option.softDelete(userId); TODO: 추후에 주석처리 풀 예정
     }
 }

@@ -19,7 +19,7 @@ public class ProductValidator {
         // TODO: 요청한 사용자 userRole이 ADMIN or SELLEER인지 확인하는 로직 추가 예정
 
         return productRepository.findByIdAndDeletedAtIsNull(productId)
-            .orElseThrow(() -> new BusinessException(ProductErrorCode.INVALID_OPTION));
+            .orElseThrow(() -> new BusinessException(ProductErrorCode.NOT_FOUND_OPTION));
     }
 
     public void checkPermission(Product product) {
