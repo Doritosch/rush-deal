@@ -1,6 +1,7 @@
 package com.rushcrew.product.infrastructure.repostiory;
 
 import com.rushcrew.product.domain.entity.Product;
+import com.rushcrew.product.domain.entity.ProductOption;
 import com.rushcrew.product.domain.repository.ProductRepository;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,5 +27,10 @@ public class ProductRepositoryAdapter implements ProductRepository {
     @Override
     public void flush() {
         jpaProductRepository.flush();
+    }
+
+    @Override
+    public Optional<ProductOption> findOptionBySkuId(UUID skuId) {
+        return jpaProductRepository.findOptionBySkuId(skuId);
     }
 }

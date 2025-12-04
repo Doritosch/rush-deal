@@ -2,11 +2,14 @@ package com.rushcrew.product.application.service.impl;
 
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.product.application.command.CreateOptionCommand;
+import com.rushcrew.product.application.command.UpdateOptionCommand;
+import com.rushcrew.product.application.result.UpdateOptionResult;
 import com.rushcrew.product.application.service.OptionService;
 import com.rushcrew.product.application.service.ProductValidator;
 import com.rushcrew.product.domain.entity.Product;
 import com.rushcrew.product.domain.entity.ProductOption;
 import com.rushcrew.product.domain.exception.ProductErrorCode;
+import com.rushcrew.product.domain.model.UpdateOptionParams;
 import com.rushcrew.product.domain.repository.ProductRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,5 +43,21 @@ public class OptionServiceImpl implements OptionService {
         productRepository.flush();
 
         return newOptions.stream().map(ProductOption::getId).toList();
+    }
+
+    @Override
+    @Transactional
+    public UpdateOptionResult updateProductOption(UUID productId, UUID skuId,
+        UpdateOptionCommand command) {
+        Product product = productValidator.findAndValidateProduct(productId);
+        productValidator.checkPermission(product);
+
+        ProductOption option = productRepository.findOptionBySkuId(skuId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 옵션입니다."));
+        UpdateOptionParams params = new UpdateOptionParams(command.size(), command.color());
+
+        option.update(params);
+
+        return UpdateOptionResult.from(option);
     }
 }
