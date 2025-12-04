@@ -4,10 +4,13 @@ import com.rushcrew.queue.application.command.EnterQueueCommand;
 import com.rushcrew.queue.application.dto.QueueRedisResponse;
 import com.rushcrew.queue.application.port.in.QueuePort;
 import com.rushcrew.queue.domain.entity.QueueToken;
+import com.rushcrew.queue.domain.enums.QueueStatus;
 import com.rushcrew.queue.domain.repository.QueueRepository;
+import com.rushcrew.queue.domain.vo.TokenId;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -29,7 +32,7 @@ public class QueueService implements QueuePort {
         queueRepository.register(queueToken);
 
         // 현재 순번 조회
-        Long waitingRank = queueRepository.getWaitingRank(command.productId(), queueToken);
+        Long waitingRank = queueRepository.getWaitingRank(command.productId(), queueToken.getId());
         // 요청시간 LocalDateTime 타입으로 변환
         LocalDateTime enteredAt = convertLocalDateTime(queueToken.getRequestTime());
 
@@ -42,6 +45,44 @@ public class QueueService implements QueuePort {
             .build();
     }
 
+    /**
+     * 대기열 순번, 상태 조회 (polling)
+     */
+    @Override
+    public QueueRedisResponse getQueueRank(UUID productId, String tokenValue) {
+        TokenId tokenId = TokenId.of(UUID.fromString(tokenValue));
+
+        // 요청시간 LocalDateTime 타입으로 변환
+        Long requestTime = getRequestTime(productId, tokenId);
+        LocalDateTime enteredAt = convertLocalDateTime(requestTime);
+
+        // 이미 활성상태인지 확인
+        if (queueRepository.isActivatedToken(productId, tokenId)) {
+            return QueueRedisResponse.builder()
+                .token(tokenId.getValue())
+                .productId(productId)
+                .rank(0L) // 활성 상태는 순번 0 (이미 활성열에 있으므로)
+                .status(QueueStatus.ACTIVE)
+                .enteredAt(enteredAt)
+                .build();
+        }
+
+        // 대기열 순번 확인 (Redis ZRANK)
+        // rank는 0부터 시작
+        Long waitingRank = queueRepository.getWaitingRank(productId, tokenId);
+        if (waitingRank == null) {
+            // Redis에 없으면 만료되었거나 잘못된 토큰
+            throw new IllegalArgumentException("대기열에 존재하지 않는 토큰입니다.");
+        }
+
+        return QueueRedisResponse.builder()
+            .token(tokenId.getValue())
+            .productId(productId)
+            .rank(waitingRank + 1) // 사용자 친화적 순번 (0번대신 1번부터 표시)
+            .status(QueueStatus.WAITING)
+            .enteredAt(enteredAt)
+            .build();
+    }
 
     /**
      * 타임스탬프 -> LocalDateTime 변환
@@ -52,5 +93,11 @@ public class QueueService implements QueuePort {
         return Instant.ofEpochMilli(timestamp)
             .atZone(ZoneId.systemDefault())
             .toLocalDateTime();
+    }
+
+    private Long getRequestTime(UUID productId, TokenId tokenId) {
+        // 진입 요청 시간 반환
+        Double score = queueRepository.getWaitingScore(productId, tokenId);
+        return score != null ? score.longValue() : System.currentTimeMillis();
     }
 }
