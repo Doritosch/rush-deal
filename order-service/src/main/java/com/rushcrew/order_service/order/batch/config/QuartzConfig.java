@@ -29,7 +29,11 @@ public class QuartzConfig {
 			.forJob(autoConfirmJobDeatail())
 			.withIdentity("autoConfirmPurchaseTrigger")
 			.withSchedule(
-				CronScheduleBuilder.cronSchedule("0 0 * * * ?")	// 매 시간 정각
+				// 테스트: 1분마다 실행
+				CronScheduleBuilder.cronSchedule("0 * * * * ?")
+
+				// // 운영: 매 시간 정각 실행
+				// CronScheduleBuilder.cronSchedule("0 0 * * * ?")
 			).build();
 	}
 }
