@@ -35,4 +35,15 @@ public interface ProductJpaRepository extends JpaRepository<Product, UUID> {
         @Param("filter") ProductFilter productFilter,
         Pageable pageable
     );
+
+
+    @Query("""
+                    SELECT DISTINCT p
+                    FROM Product p
+                    LEFT JOIN FETCH p.options
+                    WHERE p.id = :productId
+                      AND p.isActive = true
+                      AND p.deletedAt IS NULL
+        """)
+    Optional<Product> findProductDetail(UUID productId);
 }

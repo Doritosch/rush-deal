@@ -32,4 +32,9 @@ public class ProductRepositoryAdapter implements ProductRepository {
         Pageable pageable) {
         return jpaProductRepository.searchEnabledProducts(productFilter, pageable);
     }
+
+    @Override
+    public Optional<Product> findProductDetail(UUID productId) {
+        return jpaProductRepository.findProductDetail(productId);
+    }
 }

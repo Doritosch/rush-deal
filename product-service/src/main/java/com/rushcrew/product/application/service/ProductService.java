@@ -4,6 +4,7 @@ import com.rushcrew.product.application.ProductFilter;
 import com.rushcrew.product.application.command.CreateProductCommand;
 import com.rushcrew.product.application.command.UpdateProductCommand;
 import com.rushcrew.product.application.result.CreateProductResult;
+import com.rushcrew.product.application.result.ProductDetailResult;
 import com.rushcrew.product.application.result.ProductResult;
 import com.rushcrew.product.application.result.UpdateProductResult;
 import java.util.UUID;
@@ -24,4 +25,5 @@ public interface ProductService {
 
     Page<ProductResult> getProducts(ProductFilter productFilter, Pageable pageable);
 
+    ProductDetailResult getProductDetail(UUID productId);
 }

@@ -4,12 +4,14 @@ import com.rushcrew.product.application.ProductFilter;
 import com.rushcrew.product.application.command.CreateProductCommand;
 import com.rushcrew.product.application.command.UpdateProductCommand;
 import com.rushcrew.product.application.result.CreateProductResult;
+import com.rushcrew.product.application.result.ProductDetailResult;
 import com.rushcrew.product.application.result.ProductResult;
 import com.rushcrew.product.application.result.UpdateProductResult;
 import com.rushcrew.product.application.service.ProductService;
 import com.rushcrew.product.presentation.dto.request.CreateProductRequest;
 import com.rushcrew.product.presentation.dto.request.UpdateProductRequest;
 import com.rushcrew.product.presentation.dto.response.CreateProductResponse;
+import com.rushcrew.product.presentation.dto.response.ProductDetailResponse;
 import com.rushcrew.product.presentation.dto.response.ProductResponse;
 import com.rushcrew.product.presentation.dto.response.UpdateProductResponse;
 import jakarta.validation.Valid;
@@ -92,6 +94,15 @@ public class ProductController {
         ProductFilter productFilter = ProductFilter.of(category, minPrice, maxPrice);
         Page<ProductResult> resultList = productService.getProducts(productFilter, pageable);
         Page<ProductResponse> response = resultList.map(ProductResponse::from);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductDetailResponse> getProductDetail(
+        @PathVariable UUID productId
+    ) {
+        ProductDetailResult result = productService.getProductDetail(productId);
+        ProductDetailResponse response = ProductDetailResponse.from(result);
         return ResponseEntity.ok(response);
     }
 }

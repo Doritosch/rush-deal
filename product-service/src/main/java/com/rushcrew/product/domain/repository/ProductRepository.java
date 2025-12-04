@@ -18,4 +18,6 @@ public interface ProductRepository {
      * 활성화된(비활성화 X, 논리삭제 X) 상품들을 필터링 및 페이지 조회하는 메서드
      */
     Page<ProductResult> searchEnabledProducts(ProductFilter productFilter, Pageable pageable);
+
+    Optional<Product> findProductDetail(UUID productId);
 }
