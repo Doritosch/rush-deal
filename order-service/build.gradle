@@ -21,6 +21,12 @@ dependencies {
     // 자체 공통 모듈
     implementation 'com.github.RushCrew:rush-deal-common:v0.0.7'
 
+    // Spring Batch
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+
+    // Quartz (스케줄러)
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
+
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'
 
