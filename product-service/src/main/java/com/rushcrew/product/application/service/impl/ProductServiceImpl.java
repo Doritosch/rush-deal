@@ -39,6 +39,8 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public UpdateProductResult updateProduct(UUID productId, UpdateProductCommand command) {
         Product product = findAndValidateProduct(productId);
+        checkPermission(product);
+
         UpdateProductParams params = new UpdateProductParams(
             command.companyName(), command.category(), command.price(),
             command.productName(), command.description()
@@ -48,11 +50,44 @@ public class ProductServiceImpl implements ProductService {
         return UpdateProductResult.from(product);
     }
 
+    @Override
+    @Transactional
+    public void disableProduct(UUID productId) {
+        Product product = findAndValidateProduct(productId);
+        checkPermission(product);
+        product.deactivate();
+    }
+
+    @Override
+    @Transactional
+    public void enableProduct(UUID productId) {
+        Product product = findAndValidateProduct(productId);
+        checkPermission(product);
+        product.activate();
+    }
+
+    @Override
+    @Transactional
+    public void deleteProduct(UUID productId) {
+        Product product = findAndValidateProduct(productId);
+        checkPermission(product);
+
+        // TODO: 추후에 사용자 정보 가지고 오면 주석처리 풀 예정
+//        product.delete(userId);
+    }
+
     // 유효성 검증한 product 반환
     private Product findAndValidateProduct(UUID productId) {
         // TODO: 요청한 사용자 userRole이 ADMIN or SELLEER인지 확인하는 로직 추가 예정
 
         return productRepository.findByIdAndDeletedAtIsNull(productId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+    }
+
+    private void checkPermission(Product product) {
+        /* TODO: 요청한 사용자 userRole이
+            ADMIN or product.sellerId와 일치하는 SELLEER인지
+            확인하는 로직 추가 예정
+        */
     }
 }
