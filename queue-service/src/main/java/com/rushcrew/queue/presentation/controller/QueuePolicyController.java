@@ -1,4 +1,4 @@
-package com.rushcrew.queue.presentation;
+package com.rushcrew.queue.presentation.controller;
 
 import com.rushcrew.common.dto.ApiResponse;
 import com.rushcrew.queue.application.command.CreatePolicyCommand;

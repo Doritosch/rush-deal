@@ -68,7 +68,7 @@ public class QueueService implements QueuePort {
         }
 
         // 대기열 순번 확인 (Redis ZRANK)
-        // rank는 0부터 시작
+        // rank는 0부터 시작 (내 앞의 대기 인원 수 (0이면 내가 1빠))
         Long waitingRank = queueRepository.getWaitingRank(productId, tokenId);
         if (waitingRank == null) {
             // Redis에 없으면 만료되었거나 잘못된 토큰
