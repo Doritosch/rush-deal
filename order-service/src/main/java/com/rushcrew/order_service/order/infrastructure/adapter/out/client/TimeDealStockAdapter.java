@@ -10,8 +10,10 @@ import com.rushcrew.order_service.order.application.port.dto.TimeDealStatus;
 import com.rushcrew.order_service.order.application.port.dto.TimeDealStockDetail;
 import com.rushcrew.order_service.order.application.port.out.TimeDealStockPort;
 import com.rushcrew.order_service.order.infrastructure.adapter.out.client.feign.TimeDealStockFeignClient;
+import com.rushcrew.order_service.order.infrastructure.dto.timedeal.StockConfirmRequest;
 import com.rushcrew.order_service.order.infrastructure.dto.timedeal.StockReservationRequest;
 import com.rushcrew.order_service.order.infrastructure.dto.timedeal.StockReservationResponse;
+import com.rushcrew.order_service.order.infrastructure.dto.timedeal.StockRestoreRequest;
 import com.rushcrew.order_service.order.infrastructure.dto.timedeal.TimeDealResponse;
 import com.rushcrew.order_service.order.infrastructure.dto.timedeal.TimeDealResponseStatus;
 import com.rushcrew.order_service.order.infrastructure.dto.timedeal.TimeDealStockDetailResponse;
@@ -82,13 +84,24 @@ public class TimeDealStockAdapter implements TimeDealStockPort {
 	}
 
 	@Override
-	public void confirmReservation(UUID timeDealStockId, Integer quantity) {
-
+	public void confirmStock(UUID timeDealStockId, Integer quantity, String orderId) {
+		StockConfirmRequest request = StockConfirmRequest.builder()
+			.timeDealStockId(timeDealStockId)
+			.quantity(quantity)
+			.orderId(orderId)
+			.build();
+		feignClient.confirmStock(request);
 	}
 
 	@Override
-	public void cancelReservation(UUID timeDealStockId, Integer quantity) {
-
+	public void restoreStock(UUID timeDealStockId, Integer quantity, String orderId, String reason) {
+		StockRestoreRequest request = StockRestoreRequest.builder()
+			.timeDealStockId(timeDealStockId)
+			.quantity(quantity)
+			.orderId(orderId)
+			.reason(reason)
+			.build();
+		feignClient.restoreStock(request);
 	}
 
 	private TimeDealStatus mapStatus(TimeDealResponseStatus infraStatus) {

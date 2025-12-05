@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.rushcrew.order_service.order.infrastructure.dto.timedeal.StockConfirmRequest;
 import com.rushcrew.order_service.order.infrastructure.dto.timedeal.StockReservationRequest;
 import com.rushcrew.order_service.order.infrastructure.dto.timedeal.StockReservationResponse;
+import com.rushcrew.order_service.order.infrastructure.dto.timedeal.StockRestoreRequest;
 import com.rushcrew.order_service.order.infrastructure.dto.timedeal.TimeDealResponse;
 import com.rushcrew.order_service.order.infrastructure.dto.timedeal.TimeDealStockDetailResponse;
 
@@ -26,16 +28,9 @@ public interface TimeDealStockFeignClient {
 	@PostMapping("/api/v1/timedeal-stocks/reserve")
 	StockReservationResponse reserveStock(@RequestBody StockReservationRequest request);
 
-	@PostMapping("/api/v1/timedeal-stocks/{timeDealStockId}/confirm")
-	void confirmReservation(
-		@PathVariable("timeDealStockId") UUID timeDealStockId,
-		@RequestParam("quantity") Integer quantity
-	);
+	@PostMapping("/api/v1/timedeal-stocks/confirm")
+	void confirmStock(StockConfirmRequest request);
 
-	@PostMapping("/api/v1/timedeal-stocks/{timeDealStockId}/cancel")
-	void cancelReservation(
-		@PathVariable("timeDealStockId") UUID timeDealStockId,
-		@RequestParam("quantity") Integer quantity
-	);
-
+	@PostMapping("/api/v1/timedeal-stocks/restore")
+	void restoreStock(StockRestoreRequest request);
 }
