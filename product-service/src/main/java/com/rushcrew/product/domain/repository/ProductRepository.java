@@ -3,6 +3,7 @@ package com.rushcrew.product.domain.repository;
 import com.rushcrew.product.application.ProductFilter;
 import com.rushcrew.product.application.result.ProductResult;
 import com.rushcrew.product.domain.entity.Product;
+import com.rushcrew.product.domain.entity.ProductOption;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -20,4 +21,8 @@ public interface ProductRepository {
     Page<ProductResult> searchEnabledProducts(ProductFilter productFilter, Pageable pageable);
 
     Optional<Product> findProductDetail(UUID productId);
+
+    void saveAndFlush(Product product);
+
+    Optional<ProductOption> findOptionBySkuId(UUID skuId);
 }
