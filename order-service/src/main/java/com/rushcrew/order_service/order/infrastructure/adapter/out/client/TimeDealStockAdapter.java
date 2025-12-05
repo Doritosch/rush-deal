@@ -18,6 +18,7 @@ import com.rushcrew.order_service.order.infrastructure.dto.timedeal.TimeDealResp
 import com.rushcrew.order_service.order.infrastructure.dto.timedeal.TimeDealResponseStatus;
 import com.rushcrew.order_service.order.infrastructure.dto.timedeal.TimeDealStockDetailResponse;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -27,12 +28,12 @@ public class TimeDealStockAdapter implements TimeDealStockPort {
 	private final TimeDealStockFeignClient feignClient;
 
 	@Override
-	public TimeDealInfo getTimeDeal(String timeDealId) {
-		TimeDealResponse response = feignClient.getTimeDeal(timeDealId);
+	public TimeDealInfo getTimeDeal(@NonNull UUID timeDealId) {
+		TimeDealResponse response = feignClient.getTimeDeal(timeDealId.toString());
 		TimeDealStatus appStatus = mapStatus(response.getStatus());
 
 		return TimeDealInfo.builder()
-			.timeDealId(response.getTimeDealId())
+			.timeDealId(UUID.fromString(response.getTimeDealId()))
 			.title(response.getTitle())
 			.status(appStatus)
 			.discountPrice(response.getDiscountPrice())
@@ -42,33 +43,37 @@ public class TimeDealStockAdapter implements TimeDealStockPort {
 	}
 
 	@Override
-	public TimeDealStockDetail getTimeDealStockDetail(UUID timeDealStockId) {
-		TimeDealStockDetailResponse response = feignClient.getTimeDealStockDetail(timeDealStockId);
+	public TimeDealStockDetail getTimeDealStockDetail(@NonNull UUID timeDealStockId) {
+		TimeDealStockDetailResponse response = feignClient.getTimeDealStockDetail(timeDealStockId.toString());
 		TimeDealStatus appStatus = mapStatus(response.getStatus());
 
 		return TimeDealStockDetail.builder()
-			.timeDealStockId(response.getTimeDealStockId())
-			.timeDealId(response.getTimeDealId())
+			.timeDealStockId(UUID.fromString(response.getTimeDealStockId()))
+			.timeDealId(UUID.fromString(response.getTimeDealId()))
 			.availableStock(response.getAvailableStock())
 			.reservedStock(response.getReservedStock())
 			.soldStock(response.getSoldStock())
 			.status(appStatus)
-			.productId(response.getProductId())
+			.productId(UUID.fromString(response.getProductId()))
 			.productName(response.getProductName())
 			.productPrice(response.getProductPrice())
 			.productDescription(response.getProductDescription())
 			.category(response.getCategory())
-			.optionId(response.getOptionId())
+			.optionId(UUID.fromString(response.getOptionId()))
 			.optionName(response.getOptionName())
-			.sellerId(response.getSellerId())
+			.sellerId(UUID.fromString(response.getSellerId()))
 			.isActive(response.isActive())
 			.build();
 	}
 
 	@Override
-	public StockReservationResult reserveStock(UUID timeDealStockId, Integer quantity, Long userId) {
+	public StockReservationResult reserveStock(
+		@NonNull UUID timeDealStockId,
+		@NonNull Integer quantity,
+		@NonNull Long userId
+	) {
 		StockReservationRequest request = StockReservationRequest.builder()
-			.timeDealStockId(timeDealStockId)
+			.timeDealStockId(timeDealStockId.toString())
 			.quantity(quantity)
 			.userId(userId)
 			.build();
@@ -84,21 +89,30 @@ public class TimeDealStockAdapter implements TimeDealStockPort {
 	}
 
 	@Override
-	public void confirmStock(UUID timeDealStockId, Integer quantity, String orderId) {
+	public void confirmStock(
+		@NonNull UUID timeDealStockId,
+		@NonNull Integer quantity,
+		@NonNull UUID orderId
+	) {
 		StockConfirmRequest request = StockConfirmRequest.builder()
-			.timeDealStockId(timeDealStockId)
+			.timeDealStockId(timeDealStockId.toString())
 			.quantity(quantity)
-			.orderId(orderId)
+			.orderId(orderId.toString())
 			.build();
 		feignClient.confirmStock(request);
 	}
 
 	@Override
-	public void restoreStock(UUID timeDealStockId, Integer quantity, String orderId, String reason) {
+	public void restoreStock(
+		@NonNull UUID timeDealStockId,
+		@NonNull Integer quantity,
+		@NonNull UUID orderId,
+		@NonNull String reason
+	) {
 		StockRestoreRequest request = StockRestoreRequest.builder()
-			.timeDealStockId(timeDealStockId)
+			.timeDealStockId(timeDealStockId.toString())
 			.quantity(quantity)
-			.orderId(orderId)
+			.orderId(orderId.toString())
 			.reason(reason)
 			.build();
 		feignClient.restoreStock(request);

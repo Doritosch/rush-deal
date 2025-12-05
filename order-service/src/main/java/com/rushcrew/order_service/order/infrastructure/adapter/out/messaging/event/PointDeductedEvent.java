@@ -4,15 +4,17 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+import lombok.NonNull;
+
 /*
  * 포인트 차감 완료 이벤트 (유저 -> 주문)
  */
 public record PointDeductedEvent(
-	Long userId,
-	String orderId,
-	String sagaId,
-	BigDecimal deductedAmount,
-	UUID pointHistoryId,
-	BigDecimal newBalance,
-	Instant timestamp
+	@NonNull Long userId,
+	@NonNull String orderId,
+	@NonNull String sagaId,
+	@NonNull BigDecimal deductedAmount,
+	@NonNull String pointHistoryId,
+	@NonNull BigDecimal newBalance,
+	@NonNull Instant timestamp
 ) {}

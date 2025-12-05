@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 /*
 * 결제 요청 이벤트
@@ -16,12 +17,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentRequestedEvent {
-	private String orderId;
-	private Long userId;
-	private BigDecimal originalAmount;
-	private BigDecimal pointUsed;
-	private BigDecimal finalAmount;
-	private String paymentMethod;
-	private String sagaId;
-	private Instant timestamp;
+	@NonNull private String orderId;
+	@NonNull private Long userId;
+	@NonNull private BigDecimal originalAmount;
+	@NonNull private BigDecimal pointUsed;
+	@NonNull private BigDecimal finalAmount;
+	@NonNull private String paymentMethod;
+	@NonNull private String sagaId;
+	@NonNull private Instant timestamp;
 }

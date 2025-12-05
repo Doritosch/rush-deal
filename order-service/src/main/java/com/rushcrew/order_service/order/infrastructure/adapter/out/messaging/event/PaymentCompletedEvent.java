@@ -4,13 +4,15 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+import lombok.NonNull;
+
 /*
 * 결제 완료 이벤트
 * */
 public record PaymentCompletedEvent(
-	String orderId,
-	UUID paymentId,
-	BigDecimal capturedAmount,
-	String sagaId,
-	Instant timestamp
+	@NonNull String orderId,
+	@NonNull String paymentId,
+	@NonNull BigDecimal capturedAmount,
+	@NonNull String sagaId,
+	@NonNull Instant timestamp
 ) {}

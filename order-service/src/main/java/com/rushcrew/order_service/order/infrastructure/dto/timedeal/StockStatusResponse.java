@@ -6,17 +6,18 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class StockStatusResponse {
-	private UUID timeDealStockId;
-	private UUID productId;
-	private UUID optionId;
-	private Integer availableStock;
-	private Integer reservedStock;
-	private Integer soldStock;
-	private String status; // AVAILABLE, SOLD_OUT
+	@NonNull private String timeDealStockId;
+	@NonNull private String productId;
+	@NonNull private String optionId;
+	@NonNull private Integer availableStock;
+	@NonNull private Integer reservedStock;
+	@NonNull private Integer soldStock;
+	@NonNull private String status; // AVAILABLE, SOLD_OUT
 }

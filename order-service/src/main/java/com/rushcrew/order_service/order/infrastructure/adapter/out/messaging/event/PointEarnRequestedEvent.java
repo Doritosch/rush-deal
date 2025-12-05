@@ -7,15 +7,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class PointEarnRequestedEvent {
-	private Long userId;
-	private String orderId;
-	private BigDecimal earnAmount;
-	private String reason;	// 구매확정, 자동 구매확정
-	private Instant timestamp;
+	@NonNull private Long userId;
+	@NonNull private String orderId;
+	@NonNull private BigDecimal earnAmount;
+	@NonNull private String reason;	// 구매확정, 자동 구매확정
+	@NonNull private Instant timestamp;
 }
