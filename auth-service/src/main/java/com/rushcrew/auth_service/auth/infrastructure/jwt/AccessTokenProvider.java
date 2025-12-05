@@ -8,24 +8,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
 import javax.crypto.SecretKey;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class AccessTokenProvider implements TokenProvider {
 
-    @Value("${jwt.access.secret}")
-    private String accessSecret;
-
-    @Value("${jwt.access.expiration}")
-    private Long accessExpiration;
+    private final JwtProperties properties;
 
     private SecretKey accessSecretKey;
 
     @PostConstruct
     public void init() {
         this.accessSecretKey = Keys.hmacShaKeyFor(
-            accessSecret.getBytes(StandardCharsets.UTF_8)
+            properties.access().secret().getBytes(StandardCharsets.UTF_8)
         );
     }
 
@@ -39,7 +36,9 @@ public class AccessTokenProvider implements TokenProvider {
             .id(UUID.randomUUID().toString())
             .issuer("rush-deal")
             .issuedAt(new Date())
-            .expiration(new Date(System.currentTimeMillis() + accessExpiration))
+            .expiration(
+                new Date(System.currentTimeMillis() + properties.access().expiration())
+            )
             .signWith(accessSecretKey)
             .compact();
     }

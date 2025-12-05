@@ -8,7 +8,7 @@ public record SignUpResponse(
     String name,
     String accessToken
 ) {
-    public static SignUpResponse from(SignUpResult result) {
+    public static SignUpResponse fromResult(SignUpResult result) {
         return new SignUpResponse(
             result.userId(),
             result.email(),

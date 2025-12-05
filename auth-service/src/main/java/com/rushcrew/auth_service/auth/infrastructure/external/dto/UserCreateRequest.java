@@ -8,7 +8,7 @@ public record UserCreateRequest(
     String name,
     String role
 ) {
-    public static UserCreateRequest from(SignUpCommand command) {
+    public static UserCreateRequest fromCommand(SignUpCommand command) {
         return new UserCreateRequest(
             command.email(),
             command.password(),
