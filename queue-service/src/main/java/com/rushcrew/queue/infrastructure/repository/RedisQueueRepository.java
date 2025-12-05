@@ -7,11 +7,16 @@ import com.rushcrew.queue.domain.vo.TrafficSetting;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -77,6 +82,44 @@ public class RedisQueueRepository implements QueueRepository {
 
     @Override
     public void activateTokens(UUID productId, List<String> tokens, TrafficSetting setting) {
+        if (tokens == null || tokens.isEmpty()) { return; }
+
+        String waitingKey = getWaitingKey(productId);
+        String activeKey = getActiveKey(productId);
+
+        // TrafficSetting의 TTL을 사용하여 만료 시간 계산
+        double expireAt = getExpireAt(setting.getTtl());
+
+        redisTemplate.executePipelined(new SessionCallback<Object>() {
+            @Override
+            public Object execute(RedisOperations operations) throws DataAccessException {
+                for (String token : tokens) {
+                    // 활성열 추가 (Score = 만료 예정 시간)
+                    operations.opsForZSet().add(activeKey, token, expireAt);
+
+                    // 대기열 제거
+                    operations.opsForZSet().remove(waitingKey, token);
+                }
+                return null;
+            }
+        });
+        log.info("[QUEUE:SUCCESS:ACTIVE] 상품({}) :: {}명 활성화 완료 (Max: {}, Limit: {})",
+            productId, tokens.size(), setting.getMaxCapacity(), setting.getLimitSize());
+    }
+
+    /**
+     * 활성 대상 토큰 조회
+     * ZSet에서 점수가 가장 낮은 N명 조회
+     */
+    @Override
+    public List<String> getWaitingTokens(UUID productId, long count) {
+        // 0번부터 count-1명까지 (상위 N명) -> Redis ZRANGE
+        Set<String> tokens = redisTemplate.opsForZSet().range(
+            getWaitingKey(productId),
+            0,
+            count - 1
+        );
+        return tokens == null ? List.of() : new ArrayList<>(tokens);
     }
 
     @Override
@@ -152,8 +195,8 @@ public class RedisQueueRepository implements QueueRepository {
         // ActiveKey(활성열 키) 생성
         String activeKey = getActiveKey(token.getProductId());
         try {
-            // 만료 시간(score) 계산: 현재시간
-            double expireAt = System.currentTimeMillis() + (activeTtl * 1000L);
+            // 만료 시간(score) 계산: 현재시간 기준 + activeTtl
+            double expireAt = getExpireAt(activeTtl);
 
             // active(활성열) ZSet에 저장 (Score = 만료시간)
             redisTemplate.opsForZSet().add(
@@ -205,5 +248,10 @@ public class RedisQueueRepository implements QueueRepository {
 
     private String getUserIndexKey(UUID productId, Long userId) {
         return String.format(USER_INDEX_KEY, productId, userId);
+    }
+
+    private double getExpireAt(Integer activeTtl) {
+        long now = System.currentTimeMillis();
+        return now + (activeTtl * 1000L);
     }
 }

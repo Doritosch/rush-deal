@@ -26,6 +26,15 @@ public interface QueueRepository {
     void activateTokens(UUID productId, List<String> tokens, TrafficSetting trafficSetting);
 
     /**
+     * 대기열에서 Score 정렬 순서대로 N개의 토큰 조회 (범위 조회)
+     * 활성화 대상 토큰을 선별하기 위함
+     * @param productId
+     * @param count
+     * @return
+     */
+    List<String> getWaitingTokens(UUID productId, long count);
+
+    /**
      * 활성 토큰 검증 (주문 서비스에서 검증 요청 시 사용)
      * @param productId
      * @param tokenId
