@@ -1,0 +1,48 @@
+package com.rushcrew.order_service.order.presentation;
+
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.rushcrew.common.dto.ApiResponse;
+import com.rushcrew.order_service.global.util.RoleChecker;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@RestController
+@RequestMapping("/api/v1/batch")
+@RequiredArgsConstructor
+public class BatchController {
+
+	private final JobLauncher jobLauncher;
+	private final Job autoConfirmPurchaseJob;
+
+	/* 자동 구매확정 배치 수동 실행 - 관리자 전용 */
+	@PostMapping("/auto-confirm")
+	public ApiResponse<String> runAutoConfirmBatch(
+		@RequestHeader("X-User-Id") Long userId,
+		@RequestHeader(value = "X-User-Role", required = false) String role
+	) {
+		RoleChecker.checkRole(role, "MASTER");
+		log.info("====== 트리거 매뉴얼: 자동 구매확정 배치 ======");
+
+		try {
+			JobParameters params = new JobParametersBuilder()
+				.addLong("timestamp", System.currentTimeMillis())
+				.toJobParameters();
+			jobLauncher.run(autoConfirmPurchaseJob, params);
+			return ApiResponse.success("배치 작업 시작 성공");
+
+		} catch(Exception e) {
+			log.error("====== 배치 작업 시작 실패 ======");
+			return ApiResponse.error("배치 작업 시작 실패. 에러 메시지: " + e.getMessage());
+		}
+	}
+}

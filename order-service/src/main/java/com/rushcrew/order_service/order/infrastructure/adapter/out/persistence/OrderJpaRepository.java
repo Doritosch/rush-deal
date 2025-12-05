@@ -1,12 +1,16 @@
 package com.rushcrew.order_service.order.infrastructure.adapter.out.persistence;
 
+import java.time.Instant;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.rushcrew.order_service.order.domain.entity.Order;
+import com.rushcrew.order_service.order.domain.enums.OrderStatus;
 
 public interface OrderJpaRepository extends JpaRepository<Order, UUID> {
 
@@ -22,4 +26,7 @@ public interface OrderJpaRepository extends JpaRepository<Order, UUID> {
 		@Param("userId") Long userId,
 		@Param("timeDealId") String timeDealId
 	);
+
+	/* 자동 구매확정 대상 조회 */
+	Page<Order> findAllByStatusAndAutoConfirmScheduledAtBefore(OrderStatus status, Instant scheduledAt, Pageable pageable);
 }
