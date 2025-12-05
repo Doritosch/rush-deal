@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.StringRedisConnection;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SessionCallback;
@@ -90,18 +92,17 @@ public class RedisQueueRepository implements QueueRepository {
         // TrafficSetting의 TTL을 사용하여 만료 시간 계산
         double expireAt = getExpireAt(setting.getTtl());
 
-        redisTemplate.executePipelined(new SessionCallback<Object>() {
-            @Override
-            public Object execute(RedisOperations operations) throws DataAccessException {
+        redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+            // StringRedisConnection으로 형변환
+            StringRedisConnection strConnection = (StringRedisConnection) connection;
                 for (String token : tokens) {
                     // 활성열 추가 (Score = 만료 예정 시간)
-                    operations.opsForZSet().add(activeKey, token, expireAt);
+                    strConnection.zAdd(activeKey, expireAt, token);
 
                     // 대기열 제거
-                    operations.opsForZSet().remove(waitingKey, token);
+                    strConnection.zRem(waitingKey, token);
                 }
-                return null;
-            }
+                return null; // 파이프라인은 반환값이 null이어야 함
         });
         log.info("[QUEUE:SUCCESS:ACTIVE] 상품({}) :: {}명 활성화 완료 (Max: {}, Limit: {})",
             productId, tokens.size(), setting.getMaxCapacity(), setting.getLimitSize());
