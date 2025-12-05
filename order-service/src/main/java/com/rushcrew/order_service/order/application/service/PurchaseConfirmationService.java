@@ -23,13 +23,14 @@ public class PurchaseConfirmationService {
 	private final OrderRepository orderRepository;
 	private final PointEventPort pointEventPort;
 
+	/* 구매 확정 */
 	@Transactional
 	public ConfirmPurchaseResult confirmPurchase(ConfirmPurchaseCommand command) {
 		// 주문 조회
-		Order order = orderRepository.findById(command.getOrderId())
+		Order order = orderRepository.findById(command.orderId())
 			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 		// 본인 주문인지
-		if (!order.isOwnedBy(command.getUserId())) {
+		if (!order.isOwnedBy(command.userId())) {
 			throw new BusinessException(OrderErrorCode.UNAUTHORIZED);
 		}
 		// 주문 상태 PAID 인지
@@ -47,14 +48,14 @@ public class PurchaseConfirmationService {
 			.setScale(0, RoundingMode.DOWN);
 		// 포인트 적립 요청 이벤트 발행
 		pointEventPort.publishPointEarnRequested(
-			command.getUserId(),
-			command.getOrderId().toString(),
+			command.userId(),
+			command.orderId().toString(),
 			earnAmount, // 포인트적립금액을 주문 쪽에서 안 하면 finalAmount 넘김
 			"구매확정",
 			Instant.now()
 		);
 		return ConfirmPurchaseResult.builder()
-			.orderId(command.getOrderId())
+			.orderId(command.orderId())
 			.orderStatus(order.getStatus().name())
 			.earnedPoints(earnAmount)
 			.confirmedAt(order.getPurchaseConfirmedAt())

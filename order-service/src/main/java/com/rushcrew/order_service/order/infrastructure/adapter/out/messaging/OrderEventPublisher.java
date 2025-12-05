@@ -18,13 +18,7 @@ public class OrderEventPublisher implements OrderEventPort {
 
 	@Override
 	public void publishStockDepletedEvent(String timeDealId, Long userId, Integer availableStock, Instant timestamp) {
-		StockDepletedEvent event = StockDepletedEvent.builder()
-			.timeDealId(timeDealId)
-			.userId(userId)
-			.availableStock(availableStock)
-			.timestamp(timestamp)
-			.build();
-
+		StockDepletedEvent event = new StockDepletedEvent(timeDealId, userId, availableStock, timestamp);
 		kafkaTemplate.send("stock.depleted.event", event);
 	}
 }

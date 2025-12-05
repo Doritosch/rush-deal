@@ -3,20 +3,14 @@ package com.rushcrew.order_service.order.infrastructure.adapter.out.messaging.ev
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class PointEarnedEvent {
-	private Long userId;
-	private String orderId;
-	private BigDecimal earnedAmount;
-	// private UUID pointHistoryId;
-	private BigDecimal newBalance;
-	private Instant timestamp;
-}
+/*
+* 포인트 적립 완료 이벤트 유저 -> 주문
+* */
+public record PointEarnedEvent(
+	Long userId,
+	String orderId,
+	BigDecimal earnedAmount,
+	BigDecimal newBalance,
+	// UUID pointHistoryId,
+	Instant timestamp
+) { }

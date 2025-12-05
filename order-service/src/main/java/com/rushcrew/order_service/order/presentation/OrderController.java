@@ -83,12 +83,7 @@ public class OrderController {
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	){
 		RoleChecker.checkRole(role, "USER", "MASTER");
-		RequestPaymentCommand command = RequestPaymentCommand.builder()
-			.orderId(orderId)
-			.userId(userId)
-			.paymentMethod(request.getPaymentMethod())
-			.build();
-
+		RequestPaymentCommand command = new RequestPaymentCommand(orderId, userId, request.getPaymentMethod());
 		RequestPaymentResult result = requestPaymentCommandHandler.handle(command);
 		RequestPaymentResponse response = RequestPaymentResponse.from(result);
 
@@ -105,10 +100,7 @@ public class OrderController {
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER");
-		ConfirmPurchaseCommand command = ConfirmPurchaseCommand.builder()
-			.orderId(orderId)
-			.userId(userId)
-			.build();
+		ConfirmPurchaseCommand command = new ConfirmPurchaseCommand(orderId, userId);
 		ConfirmPurchaseResult result = confirmPurchaseCommandHandler.handle(command);
 		ConfirmPurchaseResponse response = ConfirmPurchaseResponse.from(result);
 
