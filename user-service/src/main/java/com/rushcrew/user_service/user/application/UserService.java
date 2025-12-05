@@ -4,6 +4,7 @@ import com.rushcrew.user_service.user.application.command.UserCreateCommand;
 import com.rushcrew.user_service.user.application.command.UserUpdateCommand;
 import com.rushcrew.user_service.user.application.command.VerifyPasswordCommand;
 import com.rushcrew.user_service.user.application.result.UserCreateResult;
+import com.rushcrew.user_service.user.application.result.UserInfoResult;
 import com.rushcrew.user_service.user.application.result.UserResult;
 import com.rushcrew.user_service.user.application.result.VerifyPasswordResult;
 import com.rushcrew.user_service.user.domain.entity.User;
@@ -71,6 +72,16 @@ public class UserService {
             user.getUserId(),
             user.getEmail(),
             user.getName()
+        );
+    }
+
+    public UserInfoResult getUserById(Long userId) {
+        User user = userRepository.getById(userId);
+
+        return new UserInfoResult(
+            user.getUserId(),
+            user.getName(),
+            user.getRole().name()
         );
     }
 
