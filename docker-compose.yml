@@ -27,6 +27,7 @@ services:
       - "6380:6379" # 6379가 Redis 기본 포트이나, 호스트 포트를 6380으로 설정하여 기존 충돌을 피합니다.
     volumes:
       - rushdeal_queue_redis_data:/data # 데이터 영속성을 위한 볼륨
+    command: redis-server --save 60 1 --loglevel warning # 개발 중 데이터 날아가는거 방지 위해 60초마다 스냅샷 저장
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
