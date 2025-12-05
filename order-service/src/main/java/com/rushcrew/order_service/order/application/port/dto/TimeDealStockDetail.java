@@ -11,7 +11,7 @@ import lombok.Getter;
 public class TimeDealStockDetail {
 	// 타임딜 재고 정보
 	private UUID timeDealStockId;
-	private String timeDealId;
+	private UUID timeDealId;
 
 	private Integer availableStock;     // 주문 가능한 재고
 	private Integer reservedStock;      // 예약된 재고
@@ -19,18 +19,18 @@ public class TimeDealStockDetail {
 	private TimeDealStatus status;
 
 	// 상품 정보
-	private String productId;
+	private UUID productId;
 	private String productName;
 	private String productDescription;
 	private BigDecimal productPrice; // 원가
 	private String category;
 
 	// 옵션 정보
-	private String optionId;
+	private UUID optionId;
 	private String optionName;
 
 	// 판매자 정보
-	private String sellerId;
+	private UUID sellerId;
 	private String sellerName;
 
 	private boolean isActive;

@@ -91,7 +91,7 @@ public class OrderCreationService {
 		// 7. 주문 예약 정보 추가
 		for (CreateOrderCommand.OrderItemCommand itemCommand : command.getOrderItems()) {
 			OrderReservation orderReservation = OrderReservation.create(
-				UUID.fromString(itemCommand.getTimeDealStockId()),
+				itemCommand.getTimeDealStockId(),
 				itemCommand.getQuantity()
 			);
 			order.addReservation(orderReservation);
@@ -115,7 +115,7 @@ public class OrderCreationService {
 		List<OrderItem> orderItems = new ArrayList<>();
 
 		for (CreateOrderCommand.OrderItemCommand itemCommand : command.getOrderItems()) {
-			UUID timeDealStockId = UUID.fromString(itemCommand.getTimeDealStockId());
+			UUID timeDealStockId = itemCommand.getTimeDealStockId();
 			String lockKey = "stock:" + timeDealStockId + ":lock";
 
 			OrderItem orderItem = lockManager.executeWithLock(
@@ -181,7 +181,7 @@ public class OrderCreationService {
 	}
 
 	/* 재고 소진 처리 */
-	private void handleStockDepletion(String timeDealId, Long userId, Integer availableStock) {
+	private void handleStockDepletion(UUID timeDealId, Long userId, Integer availableStock) {
 		orderEventPort.publishStockDepletedEvent(
 			timeDealId,
 			userId,

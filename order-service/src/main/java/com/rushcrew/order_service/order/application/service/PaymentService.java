@@ -49,7 +49,7 @@ public class PaymentService {
 		if (order.getPointUsed().compareTo(BigDecimal.ZERO) > 0) {
 			paymentEventPort.publishPointDeductionRequested(
 				command.userId(),
-				command.orderId().toString(),
+				command.orderId(),
 				order.getPointUsed(),
 				sagaId,
 				Instant.now()
@@ -68,7 +68,7 @@ public class PaymentService {
 		}
 		// 7. 포인트 사용 없으면 바로 결제 요청
 		paymentEventPort.publishPaymentRequested(
-			command.orderId().toString(),
+			command.orderId(),
 			command.userId(),
 			order.getTotalAmount(),
 			order.getPointUsed(),

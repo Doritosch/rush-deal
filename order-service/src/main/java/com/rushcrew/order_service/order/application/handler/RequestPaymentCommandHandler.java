@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class RequestPaymentCommandHandler {
-
 	private final PaymentService paymentService;
 
 	@Transactional

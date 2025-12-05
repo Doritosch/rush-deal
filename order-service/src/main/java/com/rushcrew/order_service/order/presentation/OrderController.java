@@ -53,10 +53,10 @@ public class OrderController {
 		RoleChecker.checkRole(role, "USER", "MASTER", "SELLER");
 		CreateOrderCommand command = CreateOrderCommand.builder()
 			.userId(userId)
-			.timeDealId(request.getTimeDealId())
+			.timeDealId(UUID.fromString(request.getTimeDealId()))
 			.orderItems(request.getOrderItems().stream()
 				.map(item -> CreateOrderCommand.OrderItemCommand.builder()
-					.timeDealStockId(item.getTimeDealStockId())
+					.timeDealStockId(UUID.fromString(item.getTimeDealStockId()))
 					.quantity(item.getQuantity())
 					.build())
 				.collect(Collectors.toList()))

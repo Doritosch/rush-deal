@@ -24,7 +24,7 @@ public interface OrderJpaRepository extends JpaRepository<Order, UUID> {
     """, nativeQuery = true)
 	Integer getTotalPurchasedQuantity(
 		@Param("userId") Long userId,
-		@Param("timeDealId") String timeDealId
+		@Param("timeDealId") UUID timeDealId
 	);
 
 	/* 자동 구매확정 대상 조회 */

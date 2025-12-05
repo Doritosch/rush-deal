@@ -1,6 +1,7 @@
 package com.rushcrew.order_service.order.application.validator;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,7 @@ public class PurchaseLimitValidator {
 
 	public void validate(
 		Long userId,
-		String timeDealId,
+		UUID timeDealId,
 		List<CreateOrderCommand.OrderItemCommand> items,
 		TimeDealInfo timeDeal
 	) {
