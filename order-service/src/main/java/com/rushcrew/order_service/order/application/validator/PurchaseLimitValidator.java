@@ -4,8 +4,9 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.order_service.order.application.command.CreateOrderCommand;
-import com.rushcrew.order_service.order.application.exception.PurchaseLimitExceededException;
+import com.rushcrew.order_service.order.application.error.OrderErrorCode;
 import com.rushcrew.order_service.order.application.port.dto.TimeDealInfo;
 import com.rushcrew.order_service.order.domain.repository.OrderRepository;
 
@@ -34,7 +35,7 @@ public class PurchaseLimitValidator {
 		Integer limitQuantity = timeDeal.getLimitQuantity();
 
 		if (limitQuantity != null && (totalPurchased + requestQuantity) > limitQuantity) {
-			throw new PurchaseLimitExceededException();
+			throw new BusinessException(OrderErrorCode.PURCHASE_LIMIT_EXCEEDED);
 		}
 	}
 }

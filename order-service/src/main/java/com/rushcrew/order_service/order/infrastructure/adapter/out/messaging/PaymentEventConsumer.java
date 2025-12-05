@@ -7,7 +7,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.rushcrew.order_service.order.application.exception.OrderNotFoundException;
+import com.rushcrew.common.exception.BusinessException;
+import com.rushcrew.order_service.order.application.error.OrderErrorCode;
 import com.rushcrew.order_service.order.application.port.out.OrderEventPort;
 import com.rushcrew.order_service.order.application.port.out.PaymentEventPort;
 import com.rushcrew.order_service.order.application.port.out.TimeDealStockPort;
@@ -35,7 +36,7 @@ public class PaymentEventConsumer {
 	@Transactional
 	public void handlePointDeducted(PointDeductedEvent event) {
 		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
-			.orElseThrow(() -> new OrderNotFoundException());
+			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 		// 결제 요청 이벤트 발행
 		paymentEventPort.publishPaymentRequested(
 			event.getOrderId(),
@@ -43,31 +44,24 @@ public class PaymentEventConsumer {
 			order.getTotalAmount(),
 			event.getDeductedAmount(),
 			order.getFinalAmount(),
-			"CARD",	// TODO: Order에 paymentMethod 필드 추가
-			event.getSagaId(), 
+			order.getPaymentMethod(),
+			event.getSagaId(),
 			Instant.now()
 		);
 	}
 
-	// 포인트 차감 실패 이벤트 처리: 주문 취소 + 재고 복구
+	// 포인트 차감 실패 이벤트 처리: 주문 취소 X + 재고 복구 X + 주문 PENDING 상태 유지 + 주문 이력 기록
 	@KafkaListener(topics = "point.deduction.failed", groupId = "order-service")
 	@Transactional
 	public void handlePointDeductionFailed(PointDeductionFailedEvent event) {
 		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
-			.orElseThrow(() -> new OrderNotFoundException());
-
-		// 각 예약에 대한 재고 복구 요청
-		for (OrderReservation reservation : order.getReservations()) {
-			timeDealStockPort.restoreStock(
-				reservation.getTimeDealStockId(),
-				reservation.getQuantity(),
-				event.getOrderId(),
-				"포인트 차감 실패: " + event.getReason()
-			);
-			reservation.cancel();
-		}
-		// 결제 전 주문 취소
-		order.cancelBeforePayment("포인트 차감 실패: " + event.getReason());
+			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
+		// 포인트 차감 실패 이력 기록
+		String reason = "포인트 차감 실패: %s (필요: %s원, 보유: %s원)"
+			.formatted(event.getReason(),
+			event.getRequiredAmount(),
+			event.getCurrentBalance());
+		order.recordPointDeductionFailed(reason);
 		orderRepository.save(order);
 	}
 
@@ -76,7 +70,7 @@ public class PaymentEventConsumer {
 	@Transactional
 	public void handlePaymentCompleted(PaymentCompletedEvent event) {
 		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
-			.orElseThrow(() -> new OrderNotFoundException());
+			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 
 		// 주문 상태 변경: PENDING → PAID
 		order.completePayment();
@@ -97,7 +91,7 @@ public class PaymentEventConsumer {
 	@Transactional
 	public void handlePaymentFailed(PaymentFailedEvent event) {
 		Order order = orderRepository.findById(UUID.fromString(event.getOrderId()))
-			.orElseThrow(() -> new OrderNotFoundException());
+			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 
 		// 포인트 환불 요청 (사용한 포인트 있으면)
 		if (order.getPointUsed().compareTo(java.math.BigDecimal.ZERO) > 0) {

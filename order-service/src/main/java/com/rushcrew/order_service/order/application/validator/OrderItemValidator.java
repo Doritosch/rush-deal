@@ -6,8 +6,9 @@ import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.order_service.order.application.command.CreateOrderCommand;
-import com.rushcrew.order_service.order.application.exception.DuplicateOrderItemException;
+import com.rushcrew.order_service.order.application.error.OrderErrorCode;
 
 @Component
 public class OrderItemValidator {
@@ -18,7 +19,7 @@ public class OrderItemValidator {
 
 		for (CreateOrderCommand.OrderItemCommand item : items) {
 			if (!timeDealStockIds.add(item.getTimeDealStockId())) {
-				throw new DuplicateOrderItemException();
+				throw new BusinessException(OrderErrorCode.DUPLICATE_ORDER_ITEM);
 			}
 			if (item.getQuantity() <= 0) {
 				throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");

@@ -50,7 +50,10 @@ public class Order extends BaseEntity {
 	private OrderStatus status;
 
 	@Embedded
-	private ShippingInfo shippingInfo; // 현재 배송 서비스가 없어서 Embeddable 사용 --> 추후 배송 서비스를 독립적으로 개발하게 되면, 그때 ShippingInfo 테이블 분리 + Order에서 deliveryId 참조로 리팩토링 가능
+	private ShippingInfo shippingInfo; // 현재 배송 서비스가 없어서 Embeddable 사용 --> 추후 배송 서비스를 독립적으로 개발하게 되면, 그때 ShippingInfo 테이블 분리 + Order에서 deliveryId 참조로 리팩토링
+
+	@Column(length = 20)
+	private String paymentMethod; // 주문 생성 시 사용자가 선택한 결제 수단
 
 	@Column(nullable = false)
 	private Instant orderedAt;
@@ -82,7 +85,13 @@ public class Order extends BaseEntity {
 	//                 도메인 로직
 	// ============================================
 
-	public static Order create(Long userId, List<OrderItem> orderItems, BigDecimal pointUsed, ShippingInfo shippingInfo) {
+	public static Order create(
+		Long userId,
+		List<OrderItem> orderItems,
+		BigDecimal pointUsed,
+		ShippingInfo shippingInfo,
+		String paymentMethod
+		) {
 		BigDecimal totalAmount = orderItems.stream()
 			.map(OrderItem::getSubtotal)
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -95,6 +104,7 @@ public class Order extends BaseEntity {
 			.amount(amount)
 			.status(OrderStatus.PENDING)
 			.shippingInfo(shippingInfo)
+			.paymentMethod(paymentMethod)
 			.orderedAt(Instant.now())
 			.build();
 
@@ -130,6 +140,16 @@ public class Order extends BaseEntity {
 			status,
 			status,
 			"포인트 사용량 변경: %s --> %s".formatted(oldPointUsed, newPointUsed)
+		);
+	}
+
+	// 포인트 차감 실패 이력 기록
+	public void recordPointDeductionFailed(String reason) {
+		addHistory(
+			OrderEventType.POINT_DEDUCTION_FAILED,
+			this.status,
+			this.status,  // 상태는 PENDING 유지
+			reason
 		);
 	}
 
