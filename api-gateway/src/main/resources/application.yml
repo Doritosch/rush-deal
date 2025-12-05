@@ -6,6 +6,18 @@ spring:
     name: api-gateway
   main:
     web-application-type: reactive
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: -1ms
   cloud:
     gateway:
       server:
@@ -28,12 +40,10 @@ eureka:
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
 
-
 jwt:
   access:
     secret: ${JWT_ACCESS_SECRET}
     expiration: ${JWT_ACCESS_EXPIRED}
-
 
 gateway:
   public-paths:
