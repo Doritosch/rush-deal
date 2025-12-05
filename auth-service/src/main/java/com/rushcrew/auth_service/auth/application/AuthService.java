@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class AuthService {
 
     private final UserClient userClient;
@@ -55,5 +55,7 @@ public class AuthService {
             tokens.accessToken(),
             tokens.refreshToken()
         );
+        return new LoginResult(tokens.accessToken(), tokens.refreshToken());
+    }
     }
 }
