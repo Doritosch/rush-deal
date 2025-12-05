@@ -23,14 +23,14 @@ public class PointEventPublisher implements PointEventPort {
 	public void publishPointEarnRequested(
 		@NonNull Long userId,
 		@NonNull UUID orderId,
-		@NonNull BigDecimal earnAmount,
+		@NonNull BigDecimal finalAmount,
 		@NonNull String reason,
 		@NonNull Instant timestamp
 	) {
 		PointEarnRequestedEvent event = PointEarnRequestedEvent.builder()
 			.userId(userId)
 			.orderId(orderId.toString())
-			.earnAmount(earnAmount)
+			.earnAmount(finalAmount)
 			.reason(reason)
 			.timestamp(timestamp)
 			.build();

@@ -88,20 +88,20 @@ public class AutoConfirmPurchaseBatchJob {
 
 			// 2. 각 주문에 대해 포인트 적립 요청
 			for (Order order : orders) {
-				BigDecimal earnAmount = order.getFinalAmount()
-					.multiply(new BigDecimal("0.05")) // TODO: 결제 금액 그대로 돌려주는지, 결제 금액의 몇% 적립할 포인트 돌려주는지
-					.setScale(0, RoundingMode.DOWN);
+				// BigDecimal earnAmount = order.getFinalAmount()
+				// 	.multiply(new BigDecimal("0.05"))
+				// 	.setScale(0, RoundingMode.DOWN);
 
 				pointEventPort.publishPointEarnRequested(
 					order.getUserId(),
 					order.getOrderId(),
-					earnAmount,
+					order.getFinalAmount(),
 					"자동 구매확정",
 					Instant.now()
 				);
 
-				log.info("자동 구매확정 완료 + 포인트 적립 요청 - 주문 ID: {}, 사용자 ID: {}, 적립 포인트: {}",
-					order.getOrderId(), order.getUserId(), earnAmount);
+				log.info("자동 구매확정 완료 + 포인트 적립 요청 - 주문 ID: {}, 사용자 ID: {}",
+					order.getOrderId(), order.getUserId());
 			}
 
 			log.info("총 {}건의 주문을 자동 구매확정 처리했습니다.", orders.size());
