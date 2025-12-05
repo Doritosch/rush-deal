@@ -1,7 +1,5 @@
 package com.rushcrew.order_service.order.infrastructure.dto.timedeal;
 
-import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

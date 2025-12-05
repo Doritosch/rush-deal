@@ -1,8 +1,6 @@
 package com.rushcrew.order_service.order.infrastructure.dto.timedeal;
 
 import java.math.BigDecimal;
-import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
