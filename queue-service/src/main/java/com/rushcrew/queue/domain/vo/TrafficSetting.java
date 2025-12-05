@@ -10,7 +10,12 @@ import lombok.NoArgsConstructor;
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TrafficSetting {
-    // 활성 허용 인원
+
+    // 전체 시스템에서 수용 가능한 최대 활성 인원 (Max Capacity)
+    @Column(name = "max_capacity", nullable = false)
+    private Integer maxCapacity;
+
+    // 변경 회당 활성 허용 인원 (한 번 스케줄링 돌 때 진입시킬 인원 : Batch 사이즈)
     @Column(name = "limit_size", nullable = false)
     private Integer limitSize;
 
@@ -22,13 +27,17 @@ public class TrafficSetting {
     @Column(name = "ttl", nullable = false)
     private Integer ttl;
 
-    public TrafficSetting(Integer limitSize, Integer queueGap, Integer ttl) {
-        if (limitSize == null || limitSize <= 0) {
-            throw new IllegalArgumentException("진입 허용 인원은 1명 이상이어야 합니다.");
+    public TrafficSetting(Integer maxCapacity, Integer limitSize, Integer queueGap, Integer ttl) {
+        if (maxCapacity == null || maxCapacity <= 0) {
+            throw new IllegalArgumentException("최대 활성 허용 인원은 1명 이상이어야 합니다.");
         }
 
-        if (limitSize > 10000) {
-            throw new IllegalArgumentException("진입 허용 인원은 10,000명을 초과할 수 없습니다.");
+        if (maxCapacity < limitSize) {
+            throw new IllegalArgumentException("진입 허용 인원은 최대 허용 인원을 초과할 수 없습니다.");
+        }
+
+        if (limitSize <= 0) {
+            throw new IllegalArgumentException("진입 허용 인원은 1명 이상이어야 합니다.");
         }
 
         if (queueGap == null || queueGap <= 0) {
