@@ -6,14 +6,16 @@ public record SignUpResponse(
     Long userId,
     String email,
     String name,
-    String accessToken
+    String accessToken,
+    String refreshToken
 ) {
-    public static SignUpResponse from(SignUpResult result) {
+    public static SignUpResponse fromResult(SignUpResult result) {
         return new SignUpResponse(
             result.userId(),
             result.email(),
             result.name(),
-            result.accessToken()
+            result.accessToken(),
+            result.refreshToken()
         );
     }
 }

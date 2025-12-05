@@ -13,6 +13,18 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: -1ms
 
 server:
   port: 9000
@@ -21,8 +33,18 @@ eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
 
 jwt:
   access:
+    secret: ${JWT_ACCESS_SECRET}
+    expiration: ${JWT_ACCESS_EXPIRED:3600000}
+  refresh:
     secret: ${JWT_REFRESH_SECRET}
-    expiration: ${JWT_REFRESH_EXPIRED}
+    expiration: ${JWT_REFRESH_EXPIRED:604800000}
+
+auth:
+  concurrent:
+    max-sessions: ${AUTH_MAX_CONCURRENT_SESSIONS:3}
