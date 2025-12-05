@@ -52,9 +52,6 @@ public class Order extends BaseEntity {
 	@Embedded
 	private ShippingInfo shippingInfo; // 현재 배송 서비스가 없어서 Embeddable 사용 --> 추후 배송 서비스를 독립적으로 개발하게 되면, 그때 ShippingInfo 테이블 분리 + Order에서 deliveryId 참조로 리팩토링
 
-	@Column(length = 20)
-	private String paymentMethod; // 주문 생성 시 사용자가 선택한 결제 수단
-
 	@Column(nullable = false)
 	private Instant orderedAt;
 
@@ -90,8 +87,7 @@ public class Order extends BaseEntity {
 		Long userId,
 		List<OrderItem> orderItems,
 		BigDecimal pointUsed,
-		ShippingInfo shippingInfo,
-		String paymentMethod
+		ShippingInfo shippingInfo
 		) {
 		BigDecimal totalAmount = orderItems.stream()
 			.map(OrderItem::getSubtotal)
@@ -105,7 +101,6 @@ public class Order extends BaseEntity {
 			.amount(amount)
 			.status(OrderStatus.PENDING)
 			.shippingInfo(shippingInfo)
-			.paymentMethod(paymentMethod)
 			.orderedAt(Instant.now())
 			.build();
 

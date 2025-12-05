@@ -42,7 +42,6 @@ public class PaymentEventConsumer {
 			order.getTotalAmount(),
 			event.deductedAmount(),
 			order.getFinalAmount(),
-			order.getPaymentMethod(),
 			event.sagaId(),
 			Instant.now()
 		);

@@ -38,8 +38,6 @@ public class CreateOrderRequest {
 	@Valid
 	private ShippingInfoRequest shippingInfo;
 
-	@NotBlank(message = "결제 수단은 필수입니다")
-	private String paymentMethod; // CARD, BILLING
 
 	@Getter
 	@Builder
