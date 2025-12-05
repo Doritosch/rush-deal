@@ -86,19 +86,27 @@ public class Product extends BaseEntity {
         return product;
     }
 
-    public void addOption(String size, String color) {
-        this.options.add(ProductOption.of(this, size, color));
+    public ProductOption addOption(String size, String color) {
+        ProductOption option = ProductOption.of(this, size, color);
+        this.options.add(option);
+        return option;
     }
 
     public void update(UpdateProductParams params) {
-        if (params.companyName() != null) this.companyName = params.companyName();
-        if (params.category() != null) this.category = params.category();
+        if (params.companyName() != null) {
+            this.companyName = params.companyName();
+        }
+        if (params.category() != null) {
+            this.category = params.category();
+        }
         updateProductInfo(params.productName(), params.description());
         this.price = params.price() != null ? Price.of(params.price()) : this.price;
     }
 
     private void updateProductInfo(String newName, String newDescription) {
-        if(newName == null && newDescription == null) return;
+        if (newName == null && newDescription == null) {
+            return;
+        }
         String updatedName = newName != null ? newName : this.productInfo.getName();
         String updatedDescription =
             newDescription != null ? newDescription : this.productInfo.getDescription();

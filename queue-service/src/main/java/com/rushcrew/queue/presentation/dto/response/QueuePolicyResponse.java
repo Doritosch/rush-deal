@@ -1,11 +1,9 @@
-package com.rushcrew.queue.application.dto;
+package com.rushcrew.queue.presentation.dto.response;
 
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import lombok.Builder;
 
-@Builder
 public record QueuePolicyResponse(
     UUID policyId,
     UUID productId,

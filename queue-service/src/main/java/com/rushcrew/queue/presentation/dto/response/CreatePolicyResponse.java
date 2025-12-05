@@ -7,5 +7,4 @@ public record CreatePolicyResponse(
     UUID productId,
     String dealName
 ) {
-
 }

@@ -27,6 +27,10 @@ public class TrafficSetting {
             throw new IllegalArgumentException("진입 허용 인원은 1명 이상이어야 합니다.");
         }
 
+        if (limitSize > 10000) {
+            throw new IllegalArgumentException("진입 허용 인원은 10,000명을 초과할 수 없습니다.");
+        }
+
         if (queueGap == null || queueGap <= 0) {
             throw new IllegalArgumentException("활성 체크 주기는 1초 이상이어야 합니다.");
         }
