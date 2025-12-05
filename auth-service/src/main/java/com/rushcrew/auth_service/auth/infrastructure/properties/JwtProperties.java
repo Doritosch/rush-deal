@@ -1,4 +1,4 @@
-package com.rushcrew.auth_service.auth.infrastructure.jwt;
+package com.rushcrew.auth_service.auth.infrastructure.properties;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,11 +10,15 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public record JwtProperties(
     @NotNull
-    AccessToken access
+    TokenConfig access,
+
+    @NotNull
+    TokenConfig refresh
 ) {
-    public record AccessToken(
+    public record TokenConfig(
         @NotBlank
         String secret,
+
         @Positive
         Long expiration
     ) {}
