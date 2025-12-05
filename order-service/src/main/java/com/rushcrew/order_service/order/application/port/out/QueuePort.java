@@ -15,7 +15,7 @@ public interface QueuePort {
 	void extendTokenTtl(
 		@NonNull UUID timeDealId,
 		@NonNull Long userId,
-		@NonNull int seconds);
+		int seconds);
 
 	// 사용자 대기열에서 제거
 	void removeUserToken(
