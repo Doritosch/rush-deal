@@ -60,8 +60,21 @@ public class TokenService {
     }
 
     @Transactional
-    public void revokeToken(String tokenValue) {
-        refreshTokenRepository.deleteByToken(tokenValue);
+    public String refreshAccessToken(
+        UserInfoResult user,
+        String refreshTokenValue
+    ) {
+        RefreshToken token = refreshTokenRepository.findByToken(refreshTokenValue)
+            .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 Refresh Token입니다.")
+            );
+
+        token.ensureValid();
+
+        return accessTokenProvider.generateToken(
+            user.id(),
+            user.name(),
+            user.role()
+        );
     }
 
     @Transactional

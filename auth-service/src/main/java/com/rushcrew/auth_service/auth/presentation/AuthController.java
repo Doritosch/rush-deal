@@ -2,12 +2,16 @@ package com.rushcrew.auth_service.auth.presentation;
 
 import com.rushcrew.auth_service.auth.application.AuthService;
 import com.rushcrew.auth_service.auth.application.command.LoginCommand;
+import com.rushcrew.auth_service.auth.application.command.LogoutAllCommand;
+import com.rushcrew.auth_service.auth.application.command.LogoutCommand;
+import com.rushcrew.auth_service.auth.application.command.RefreshCommand;
 import com.rushcrew.auth_service.auth.application.command.SignUpCommand;
 import com.rushcrew.auth_service.auth.application.result.LoginResult;
 import com.rushcrew.auth_service.auth.application.result.SignUpResult;
 import com.rushcrew.auth_service.auth.presentation.dto.request.LoginRequest;
 import com.rushcrew.auth_service.auth.presentation.dto.request.SignUpRequest;
 import com.rushcrew.auth_service.auth.presentation.dto.response.LoginResponse;
+import com.rushcrew.auth_service.auth.presentation.dto.response.RefreshAccessTokenResponse;
 import com.rushcrew.auth_service.auth.presentation.dto.response.SignUpResponse;
 import com.rushcrew.auth_service.auth.presentation.util.TokenUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +24,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -101,5 +106,21 @@ public class AuthController {
         return ResponseEntity.noContent()
             .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
             .build();
+    }
+
+    /**
+     * Access 토큰 초기화
+     */
+    @PostMapping("/token/refresh")
+    public ResponseEntity<RefreshAccessTokenResponse> refreshAccessToken(
+        HttpServletRequest request
+    ) {
+        String refreshToken = tokenUtils.extractRefreshToken(request);
+
+        RefreshCommand command = new RefreshCommand(refreshToken);
+
+        String accessToken = authService.refreshAccessToken(command);
+
+        return ResponseEntity.ok(RefreshAccessTokenResponse.of(accessToken));
     }
 }
