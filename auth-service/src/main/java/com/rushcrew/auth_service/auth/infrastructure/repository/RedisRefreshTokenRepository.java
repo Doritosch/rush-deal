@@ -1,4 +1,4 @@
-package com.rushcrew.auth_service.auth.presentation.repository;
+package com.rushcrew.auth_service.auth.infrastructure.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rushcrew.auth_service.auth.domain.entity.RefreshToken;
@@ -95,7 +95,6 @@ public class RedisRefreshTokenRepository implements RefreshTokenRepository {
         Optional<RefreshToken> tokenOpt = findByToken(tokenValue);
 
         if (tokenOpt.isEmpty()) {
-            log.debug("Token not found for deletion: token={}", tokenValue);
             return;
         }
 
@@ -108,17 +107,11 @@ public class RedisRefreshTokenRepository implements RefreshTokenRepository {
         redisTemplate
             .opsForList()
             .remove(USER_TOKENS_PREFIX + token.getUserId(), 0, tokenValue);
-
-        log.debug(
-            "RefreshToken deleted: userId={}, token={}",
-            token.getUserId(),
-            tokenValue
-        );
     }
 
     @Override
     public void deleteAllByUserId(Long userId) {
-        String userTokenKey = USER_TOKENS_PREFIX + userId;
+        String userTokenKey = USER_TOKENS_PREFIX + userId.toString();
 
         List<String> tokens = findAllTokensByUserId(userId);
 
