@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
@@ -84,13 +85,11 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Page<ProductResult> getProducts(ProductFilter productFilter, Pageable pageable) {
         return productRepository.searchEnabledProducts(productFilter, pageable);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public ProductDetailResult getProductDetail(UUID productId) {
         Product product = productRepository.findProductDetail(productId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
