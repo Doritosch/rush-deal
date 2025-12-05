@@ -11,7 +11,6 @@ import com.rushcrew.product.domain.entity.ProductOption;
 import com.rushcrew.product.domain.exception.ProductErrorCode;
 import com.rushcrew.product.domain.model.UpdateOptionParams;
 import com.rushcrew.product.domain.repository.ProductRepository;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -35,12 +34,10 @@ public class OptionServiceImpl implements OptionService {
         Product product = productValidator.findAndValidateProduct(productId);
         productValidator.checkPermission(product);
 
-        List<ProductOption> newOptions = new ArrayList<>();
-        commands.forEach(command -> {
-            ProductOption newOption = product.addOption(command.size(), command.color());
-            newOptions.add(newOption);
-        });
-        productRepository.flush();
+        List<ProductOption> newOptions = commands.stream()
+            .map(command ->
+                product.addOption(command.size(), command.color())).toList();
+        productRepository.saveAndFlush(product);
 
         return newOptions.stream().map(ProductOption::getId).toList();
     }

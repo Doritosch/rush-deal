@@ -27,7 +27,7 @@ public class ProductRepositoryAdapter implements ProductRepository {
     public Optional<Product> findByIdAndDeletedAtIsNull(UUID productId) {
         return jpaProductRepository.findByIdAndDeletedAtIsNull(productId);
     }
-      
+
     @Override
     public Page<ProductResult> searchEnabledProducts(ProductFilter productFilter,
         Pageable pageable) {
@@ -38,11 +38,10 @@ public class ProductRepositoryAdapter implements ProductRepository {
     public Optional<Product> findProductDetail(UUID productId) {
         return jpaProductRepository.findProductDetail(productId);
     }
-  
-  
+
     @Override
-    public void flush() {
-        jpaProductRepository.flush();
+    public void saveAndFlush(Product product) {
+        jpaProductRepository.saveAndFlush(product);
     }
 
     @Override
