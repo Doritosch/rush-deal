@@ -1,40 +1,31 @@
 package com.rushcrew.auth_service.auth.application;
 
+import com.rushcrew.auth_service.auth.application.policy.TokenPolicy;
 import com.rushcrew.auth_service.auth.application.port.AccessTokenProvider;
 import com.rushcrew.auth_service.auth.application.port.RefreshTokenProvider;
 import com.rushcrew.auth_service.auth.application.result.TokenPairResult;
+import com.rushcrew.auth_service.auth.application.result.UserInfoResult;
 import com.rushcrew.auth_service.auth.domain.entity.RefreshToken;
 import com.rushcrew.auth_service.auth.domain.policy.ConcurrentLoginPolicy;
 import com.rushcrew.auth_service.auth.domain.repository.RefreshTokenRepository;
+import com.rushcrew.auth_service.auth.domain.vo.UserId;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class TokenService {
 
+    private final TokenPolicy tokenPolicy;
     private final AccessTokenProvider accessTokenProvider;
     private final RefreshTokenProvider refreshTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final BlacklistService tokenBlacklistService;
     private final ConcurrentLoginPolicy concurrentLoginPolicy;
-    private final long refreshExpiration;
-
-    public TokenService(
-        AccessTokenProvider accessTokenProvider,
-        RefreshTokenProvider refreshTokenProvider,
-        RefreshTokenRepository refreshTokenRepository,
-        ConcurrentLoginPolicy concurrentLoginPolicy,
-        @Value("${jwt.refresh.expiration}") long refreshExpiration
-    ) {
-        this.accessTokenProvider = accessTokenProvider;
-        this.refreshTokenProvider = refreshTokenProvider;
-        this.refreshTokenRepository = refreshTokenRepository;
-        this.concurrentLoginPolicy = concurrentLoginPolicy;
-        this.refreshExpiration = refreshExpiration;
-    }
 
     @Transactional
     public TokenPairResult issueTokenPair(
@@ -47,38 +38,25 @@ public class TokenService {
             email,
             role
         );
-        String refreshToken = issueRefreshToken(userId);
-
-        return new TokenPairResult(accessToken, refreshToken);
-    }
-
-    @Transactional
-    public String issueRefreshToken(Long userId) {
-        String tokenValue = refreshTokenProvider.generateToken(userId);
+        String refreshToken = refreshTokenProvider.generateToken(userId);
 
         RefreshToken token = RefreshToken.create(
-            tokenValue,
-            userId,
-            refreshExpiration
+            refreshToken,
+            UserId.of(userId),
+            tokenPolicy.refreshExpirationMillis()
         );
 
         refreshTokenRepository.save(token);
 
-        // 동시 로그인 제한 적용
-        List<String> existingTokens = refreshTokenRepository.findAllTokensByUserId(userId);
-
-        List<String> tokensToRevoke = concurrentLoginPolicy.getTokensToRevoke(existingTokens);
-
+        // 동시 로그인 정책 적용
+        List<String> existingTokens =
+            refreshTokenRepository.findAllTokensByUserId(userId);
+        List<String> tokensToRevoke = concurrentLoginPolicy.getTokensToRevoke(
+            existingTokens
+        );
         tokensToRevoke.forEach(refreshTokenRepository::deleteByToken);
 
-        return tokenValue;
-    }
-
-    public Optional<Long> validateToken(String tokenValue) {
-        return refreshTokenRepository
-            .findByToken(tokenValue)
-            .filter(token -> !token.isExpired())
-            .map(RefreshToken::getUserId);
+        return new TokenPairResult(accessToken, refreshToken);
     }
 
     @Transactional
@@ -87,7 +65,39 @@ public class TokenService {
     }
 
     @Transactional
-    public void revokeAllTokens(Long userId) {
+    public void revokeToken(String accessToken, String refreshToken) {
+        // 1. Refresh Token 삭제
+        Optional.ofNullable(refreshToken).ifPresent(
+            refreshTokenRepository::deleteByToken
+        );
+
+        // 2. Access Token 블랙리스트 처리
+        java.time.LocalDateTime expiryDate = accessTokenProvider.getExpiryDate(
+            accessToken
+        );
+        tokenBlacklistService.blacklistAccessToken(accessToken, expiryDate);
+    }
+
+    /**
+     * 모든 토큰 폐기 (전체 로그아웃)
+     */
+    @Transactional
+    public void revokeAllTokens(Long userId, String currentAccessToken) {
+        // 1. 해당 유저의 모든 Refresh Token 삭제
         refreshTokenRepository.deleteAllByUserId(userId);
+
+        // 2. 현재 Access Token 및 유저 자체를 블랙리스트 처리
+        java.time.LocalDateTime expiryDate = accessTokenProvider.getExpiryDate(
+            currentAccessToken
+        );
+        tokenBlacklistService.blacklistAccessToken(
+            currentAccessToken,
+            expiryDate
+        );
+        tokenBlacklistService.blacklistUser(userId, expiryDate);
+    }
+
+    public Long getUserIdFromRefreshToken(String refreshToken) {
+        return refreshTokenProvider.getUserIdFromToken(refreshToken);
     }
 }

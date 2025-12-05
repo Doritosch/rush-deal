@@ -59,4 +59,47 @@ public class AuthController {
 
         return ResponseEntity.ok(LoginResponse.fromResult(result));
     }
+
+    /**
+     * 로그아웃 - Access Token 블랙리스트 추가 및 Refresh Token 폐기
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logOut(
+        @RequestHeader("Authorization") String authorization,
+        HttpServletRequest request
+    ) {
+        String accessToken = tokenUtils.extractAccessToken(authorization);
+        String refreshToken = tokenUtils.extractRefreshToken(request);
+
+        LogoutCommand command = new LogoutCommand(accessToken, refreshToken);
+
+        authService.logOut(command);
+
+        ResponseCookie expiredCookie = tokenUtils.createExpiredRefreshTokenCookie();
+
+        return ResponseEntity.noContent()
+            .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
+            .build();
+    }
+
+    /**
+     * 모든 기기에서 로그아웃
+     */
+    @PostMapping("/logout/all")
+    public ResponseEntity<Void> logoutAll(
+        @RequestHeader("X-User-Id") Long userId,
+        @RequestHeader("Authorization") String authorization
+    ) {
+        String accessToken = tokenUtils.extractAccessToken(authorization);
+
+        LogoutAllCommand command = new LogoutAllCommand(userId, accessToken);
+
+        authService.logoutFromAllDevices(command);
+
+        ResponseCookie expiredCookie = tokenUtils.createExpiredRefreshTokenCookie();
+
+        return ResponseEntity.noContent()
+            .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
+            .build();
+    }
 }
