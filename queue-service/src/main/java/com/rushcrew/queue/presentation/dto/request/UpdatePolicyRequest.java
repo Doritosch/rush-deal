@@ -8,9 +8,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record UpdatePolicyRequest(
-    // TODO : 추후 추가 예정
-//    Long userId,
-//    UserRole role,
     UUID productId,
     String timeDealName,
     QueuePolicyStatus status,
