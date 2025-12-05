@@ -1,8 +1,10 @@
 package com.rushcrew.queue.application.service;
 
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.queue.application.command.queue.EnterQueueCommand;
 import com.rushcrew.queue.application.dto.QueueRedisResponse;
 import com.rushcrew.queue.application.port.in.QueuePort;
+import com.rushcrew.queue.common.QueueErrorCode;
 import com.rushcrew.queue.domain.entity.QueuePolicy;
 import com.rushcrew.queue.domain.entity.QueueToken;
 import com.rushcrew.queue.domain.enums.QueueStatus;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.engine.internal.ManagedTypeHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -131,6 +134,37 @@ public class QueueService implements QueuePort {
 
     @Override
     public void activateTokens(UUID productId, List<String> tokens, TrafficSetting trafficSetting) {
+        // 현재 활성 인원 조회
+        Long currActiveCount = queueRepository.countActiveTokens(productId);
+
+        // 최대 활성 허용 인원 대비 남은 자리 계산
+        Integer maxCapacity = trafficSetting.getMaxCapacity();
+        Integer limitSize = trafficSetting.getLimitSize(); // 한 번에 실행할 배치 크기라고 보면 됨
+
+        if (currActiveCount >= maxCapacity) {
+            log.warn("[QUEUE] 활성열이 꽉 찼습니다. (Current: {}, Max: {})", currActiveCount, maxCapacity);
+            return;
+        }
+
+        // 활성 토큰 N개 계산 => (N = min(배치사이즈, 남은자리))
+        long availableCount = maxCapacity - currActiveCount;
+        // 최대 활성 허용 수에서 남은 자리(availableCount)가 배치 크기보다 작으면 남은 자리 수의 토큰을 활성열로 이동시키는 로직
+        long tokenCountToActivate = Math.min(limitSize, availableCount);
+
+        if (tokenCountToActivate <= 0) {
+            return;
+        }
+
+        // 대기열에서 상위 N개 토큰 조회 (Waiting -> Active 대상) : 요청 시점(Score)이 낮은 것
+        List<String> waitingTokensToActivate = queueRepository.getWaitingTokens(productId, tokenCountToActivate);
+
+        if (waitingTokensToActivate.isEmpty()) {
+            log.debug("[QUEUE] 대기열이 비어있습니다.");
+            return;
+        }
+
+        // 활성 상태로 전환
+        queueRepository.activateTokens(productId, waitingTokensToActivate, trafficSetting);
     }
 
     /**

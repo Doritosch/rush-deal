@@ -113,7 +113,8 @@ public class RedisQueueRepository implements QueueRepository {
      */
     @Override
     public List<String> getWaitingTokens(UUID productId, long count) {
-        // 0번부터 count-1명까지 (상위 N명) -> Redis ZRANGE
+        // Score(타임스탬프)가 낮은 순서(진입 요청 시점이 이른 것부터)대로 조회 (FIFO)
+        // 0번부터 count-1명까지 (상위 N명) -> Redis ZRANGE key 0 N (Score가 가장 낮은 순서부터 N개 가져옴)
         Set<String> tokens = redisTemplate.opsForZSet().range(
             getWaitingKey(productId),
             0,
