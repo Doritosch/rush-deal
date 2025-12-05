@@ -26,7 +26,6 @@ public interface QueueRepository {
 
     /**
      * 활성 토큰 검증 (주문 서비스에서 검증 요청 시 사용)
-     * SET ISMEMBER
      * @param productId
      * @param tokenId
      * @return
@@ -34,7 +33,7 @@ public interface QueueRepository {
     boolean isActivatedToken(UUID productId, TokenId tokenId);
 
     /**
-     * 현재 활성화된 인원 수 조회 (Set Size)
+     * 현재 활성화된 인원 수 조회 (ZCard)
      * @param productId
      * @return
      */

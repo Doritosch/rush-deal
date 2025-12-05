@@ -23,7 +23,6 @@ public class RedisQueueRepository implements QueueRepository {
     private static final String WAITING_KEY = "queue:wait:product:%s";
     private static final String ACTIVE_KEY = "queue:active:product:%s";
     private static final String USER_INDEX_KEY = "queue:user:product:%s:%s"; // String (중복방지용)
-    private static final String ACTIVE_TOKEN_KEY = "queue:activeToken:%s:%s"; // String (개별 활성 토큰 TTL 관리용)
 
     // FAST TRACK(대기열 진입 정책) 기준 인원 (100인 미만이면 대기열 토큰 생성 시 바로 활성열로 이동)
     // TODO: 추후 QueuePolicy (정책 DB)에서 관리하도록 수정 예정
@@ -81,18 +80,34 @@ public class RedisQueueRepository implements QueueRepository {
 
     @Override
     public boolean isActivatedToken(UUID productId, TokenId tokenId) {
-        return Boolean.TRUE.equals(redisTemplate.opsForSet()
-            .isMember(getActiveKey(productId),
-                tokenId.getValue().toString()
-            ));
+        // ZSet에서 Score(만료시간) 조회
+        String activeKey = getActiveKey(productId);
+        Double expireTime = redisTemplate.opsForZSet().score(activeKey, tokenId.getValue());
+
+        // 활성열에 없음
+        if (expireTime == null) return false;
+
+        // 만료 시간 지났는지 확인 (Lazy Validation)
+        long now = System.currentTimeMillis();
+        if (expireTime < now) {
+            // 만료되었으면 삭제
+            redisTemplate.opsForZSet().remove(
+                activeKey,
+                tokenId.getValue()
+            );
+            log.info("[QUEUE:EXPIRE:ACTIVE] 활성 토큰 만료됨. token={}", tokenId);
+            return false;
+        }
+        return true;
     }
 
     /**
-     * 활성 토큰 수 확인
+     * 활성 토큰 수 확인 (ZSet Size 조회)
      */
     @Override
     public Long countActiveTokens(UUID productId) {
-        return redisTemplate.opsForSet().size(getActiveKey(productId));
+        Long count = redisTemplate.opsForZSet().zCard(getActiveKey(productId));
+        return count != null ? count : 0L;
     }
 
     @Override
@@ -129,26 +144,21 @@ public class RedisQueueRepository implements QueueRepository {
     }
 
     /**
-     * Fast Track: 즉시 활성열 등록
+     * Fast Track: 즉시 활성열 등록 (ZSet 등록)
      */
     private boolean registerFastTrack(QueueToken token, LocalDateTime dealEndTime, Integer activeTtl,
         String userIndexKey) {
         // ActiveKey(활성열 키) 생성
         String activeKey = getActiveKey(token.getProductId());
         try {
-            // active set에 추가
-            redisTemplate.opsForSet().add(
-                activeKey,
-                token.getId().getValue().toString()
-            );
+            // 만료 시간(score) 계산: 현재시간
+            double expireAt = System.currentTimeMillis() + (activeTtl * 1000L);
 
-            // 활성 상태 등록 (Set 추가 + 개별 TTL 설정을 위한 Shadow Key 생성)
-            // Key: queue:activeToken:{productId}:{tokenId} / Value: userId
-            String activeTokenKey = getActiveTokenKey(token.getProductId(), token.getId().toString());
-            redisTemplate.opsForValue().set(
-                activeTokenKey,
-                token.getUserId().toString(),
-                Duration.of(activeTtl, ChronoUnit.SECONDS)
+            // active(활성열) ZSet에 저장 (Score = 만료시간)
+            redisTemplate.opsForZSet().add(
+                activeKey,
+                token.getId().getValue().toString(),
+                expireAt
             );
             log.info("[QUEUE:REDIS] FAST TRACK 활성열 등록 성공: user={}, token={}", token.getUserId(), token.getId());
             return true;
@@ -194,10 +204,5 @@ public class RedisQueueRepository implements QueueRepository {
 
     private String getUserIndexKey(UUID productId, Long userId) {
         return String.format(USER_INDEX_KEY, productId, userId);
-    }
-
-    // 개별 활성 토큰 검증용 키
-    private String getActiveTokenKey(UUID productId, String tokenId) {
-        return String.format(ACTIVE_TOKEN_KEY, productId, tokenId);
     }
 }
