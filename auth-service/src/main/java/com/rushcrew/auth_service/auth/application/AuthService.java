@@ -3,9 +3,9 @@ package com.rushcrew.auth_service.auth.application;
 import com.rushcrew.auth_service.auth.application.client.UserClient;
 import com.rushcrew.auth_service.auth.application.command.LoginCommand;
 import com.rushcrew.auth_service.auth.application.command.SignUpCommand;
-import com.rushcrew.auth_service.auth.application.port.TokenProvider;
 import com.rushcrew.auth_service.auth.application.result.LoginResult;
 import com.rushcrew.auth_service.auth.application.result.SignUpResult;
+import com.rushcrew.auth_service.auth.application.result.TokenPairResult;
 import com.rushcrew.auth_service.auth.application.result.UserCreateResult;
 import com.rushcrew.auth_service.auth.application.result.VerifyPasswordResult;
 import lombok.RequiredArgsConstructor;
@@ -18,13 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserClient userClient;
-    private final TokenProvider accessTokenProvider;
+    private final TokenService tokenService;
 
     @Transactional
     public SignUpResult signUp(SignUpCommand command) {
         UserCreateResult result = userClient.createUser(command);
 
-        String accessToken = accessTokenProvider.generateToken(
+        TokenPairResult tokens = tokenService.issueTokenPair(
             result.userId(),
             result.email(),
             result.role()
@@ -34,14 +34,15 @@ public class AuthService {
             result.userId(),
             result.email(),
             result.name(),
-            accessToken
+            tokens.accessToken(),
+            tokens.refreshToken()
         );
     }
 
     public LoginResult login(LoginCommand command) {
         VerifyPasswordResult result = userClient.verifyPassword(command);
 
-        String accessToken = accessTokenProvider.generateToken(
+        TokenPairResult tokens = tokenService.issueTokenPair(
             result.userId(),
             result.email(),
             result.role()
@@ -51,7 +52,8 @@ public class AuthService {
             result.userId(),
             result.email(),
             result.name(),
-            accessToken
+            tokens.accessToken(),
+            tokens.refreshToken()
         );
     }
 }

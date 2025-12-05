@@ -23,6 +23,12 @@ dependencies {
 	// feign client
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 
+	// Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+	// Jackson for JSON serialization
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
 	// jjwt
 	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'

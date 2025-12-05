@@ -4,5 +4,6 @@ public record SignUpResult(
     Long userId,
     String email,
     String name,
-    String accessToken
+    String accessToken,
+    String refreshToken
 ) {}
