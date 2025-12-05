@@ -3,6 +3,7 @@ package com.rushcrew.queue.infrastructure.repository;
 import com.rushcrew.queue.domain.entity.QueueToken;
 import com.rushcrew.queue.domain.repository.QueueRepository;
 import com.rushcrew.queue.domain.vo.TokenId;
+import com.rushcrew.queue.domain.vo.TrafficSetting;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -75,7 +76,7 @@ public class RedisQueueRepository implements QueueRepository {
     }
 
     @Override
-    public void activateTokens(UUID productId, List<String> tokens) {
+    public void activateTokens(UUID productId, List<String> tokens, TrafficSetting setting) {
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.rushcrew.queue.domain.repository;
 
 import com.rushcrew.queue.domain.entity.QueueToken;
 import com.rushcrew.queue.domain.vo.TokenId;
+import com.rushcrew.queue.domain.vo.TrafficSetting;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -22,7 +23,7 @@ public interface QueueRepository {
      * @param productId
      * @param tokens
      */
-    void activateTokens(UUID productId, List<String> tokens);
+    void activateTokens(UUID productId, List<String> tokens, TrafficSetting trafficSetting);
 
     /**
      * 활성 토큰 검증 (주문 서비스에서 검증 요청 시 사용)

@@ -9,10 +9,12 @@ import com.rushcrew.queue.domain.enums.QueueStatus;
 import com.rushcrew.queue.domain.repository.QueuePolicyRepository;
 import com.rushcrew.queue.domain.repository.QueueRepository;
 import com.rushcrew.queue.domain.vo.TokenId;
+import com.rushcrew.queue.domain.vo.TrafficSetting;
 import com.rushcrew.queue.infrastructure.repository.RedisQueueRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -115,6 +117,30 @@ public class QueueService implements QueuePort {
             .build();
     }
 
+    @Override
+    public TokenId validateQueueToken(String token) {
+        TokenId tokenId;
+        try {
+            tokenId = TokenId.of(UUID.fromString(token));
+        } catch (IllegalArgumentException e) {
+            // TODO : BUSINESSEXCEPTION으로 수정 필요
+            throw new IllegalArgumentException("잘못된 토큰 형식입니다.");
+        }
+        return tokenId;
+    }
+
+    @Override
+    public void activateTokens(UUID productId, List<String> tokens, TrafficSetting trafficSetting) {
+    }
+
+    /**
+     * 토큰 유효성 검증 (활성화 여부)
+     */
+    private boolean validateActivatedQueueToken(UUID productId, String token) {
+        TokenId tokenId = validateQueueToken(token);
+        return queueRepository.isActivatedToken(productId, tokenId);
+    }
+
     /**
      * 타임스탬프 -> LocalDateTime 변환
      */
@@ -130,16 +156,5 @@ public class QueueService implements QueuePort {
         // 진입 요청 시간 반환
         Double score = queueRepository.getWaitingScore(productId, tokenId);
         return score != null ? score.longValue() : System.currentTimeMillis();
-    }
-
-    private TokenId validateQueueToken(String token) {
-        TokenId tokenId;
-        try {
-            tokenId = TokenId.of(UUID.fromString(token));
-        } catch (IllegalArgumentException e) {
-            // TODO : BUSINESSEXCEPTION으로 수정 필요
-            throw new IllegalArgumentException("잘못된 토큰 형식입니다.");
-        }
-        return tokenId;
     }
 }
