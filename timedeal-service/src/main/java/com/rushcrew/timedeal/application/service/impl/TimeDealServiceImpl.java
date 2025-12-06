@@ -41,4 +41,14 @@ public class TimeDealServiceImpl implements TimeDealService {
 
         return newTimeDeal.getId();
     }
+
+    @Override
+    @Transactional
+    public void forceEndTimeDeal(UUID timeDealId) {
+        // TODO: 요청사용자가 MASTER 인지 확인하는 로직 추가 예정
+
+        TimeDeal timeDeal = timeDealRepository.findById(timeDealId)
+            .orElseThrow(() -> new BusinessException(TimeDealErrorCode.NOT_FOUND_TIME_DEAL));
+        timeDeal.forceEnd();
+    }
 }

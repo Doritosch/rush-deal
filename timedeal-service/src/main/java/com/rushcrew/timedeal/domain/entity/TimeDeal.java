@@ -1,6 +1,8 @@
 package com.rushcrew.timedeal.domain.entity;
 
 import com.rushcrew.common.entity.BaseEntity;
+import com.rushcrew.common.exception.BusinessException;
+import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
 import com.rushcrew.timedeal.domain.model.CreateTimeDealParams;
 import com.rushcrew.timedeal.domain.vo.LimitQuantity;
 import com.rushcrew.timedeal.domain.vo.Period;
@@ -93,6 +95,13 @@ public class TimeDeal extends BaseEntity {
         );
 
         return timeDeal;
+    }
+
+    public void forceEnd() {
+        if (this.status == TimeDealStatus.ENDED) {
+            throw new BusinessException(TimeDealErrorCode.ALREADY_ENDED);
+        }
+        this.status = TimeDealStatus.ENDED;
     }
 
     private void addTimeDealProduct(UUID productId, UUID optionId) {
