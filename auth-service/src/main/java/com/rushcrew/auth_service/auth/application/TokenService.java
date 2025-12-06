@@ -9,6 +9,7 @@ import com.rushcrew.auth_service.auth.domain.entity.RefreshToken;
 import com.rushcrew.auth_service.auth.domain.policy.ConcurrentLoginPolicy;
 import com.rushcrew.auth_service.auth.domain.repository.RefreshTokenRepository;
 import com.rushcrew.auth_service.auth.domain.vo.UserId;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -64,8 +65,12 @@ public class TokenService {
         UserInfoResult user,
         String refreshTokenValue
     ) {
-        RefreshToken token = refreshTokenRepository.findByToken(refreshTokenValue)
-            .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 Refresh Token입니다.")
+        RefreshToken token = refreshTokenRepository
+            .findByToken(refreshTokenValue)
+            .orElseThrow(() ->
+                new IllegalArgumentException(
+                    "유효하지 않은 Refresh Token입니다."
+                )
             );
 
         token.ensureValid();
@@ -84,10 +89,16 @@ public class TokenService {
             refreshTokenRepository::deleteByToken
         );
 
-        // 2. Access Token 블랙리스트 처리
-        java.time.LocalDateTime expiryDate = accessTokenProvider.getExpiryDate(
-            accessToken
-        );
+        // 2. 만료 시간을 추출
+        LocalDateTime expiryDate;
+        try {
+            expiryDate = accessTokenProvider.getExpiryDate(accessToken);
+        } catch (Exception e) {
+            // 이미 만료되었거나 잘못된 토큰인 경우 무시
+            return;
+        }
+
+        // 3. 블랙리스트 처리
         tokenBlacklistService.blacklistAccessToken(accessToken, expiryDate);
     }
 
@@ -99,10 +110,15 @@ public class TokenService {
         // 1. 해당 유저의 모든 Refresh Token 삭제
         refreshTokenRepository.deleteAllByUserId(userId);
 
-        // 2. 현재 Access Token 및 유저 자체를 블랙리스트 처리
-        java.time.LocalDateTime expiryDate = accessTokenProvider.getExpiryDate(
-            currentAccessToken
-        );
+        // 2. 현재 Access Token 및 유저 자체를 블랙리스트 처리 (멱등성 보장)
+        LocalDateTime expiryDate;
+        try {
+            expiryDate = accessTokenProvider.getExpiryDate(currentAccessToken);
+        } catch (Exception e) {
+            // 토큰 파싱 실패 시 기본값 사용
+            expiryDate = LocalDateTime.now().plusHours(1);
+        }
+
         tokenBlacklistService.blacklistAccessToken(
             currentAccessToken,
             expiryDate
