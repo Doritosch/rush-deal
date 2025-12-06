@@ -100,7 +100,7 @@ public class RedisQueueRepository implements QueueRepository {
                     strConnection.zAdd(activeKey, expireAt, token);
 
                     // 대기열 제거
-                    strConnection.zRem(waitingKey, token);
+                    strConnection.zRem(waitingKey, token) ;
                 }
                 return null; // 파이프라인은 반환값이 null이어야 함
         });
