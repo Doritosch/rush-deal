@@ -1,9 +1,11 @@
 package com.rushcrew.timedeal.domain.entity;
 
 import com.rushcrew.common.entity.BaseEntity;
+import com.rushcrew.timedeal.domain.model.CreateTimeDealParams;
 import com.rushcrew.timedeal.domain.vo.LimitQuantity;
 import com.rushcrew.timedeal.domain.vo.Period;
 import com.rushcrew.timedeal.domain.vo.Price;
+import com.rushcrew.timedeal.domain.vo.ProductItemIds;
 import com.rushcrew.timedeal.domain.vo.TimeDealInfo;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import jakarta.persistence.AttributeOverride;
@@ -57,8 +59,14 @@ public class TimeDeal extends BaseEntity {
 
     @Embedded
     @AttributeOverrides({
-        @AttributeOverride(name = "startAt", column = @Column(name = "start_at", nullable = false)),
-        @AttributeOverride(name = "endAt", column = @Column(name = "end_at", nullable = false))
+        @AttributeOverride(
+            name = "startAt",
+            column = @Column(name = "start_at", columnDefinition = "TIMESTAMP", nullable = false)
+        ),
+        @AttributeOverride(
+            name = "endAt",
+            column = @Column(name = "end_at", columnDefinition = "TIMESTAMP", nullable = false)
+        )
     })
     private Period period;
 
@@ -71,5 +79,26 @@ public class TimeDeal extends BaseEntity {
     @Builder.Default
     private List<TimeDealProduct> timeDealProducts = new ArrayList<>();
 
+    public static TimeDeal create(CreateTimeDealParams params) {
+        TimeDeal timeDeal = TimeDeal.builder()
+            .timeDealInfo(params.timeDealInfo())
+            .price(params.discountPrice())
+            .limitQuantity(params.limitQuantity())
+            .period(params.period())
+            .status(params.status())
+            .build();
+
+        params.optionIds().forEach(optionId ->
+            timeDeal.addTimeDealProduct(params.productId(), optionId)
+        );
+
+        return timeDeal;
+    }
+
+    private void addTimeDealProduct(UUID productId, UUID optionId) {
+        this.timeDealProducts.add(TimeDealProduct.create(
+            this, ProductItemIds.of(productId, optionId)
+        ));
+    }
 }
 
