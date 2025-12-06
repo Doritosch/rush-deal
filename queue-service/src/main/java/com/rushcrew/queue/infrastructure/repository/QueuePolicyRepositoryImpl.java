@@ -66,7 +66,7 @@ public class QueuePolicyRepositoryImpl implements QueuePolicyRepository {
     }
 
     @Override
-    public List<QueuePolicy> findAllActivePolicies(LocalDateTime now) {
-        return jpaQueuePolicyRepository.findAllActivePolicies(now);
+    public List<QueuePolicy> findAllActivePolicies(LocalDateTime now, LocalDateTime nowPlus1Min) {
+        return jpaQueuePolicyRepository.findAllActivePolicies(now, nowPlus1Min);
     }
 }

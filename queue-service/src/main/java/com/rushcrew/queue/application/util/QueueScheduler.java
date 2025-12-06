@@ -80,6 +80,9 @@ public class QueueScheduler {
 
     }
 
+    /**
+     * 대기열 정책에서 대기열 진입 시간 확인 로직
+     */
     private boolean isWithinRunningTime(QueuePolicy policy, LocalDateTime now) {
         LocalDateTime startTime = policy.getTimePeriod().getStartTime();
         LocalDateTime endTime = policy.getTimePeriod().getEndTime();

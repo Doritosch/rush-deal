@@ -47,9 +47,6 @@ public class QueueService implements QueuePort {
         QueuePolicy policy = queuePolicyRepository.findByProductId(command.productId())
             .orElseThrow(() -> new NoSuchElementException("타임딜이 운영되지 않는 상품입니다."));
 
-        // TODO: 대기열 정책에서 대기열 진입 시간 확인 로직 추가 필요
-//        if (policy.isOpen()) {}
-
         QueueToken queueToken = QueueToken.create(command.productId(), command.userId());
 
         // redis 대기열 저장소 저장 & 중복 진입 차단
@@ -126,8 +123,7 @@ public class QueueService implements QueuePort {
         try {
             tokenId = TokenId.of(UUID.fromString(token));
         } catch (IllegalArgumentException e) {
-            // TODO : BUSINESSEXCEPTION으로 수정 필요
-            throw new IllegalArgumentException("잘못된 토큰 형식입니다.");
+            throw new BusinessException(QueueErrorCode.QUEUE_TOKEN_NOT_AVAILABLE);
         }
         return tokenId;
     }
