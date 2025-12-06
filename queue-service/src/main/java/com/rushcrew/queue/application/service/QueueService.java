@@ -133,7 +133,7 @@ public class QueueService implements QueuePort {
     }
 
     @Override
-    public void activateTokens(UUID productId, List<String> tokens, TrafficSetting trafficSetting) {
+    public void activateTokens(UUID productId, TrafficSetting trafficSetting) {
         // 현재 활성 인원 조회
         Long currActiveCount = queueRepository.countActiveTokens(productId);
 

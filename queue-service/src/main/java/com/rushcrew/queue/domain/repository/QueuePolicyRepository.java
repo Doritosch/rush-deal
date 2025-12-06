@@ -46,5 +46,5 @@ public interface QueuePolicyRepository {
      * 현재 활성화된 모든 타임딜 정책 조회
      * (현재 서버가 처리해야 할 모든 타임딜)
      */
-    List<QueuePolicy> findAllActivePolicies(LocalDateTime now);
+    List<QueuePolicy> findAllActivePolicies(LocalDateTime now, LocalDateTime nowPlus1Min);
 }

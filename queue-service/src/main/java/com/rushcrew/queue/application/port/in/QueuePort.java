@@ -27,5 +27,5 @@ public interface QueuePort {
      * 토큰 활성화
      * 스케줄러가 호출: 대기 -> 활성 전환
      */
-    void activateTokens(UUID productId, List<String> tokens, TrafficSetting trafficSetting);
+    void activateTokens(UUID productId, TrafficSetting trafficSetting);
 }
