@@ -166,7 +166,8 @@ public class QueueService implements QueuePort {
     /**
      * 토큰 유효성 검증 (활성화 여부)
      */
-    private boolean validateActivatedQueueToken(UUID productId, String token) {
+    @Override
+    public boolean validateActivatedQueueToken(UUID productId, String token) {
         TokenId tokenId = validateQueueToken(token);
         return queueRepository.isActivatedToken(productId, tokenId);
     }

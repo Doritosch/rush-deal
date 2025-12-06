@@ -24,6 +24,11 @@ public interface QueuePort {
     TokenId validateQueueToken(String token);
 
     /**
+     * 토큰 형식 검증 + 유저 토큰 활성화 여부
+     */
+    boolean validateActivatedQueueToken(UUID productId, String token);
+
+    /**
      * 토큰 활성화
      * 스케줄러가 호출: 대기 -> 활성 전환
      */
