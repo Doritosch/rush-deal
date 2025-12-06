@@ -77,7 +77,7 @@ public class QueueService implements QueuePort {
     @Override
     public QueueRedisResponse getQueueRank(UUID productId, String token, Long userId, String role) {
         // 토큰 유효성 검증: 본인 확인 (대기열 토큰 소유권 검증)
-        boolean isOwner = ((RedisQueueRepository) queueRepository).verifyTokenOwner(productId, userId, token);
+        boolean isOwner = queueRepository.verifyTokenOwner(productId, userId, token);
         if (!isOwner) {
             log.warn("[QUEUE:ERROR] 토큰 도용 시도 감지: User {}, Token {}", userId, token);
             throw new SecurityException("토큰 소유자가 일치하지 않습니다.");
