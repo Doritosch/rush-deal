@@ -1,13 +1,14 @@
 package com.rushcrew.order_service.application.saga.orchestrator;
 
-import java.time.Instant;
-
 import org.springframework.stereotype.Component;
 
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
 import com.rushcrew.order_service.application.command.dto.result.CreateOrderResult;
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
+import com.rushcrew.order_service.application.saga.dto.SagaStepResult;
+import com.rushcrew.order_service.application.saga.step.ValidateStockStep;
+import com.rushcrew.order_service.domain.enums.SagaStatus;
 import com.rushcrew.order_service.domain.model.saga.SagaInstance;
 
 import jakarta.transaction.Transactional;
@@ -18,6 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class OrderCreationSagaOrchestrator {
+
+	private final ValidateStockStep validateStockStep;
+
 	@Transactional
 	public CreateOrderResult execute(CreateOrderCommand command) {
 		// 1. Saga 인스턴스 생성
@@ -34,6 +38,12 @@ public class OrderCreationSagaOrchestrator {
 		// 검증 시작
 		try {
 			// Step 1: 재고 검증
+			log.info("[Saga-{}] Step 1: validateStock 시작", context.getSagaId());
+			SagaStepResult validateResult = validateStockStep.execute(context, sagaData);
+			if (!validateResult.isSuccess()) {
+				throw new IllegalArgumentException(validateResult.getErrorMessage());
+			}
+			sagaInstance.addStep("VALIDATE_STOCK", SagaStatus.COMPLETED);
 			// Step 2: 재고 예약
 			// Step 3: 포인트 차감
 			// Step 4: 주문 생성
