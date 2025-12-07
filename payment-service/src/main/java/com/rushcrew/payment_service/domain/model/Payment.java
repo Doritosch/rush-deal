@@ -40,6 +40,16 @@ public class Payment extends BaseEntity {
     }
 
     public void completePayment() {
+        if (!status.isPending()) {
+            throw new IllegalArgumentException("결제 요청 상태에서만 완료할 수 있습니다.");
+        }
         this.status = PaymentStatus.PAID;
+    }
+
+    public void cancelPayment() {
+        if (!status.isPaid()) {
+            throw new IllegalArgumentException("결제 완료 상태에서만 취소할 수 있습니다.");
+        }
+        this.status = PaymentStatus.CANCELLED;
     }
 }

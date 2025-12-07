@@ -3,6 +3,8 @@ package com.rushcrew.payment_service.presentation;
 import com.rushcrew.payment_service.application.PaymentService;
 import com.rushcrew.payment_service.application.command.PaymentCommand;
 import com.rushcrew.payment_service.application.result.PaymentPrepareResult;
+import com.rushcrew.payment_service.application.result.PaymentResult;
+import com.rushcrew.payment_service.presentation.dto.request.CancelPaymentRequest;
 import com.rushcrew.payment_service.presentation.dto.request.CompletePaymentRequest;
 import com.rushcrew.payment_service.presentation.dto.request.PaymentRequest;
 import com.rushcrew.payment_service.presentation.dto.response.PaymentPrepareResponse;
@@ -13,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/payments")
@@ -51,6 +55,16 @@ public class PaymentController {
                 completeRequest.paymentId(),
                 completeRequest.portOnePaymentId()
         );
+    }
+
+    @PostMapping("/{paymentId}/cancel")
+    public Mono<PaymentResponse> cancelPayment(
+            @PathVariable("paymentId") UUID paymentId,
+            @Valid @RequestBody CancelPaymentRequest request
+            ) {
+
+        Mono<PaymentResult> result = paymentService.cancelPayment(paymentId, request.cancelReason());
+        return result.map(PaymentResponse::from);
     }
 
     // 결제 정보를 실시간으로 전달받기 위한 웹훅입니다.

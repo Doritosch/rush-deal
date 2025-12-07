@@ -2,6 +2,7 @@ package com.rushcrew.payment_service.application;
 
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.payment_service.application.command.PaymentCommand;
+import com.rushcrew.payment_service.application.command.RefundCommand;
 import com.rushcrew.payment_service.application.result.PaymentPrepareResult;
 import com.rushcrew.payment_service.application.result.PaymentResult;
 import com.rushcrew.payment_service.domain.exception.PaymentErrorCode;
@@ -11,7 +12,6 @@ import com.rushcrew.payment_service.domain.repository.PaymentRepository;
 import com.rushcrew.payment_service.domain.repository.PaymentTransactionRepository;
 import com.rushcrew.payment_service.domain.vo.Amount;
 import com.rushcrew.payment_service.domain.vo.Card;
-import com.rushcrew.payment_service.presentation.dto.response.PaymentPrepareResponse;
 import com.rushcrew.payment_service.presentation.dto.response.PaymentResponse;
 import io.portone.sdk.server.payment.PaidPayment;
 import io.portone.sdk.server.payment.PaymentClient;
@@ -112,6 +112,35 @@ public class PaymentService {
                             return Mono.error(new BusinessException(PaymentErrorCode.NOT_COMPLETED_PAYMENT));
                     }
                 });
+    }
+    @Transactional
+    public Mono<PaymentResult> cancelPayment(UUID paymentId, String cancelReason) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new BusinessException(PaymentErrorCode.INVALID_PAYMENT));
+
+        PaymentTransaction paymentTransaction = paymentTransactionRepository
+                .findFirstByPaymentOrderByRequestedAtDesc(payment)
+                .orElseThrow(() -> new BusinessException(PaymentErrorCode.NOT_FOUND_PAYMENT_TRANSACTION));
+
+        String portonePaymentId = paymentTransaction.getPortonePaymentId();
+
+        return Mono.fromFuture(portone.cancelPayment(
+                portonePaymentId,
+                null,
+                null,
+                null,
+                        cancelReason,
+                null,
+                null,
+                null
+        ))
+                .flatMap(cancelResponse -> {
+                    payment.cancelPayment();
+                    paymentRepository.save(payment);
+
+                    return Mono.just(PaymentResult.from(payment));
+                })
+                .onErrorMap(e -> new BusinessException(PaymentErrorCode.FAILED_CANCEL_PAYMENT));
     }
 
     public Mono<Unit> handleWebhook(String body, String webhookId, String webhookTimestamp, String webhookSignature) throws Exception {

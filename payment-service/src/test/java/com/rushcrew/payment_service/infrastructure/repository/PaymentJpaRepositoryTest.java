@@ -38,6 +38,6 @@ class PaymentJpaRepositoryTest {
         assertNotNull(savedPayment.getPaymentId());
         assertEquals(savedPayment.getOrderId(), orderId);
         assertEquals(savedPayment.getAmount(), amount);
-        assertEquals(savedPayment.getStatus(), PaymentStatus.READY);
+        assertEquals(savedPayment.getStatus(), PaymentStatus.PENDING);
     }
 }
