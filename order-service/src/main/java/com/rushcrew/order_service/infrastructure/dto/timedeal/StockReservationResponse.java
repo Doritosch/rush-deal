@@ -9,7 +9,7 @@ import lombok.NonNull;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StockReservationResponse {
-	@NonNull private boolean success;
+	private boolean success;
 	@NonNull private Integer availableStock;
 	@NonNull private String message;
 }

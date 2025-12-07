@@ -27,5 +27,5 @@ public class TimeDealStockDetailResponse {
 	@NonNull private String optionName;
 	@NonNull private String sellerId;
 	@NonNull private String sellerName;
-	@NonNull private boolean isActive;
+	private boolean isActive;
 }
