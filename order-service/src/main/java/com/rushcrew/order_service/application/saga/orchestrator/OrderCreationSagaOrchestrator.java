@@ -1,5 +1,7 @@
 package com.rushcrew.order_service.application.saga.orchestrator;
 
+import java.time.Instant;
+
 import org.springframework.stereotype.Component;
 
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
@@ -86,7 +88,31 @@ public class OrderCreationSagaOrchestrator {
 			log.info("[Saga-{}] 완료", context.getSagaId());
 
 			// 결과 리턴
+			Instant reservationExpiresAt = (Instant) context.getData("reservationExpiresAt");
+			if (reservationExpiresAt == null) {
+				reservationExpiresAt = Instant.now().plus(15, java.time.temporal.ChronoUnit.MINUTES);
+			}
+
+			Instant orderedAt = (Instant) context.getData("orderedAt");
+			if (orderedAt == null) {
+				orderedAt = Instant.now();
+			}
+
+			String orderStatus = (String) context.getData("orderStatus");
+			if (orderStatus == null) {
+				orderStatus = "PENDING";
+			}
+
 			return CreateOrderResult.builder()
+				.orderId(sagaData.getOrderId())
+				.userId(command.userId())
+				.orderStatus(orderStatus)
+				.totalAmount(sagaData.getTotalAmount())
+				.pointUsed(command.pointUsed())
+				.finalAmount(sagaData.getFinalAmount())
+				.orderedAt(orderedAt)
+				.reservationExpiresAt(reservationExpiresAt)
+				.orderItems(sagaData.getOrderItems())
 				.build();
 
 		} catch (Exception e) {
