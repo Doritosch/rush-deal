@@ -198,6 +198,32 @@ public class ReserveStockStep {
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
+	/**
+	 * Compensating Transaction: 재고 복구
+	 */
+	public void compensate(SagaContext context, OrderCreationSagaData data) {
+		try {
+			log.info("[Saga-{}] ReserveStock 보상 트랜잭션 시작", context.getSagaId());
+
+			@SuppressWarnings("unchecked")
+			List<ReservedStockInfo> reservedStocks =
+				(List<ReservedStockInfo>) context.getData("reservedStocks");
+
+			if (reservedStocks == null || reservedStocks.isEmpty()) {
+				log.warn("[Saga-{}] 복구할 재고 예약 정보가 없습니다", context.getSagaId());
+				return;
+			}
+
+			rollbackReservedStocks(context, reservedStocks, data.getCommand());
+
+			log.info("[Saga-{}] ReserveStock 보상 트랜잭션 완료: {} 건 복구",
+				context.getSagaId(), reservedStocks.size());
+
+		} catch (Exception e) {
+			log.error("[Saga-{}] ReserveStock 보상 트랜잭션 실패", context.getSagaId(), e);
+			// TODO: 보상 실패 시 알림 필요 (Slack)
+		}
+	}
 	@Builder
 	@Getter
 	private static class ReservedStockInfo {

@@ -7,6 +7,7 @@ import com.rushcrew.order_service.application.command.dto.result.CreateOrderResu
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
 import com.rushcrew.order_service.application.saga.dto.SagaStepResult;
+import com.rushcrew.order_service.application.saga.step.DeductPointStep;
 import com.rushcrew.order_service.application.saga.step.ReserveStockStep;
 import com.rushcrew.order_service.application.saga.step.ValidateStockStep;
 import com.rushcrew.order_service.domain.enums.SagaStatus;
@@ -23,10 +24,11 @@ public class OrderCreationSagaOrchestrator {
 
 	private final ValidateStockStep validateStockStep;
 	private final ReserveStockStep reserveStockStep;
+	private final DeductPointStep deductPointStep;
 
 	@Transactional
 	public CreateOrderResult execute(CreateOrderCommand command) {
-		// 1. Saga 인스턴스 생성
+		// 1. Saga 인스턴스 생성 - sagaId 생성
 		SagaInstance sagaInstance = SagaInstance.create("ORDER_CREATION", command.userId());
 		// 2. Saga Context 생성
 		SagaContext context = SagaContext.builder()
@@ -37,6 +39,7 @@ public class OrderCreationSagaOrchestrator {
 		OrderCreationSagaData sagaData = OrderCreationSagaData.builder()
 			.command(command)
 			.build();
+
 		// 검증 시작
 		try {
 			// Step 1: 재고 검증
@@ -54,7 +57,17 @@ public class OrderCreationSagaOrchestrator {
 				throw new IllegalArgumentException(reserveResult.getErrorMessage());
 			}
 			sagaInstance.addStep("RESERVE_STOCK", SagaStatus.COMPLETED);
+
 			// Step 3: 포인트 차감
+			log.info("[Saga-{}] Step 3: DeductPoint 시작", context.getSagaId());
+			SagaStepResult deductResult = deductPointStep.execute(context, sagaData);
+			if (!deductResult.isSuccess()) {
+				// 포인트 차감 실패 → 재고 복구
+				reserveStockStep.compensate(context, sagaData);
+				throw new IllegalArgumentException(deductResult.getErrorMessage());
+			}
+			sagaInstance.addStep("DEDUCT_POINT", SagaStatus.COMPLETED);
+
 			// Step 4: 주문 생성
 
 			// Saga 완료
