@@ -13,4 +13,12 @@ public interface PointPort {
 		@NonNull UUID sagaId,
 		@NonNull String reason
 	);
+
+	/* 포인트 환불 */
+	void refundPoint(
+		@NonNull Long userId,
+		@NonNull BigDecimal amount,
+		@NonNull UUID sagaId,
+		@NonNull String reason
+	);
 }

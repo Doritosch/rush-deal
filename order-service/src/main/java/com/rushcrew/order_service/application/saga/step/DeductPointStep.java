@@ -77,4 +77,36 @@ public class DeductPointStep {
 		}
 	}
 
+	/**
+	 * Compensating Transaction: 포인트 환불
+	 */
+	public void compensate(SagaContext context, OrderCreationSagaData data) {
+		try {
+			log.info("[Saga-{}] DeductPoint 보상 트랜잭션 시작", context.getSagaId());
+
+			Boolean pointDeducted = (Boolean) context.getData("pointDeducted");
+			if (pointDeducted == null || !pointDeducted) {
+				log.warn("[Saga-{}] 차감된 포인트가 없어서 보상 트랜잭션 스킵", context.getSagaId());
+				return;
+			}
+
+			BigDecimal pointAmount = (BigDecimal) context.getData("pointAmount");
+			Long userId = data.getCommand().userId();
+
+			// 포인트 환불 API 호출
+			pointPort.refundPoint(
+				userId,
+				pointAmount,
+				context.getSagaId(),
+				"주문 취소로 인한 포인트 환불"
+			);
+
+			log.info("[Saga-{}] DeductPoint 보상 트랜잭션 완료: userId={}, amount={}",
+				context.getSagaId(), userId, pointAmount);
+
+		} catch (Exception e) {
+			log.error("[Saga-{}] DeductPoint 보상 트랜잭션 실패", context.getSagaId(), e);
+			// TODO: 보상 실패 시 알림 필요
+		}
+	}
 }
