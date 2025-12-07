@@ -63,7 +63,7 @@ public class TimeDealStockAdapter implements TimeDealStockPort {
 			.optionId(UUID.fromString(response.getOptionId()))
 			.optionName(response.getOptionName())
 			.sellerId(UUID.fromString(response.getSellerId()))
-			.isActive(response.isActive())
+			// .isActive(response.isActive())
 			.build();
 	}
 
