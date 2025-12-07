@@ -35,5 +35,5 @@ public class TimeDealStockDetail {
 	private UUID sellerId;
 	private String sellerName;
 
-	private boolean isActive;
+	// private boolean isActive;
 }
