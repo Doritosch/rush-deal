@@ -7,6 +7,7 @@ import com.rushcrew.order_service.application.command.dto.result.CreateOrderResu
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
 import com.rushcrew.order_service.application.saga.dto.SagaStepResult;
+import com.rushcrew.order_service.application.saga.step.ReserveStockStep;
 import com.rushcrew.order_service.application.saga.step.ValidateStockStep;
 import com.rushcrew.order_service.domain.enums.SagaStatus;
 import com.rushcrew.order_service.domain.model.saga.SagaInstance;
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OrderCreationSagaOrchestrator {
 
 	private final ValidateStockStep validateStockStep;
+	private final ReserveStockStep reserveStockStep;
 
 	@Transactional
 	public CreateOrderResult execute(CreateOrderCommand command) {
@@ -44,7 +46,14 @@ public class OrderCreationSagaOrchestrator {
 				throw new IllegalArgumentException(validateResult.getErrorMessage());
 			}
 			sagaInstance.addStep("VALIDATE_STOCK", SagaStatus.COMPLETED);
+
 			// Step 2: 재고 예약
+			log.info("[Saga-{}] Step 2: ReserveStock 시작", context.getSagaId());
+			SagaStepResult reserveResult = reserveStockStep.execute(context, sagaData);
+			if (!reserveResult.isSuccess()) {
+				throw new IllegalArgumentException(reserveResult.getErrorMessage());
+			}
+			sagaInstance.addStep("RESERVE_STOCK", SagaStatus.COMPLETED);
 			// Step 3: 포인트 차감
 			// Step 4: 주문 생성
 
