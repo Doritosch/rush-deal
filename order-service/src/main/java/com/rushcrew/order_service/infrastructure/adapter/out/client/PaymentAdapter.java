@@ -28,7 +28,7 @@ public class PaymentAdapter implements PaymentPort {
 			PaymentRequest request = PaymentRequest.builder()
 				.orderId(orderId)
 				.userId(userId)
-				.amount(finalAmount)
+				.finalAmount(finalAmount)
 				.build();
 
 			PaymentResponse response = paymentFeignClient.requestPayment(request);
@@ -44,6 +44,27 @@ public class PaymentAdapter implements PaymentPort {
 		} catch (Exception e) {
 			log.error("결제 요청 중 오류 발생: orderId={}, userId={}", orderId, userId, e);
 			throw new RuntimeException("결제 요청 실패", e);
+		}
+	}
+
+	@Override
+	public void cancelPayment(UUID orderId, Long userId, BigDecimal finalAmount) {
+		try {
+			log.info("결제 취소 요청: orderId={}, userId={}, finalAmount={}", orderId, userId, finalAmount);
+
+			PaymentRequest request = PaymentRequest.builder()
+				.orderId(orderId)
+				.userId(userId)
+				.finalAmount(finalAmount)
+				.build();
+
+			paymentFeignClient.cancelPayment(request);
+
+			log.info("결제 취소 성공: orderId={}", orderId);
+
+		} catch (Exception e) {
+			log.error("결제 취소 중 오류 발생: orderId={}, userId={}", orderId, userId, e);
+			throw new RuntimeException("결제 취소 실패", e);
 		}
 	}
 }

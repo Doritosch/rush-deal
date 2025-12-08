@@ -53,4 +53,35 @@ public class PointEventPublisher implements PointEventPort {
 			throw new RuntimeException("포인트 적립 요청 이벤트 발행 실패", e);
 		}
 	}
+
+	@Override
+	public void publishPointRefundRequested(Long userId, UUID orderId, BigDecimal pointUsed, String reason,
+		Instant timestamp) {
+		try {
+			log.info("포인트 환불 요청 이벤트 발행: userId={}, orderId={}, pointUsed={}", userId, orderId, pointUsed);
+
+			Map<String, Object> event = new HashMap<>();
+			event.put("userId", userId);
+			event.put("orderId", orderId.toString());
+			event.put("pointUsed", pointUsed);
+			event.put("reason", reason);
+			event.put("timestamp", timestamp.toString());
+
+			String payload = objectMapper.writeValueAsString(event);
+
+			OutboxEventEntity outbox = OutboxEventEntity.create(
+				"ORDER",         // aggregateType
+				orderId,                     // aggregateId
+				"POINT_REFUND_REQUESTED",     // eventType
+				payload                      // json
+			);
+
+			outboxRepository.save(outbox);
+			log.info("포인트 환불 요청 이벤트 Outbox 저장 완료: orderId={}", orderId);
+
+		} catch (Exception e) {
+			log.error("포인트 환불 요청 이벤트 발행 실패: orderId={}", orderId, e);
+			throw new RuntimeException("포인트 환불 요청 이벤트 발행 실패", e);
+		}
+	}
 }

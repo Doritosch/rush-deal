@@ -15,4 +15,7 @@ public interface PaymentPort {
 	 * @return 결제 성공 여부
 	 */
 	boolean requestPayment(UUID orderId, Long userId, BigDecimal finalAmount);
+
+	/* 결제 취소 (환불) */
+	void cancelPayment(UUID orderId, Long userId, BigDecimal finalAmount);
 }
