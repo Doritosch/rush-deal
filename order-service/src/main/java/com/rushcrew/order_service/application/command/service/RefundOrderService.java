@@ -75,24 +75,34 @@ public class RefundOrderService implements RefundOrderUseCase {
 
 		// 포인트 환불 이벤트 발행
 		if (savedOrder.getPointUsed().compareTo(BigDecimal.ZERO) > 0) {
-			pointEventPort.publishPointRefundRequested(
-				savedOrder.getUserId(),
-				savedOrder.getOrderId(),
-				savedOrder.getPointUsed(),
-				"주문 환불에 의한 포인트 환불",
-				Instant.now()
-			);
+			try {
+				pointEventPort.publishPointRefundRequested(
+					savedOrder.getUserId(),
+					savedOrder.getOrderId(),
+					savedOrder.getPointUsed(),
+					"주문 환불에 의한 포인트 환불",
+					Instant.now()
+				);
+			} catch (Exception e) {
+				log.error("포인트 이벤트 발행 실패", e);
+				// 실패해도 주문 환불은 계속 진행
+			}
 		}
 
 		// 재고 복구 이벤트 발행
 		for (OrderItem orderItem : savedOrder.getOrderItems()) {
-			stockEventPort.publishStockRollbackRequested(
-				savedOrder.getOrderId(),
-				orderItem.getTimeDealStockId(),
-				orderItem.getQuantity(),
-				"주문 환불에 의한 재고 복구",
-				Instant.now()
-			);
+			try {
+				stockEventPort.publishStockRollbackRequested(
+					savedOrder.getOrderId(),
+					orderItem.getTimeDealStockId(),
+					orderItem.getQuantity(),
+					"주문 환불에 의한 재고 복구",
+					Instant.now()
+				);
+			} catch (Exception e) {
+				log.error("재고 이벤트 발행 실패", e);
+				// 실패해도 주문 환불은 계속 진행
+			}
 		}
 		log.info("재고 복구 이벤트 발행 완료: orderId={}, itemCount={}",
 			savedOrder.getOrderId(), savedOrder.getOrderItems().size());
