@@ -3,6 +3,7 @@ package com.rushcrew.order_service.presentation.api.command;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -11,11 +12,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.rushcrew.common.dto.ApiResponse;
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
+import com.rushcrew.order_service.application.command.dto.command.RequestPaymentCommand;
 import com.rushcrew.order_service.application.command.dto.result.CreateOrderResult;
+import com.rushcrew.order_service.application.command.dto.result.RequestPaymentResult;
 import com.rushcrew.order_service.application.command.usecase.CreateOrderUseCase;
+import com.rushcrew.order_service.application.command.usecase.RequestPaymentUseCase;
 import com.rushcrew.order_service.global.util.RoleChecker;
 import com.rushcrew.order_service.presentation.dto.request.CreateOrderRequest;
 import com.rushcrew.order_service.presentation.dto.response.CreateOrderResponse;
+import com.rushcrew.order_service.presentation.dto.response.RequestPaymentResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +31,11 @@ import lombok.RequiredArgsConstructor;
 public class OrderCommandController {
 
 	private final CreateOrderUseCase createOrderUseCase;
+	private final RequestPaymentUseCase requestPaymentUseCase;
 
+	/**
+	 * 주문 생성 API
+	 */
 	@PostMapping
 	public ApiResponse<CreateOrderResponse> createOrder(
 		@Valid @RequestBody CreateOrderRequest request,
@@ -51,6 +60,24 @@ public class OrderCommandController {
 		CreateOrderResult result = createOrderUseCase.createOrder(command);
 
 		return ApiResponse.success(CreateOrderResponse.from(result));
+	}
+
+	@PostMapping("/{orderId}/payment")
+	public ApiResponse<RequestPaymentResponse> requestPayment(
+		@PathVariable UUID orderId,
+		@RequestHeader("X-User-Id") Long userId,
+		@RequestHeader(value = "X-User-Role", required = false) String role
+	) {
+		RoleChecker.checkRole(role, "USER", "MASTER");
+
+		RequestPaymentCommand command = RequestPaymentCommand.builder()
+			.orderId(orderId)
+			.userId(userId)
+			.build();
+
+		RequestPaymentResult result = requestPaymentUseCase.requestPayment(command);
+
+		return ApiResponse.success(RequestPaymentResponse.from(result));
 	}
 
 }
