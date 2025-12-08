@@ -79,21 +79,18 @@ public class QueueScheduler {
 
         LocalDateTime now = LocalDateTime.now();
 
-        for (QueuePolicy policy : cachedPolicies) {
-            // "곧 시작(1분 내)할" 정책도 refreshPolicies 메서드에서 미리 가져왔으므로,
-            // 실제로 지금 시간이 시작 시간을 지났는지 메모리 상에서 체크
-            if (!isWithinRunningTime(policy, now)) {
-                continue;
-            }
-            processPolicyWithLock(policy);
-        }
-
+        // 병렬 처리로 성능 개선 (상품별 독립 락이므로 안전)
+        cachedPolicies.parallelStream()
+            .filter(policy -> isWithinRunningTime(policy, now))
+            .forEach(this::processPolicyWithLock);
     }
 
     /**
      * 대기열 정책에서 대기열 진입 시간 확인 로직
      */
     private boolean isWithinRunningTime(QueuePolicy policy, LocalDateTime now) {
+        // "곧 시작(1분 내)할" 정책도 refreshPolicies 메서드에서 미리 가져왔으므로,
+        // 실제로 지금 시간이 시작 시간을 지났는지 메모리 상에서 체크
         LocalDateTime startTime = policy.getTimePeriod().getStartTime();
         LocalDateTime endTime = policy.getTimePeriod().getEndTime();
         return (now.isEqual(startTime) || now.isAfter(startTime)) && now.isBefore(endTime);
