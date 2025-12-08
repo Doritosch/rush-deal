@@ -27,7 +27,6 @@ public class PaymentAdapter implements PaymentPort {
 
 			PaymentRequest request = PaymentRequest.builder()
 				.orderId(orderId)
-				.userId(userId)
 				.amount(finalAmount)
 				.build();
 
