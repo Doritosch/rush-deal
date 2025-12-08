@@ -52,4 +52,34 @@ public class PaymetEventPublisher implements PaymentEventPort {
 			throw new RuntimeException("결제 완료 이벤트 발행 실패", e);
 		}
 	}
+
+	@Override
+	public void publishRefundRequested(UUID orderId, Long userId, BigDecimal refundAmount, String reason, Instant timestamp) {
+		try {
+			log.info("환불 요청 이벤트 발행: orderId={}, userId={}, refundAmount={}", orderId, userId, refundAmount);
+
+			Map<String, Object> event = new HashMap<>();
+			event.put("orderId", orderId.toString());
+			event.put("userId", userId);
+			event.put("refundAmount", refundAmount);
+			event.put("reason", reason);
+			event.put("timestamp", timestamp.toString());
+
+			String payload = objectMapper.writeValueAsString(event);
+
+			OutboxEventEntity outbox = OutboxEventEntity.create(
+				"ORDER",      // aggregateType
+				orderId,                    // aggregateId
+				"REFUND_REQUESTED",         // eventType
+				payload                     // json
+			);
+
+			outboxRepository.save(outbox);
+			log.info("환불 요청 이벤트 Outbox 저장 완료: orderId={}", orderId);
+
+		} catch (Exception e) {
+			log.error("환불 요청 이벤트 발행 실패: orderId={}", orderId, e);
+			throw new RuntimeException("환불 요청 이벤트 발행 실패", e);
+		}
+	}
 }
