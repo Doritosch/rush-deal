@@ -2,6 +2,7 @@ package com.rushcrew.order_service.order.infrastructure.adapter.out.messaging;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.UUID;
 
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import com.rushcrew.order_service.order.application.port.out.PaymentEventPort;
 import com.rushcrew.order_service.order.infrastructure.adapter.out.messaging.event.PaymentRequestedEvent;
 import com.rushcrew.order_service.order.infrastructure.adapter.out.messaging.event.PointDeductionRequestedEvent;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -20,15 +22,15 @@ public class PaymentEventPublisher implements PaymentEventPort {
 
 	@Override
 	public void publishPointDeductionRequested(
-		Long userId,
-		String orderId,
-		BigDecimal pointAmount,
-		String sagaId,
-		Instant timestamp
+		@NonNull Long userId,
+		@NonNull UUID orderId,
+		@NonNull BigDecimal pointAmount,
+		@NonNull String sagaId,
+		@NonNull Instant timestamp
 	) {
 		PointDeductionRequestedEvent event = PointDeductionRequestedEvent.builder()
 			.userId(userId)
-			.orderId(orderId)
+			.orderId(orderId.toString())
 			.pointAmount(pointAmount)
 			.sagaId(sagaId)
 			.timestamp(timestamp)
@@ -39,17 +41,17 @@ public class PaymentEventPublisher implements PaymentEventPort {
 
 	@Override
 	public void publishPaymentRequested(
-		String orderId,
-		Long userId,
-		BigDecimal originalAmount,
-		BigDecimal pointUsed,
-		BigDecimal finalAmount,
-		String paymentMethod,
-		String sagaId,
-		Instant timestamp
+		@NonNull UUID orderId,
+		@NonNull Long userId,
+		@NonNull BigDecimal originalAmount,
+		@NonNull BigDecimal pointUsed,
+		@NonNull BigDecimal finalAmount,
+		@NonNull String paymentMethod,
+		@NonNull String sagaId,
+		@NonNull Instant timestamp
 	) {
 		PaymentRequestedEvent event = PaymentRequestedEvent.builder()
-			.orderId(orderId)
+			.orderId(orderId.toString())
 			.userId(userId)
 			.originalAmount(originalAmount)
 			.pointUsed(pointUsed)

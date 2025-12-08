@@ -1,5 +1,7 @@
 package com.rushcrew.order_service.order.application.validator;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Component;
 
 import com.rushcrew.common.exception.BusinessException;
@@ -13,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 public class QueueTokenValidator {
 	private final QueuePort queueServiceClient;
 
-	public void validate(String timeDealId, Long userId) {
+	public void validate(UUID timeDealId, Long userId) {
 		if (!queueServiceClient.validateQueueToken(timeDealId, userId)) {
 			throw new BusinessException(OrderErrorCode.INVALID_QUEUE_TOKEN);
 		}

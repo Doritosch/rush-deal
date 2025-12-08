@@ -3,6 +3,7 @@ package com.rushcrew.order_service.order.application.validator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
@@ -15,7 +16,7 @@ public class OrderItemValidator {
 	public void validate(List<CreateOrderCommand.OrderItemCommand> items) {
 
 		// 중복 상품 검증
-		Set<String> timeDealStockIds = new HashSet<>();
+		Set<UUID> timeDealStockIds = new HashSet<>();
 
 		for (CreateOrderCommand.OrderItemCommand item : items) {
 			if (!timeDealStockIds.add(item.getTimeDealStockId())) {

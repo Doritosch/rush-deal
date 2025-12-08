@@ -49,7 +49,7 @@ public class PurchaseConfirmationService {
 		// 포인트 적립 요청 이벤트 발행
 		pointEventPort.publishPointEarnRequested(
 			command.userId(),
-			command.orderId().toString(),
+			command.orderId(),
 			earnAmount, // 포인트적립금액을 주문 쪽에서 안 하면 finalAmount 넘김
 			"구매확정",
 			Instant.now()

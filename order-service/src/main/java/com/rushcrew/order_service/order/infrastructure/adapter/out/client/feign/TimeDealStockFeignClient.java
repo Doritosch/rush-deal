@@ -23,7 +23,7 @@ public interface TimeDealStockFeignClient {
 	TimeDealResponse getTimeDeal(@PathVariable("timeDealId") String timeDealId);
 
 	@GetMapping("/api/v1/timedeal-stocks/{timeDealStockId}")
-	TimeDealStockDetailResponse getTimeDealStockDetail(@PathVariable("timeDealStockId") UUID timeDealStockId);
+	TimeDealStockDetailResponse getTimeDealStockDetail(@PathVariable("timeDealStockId") String timeDealStockId);
 
 	@PostMapping("/api/v1/timedeal-stocks/reserve")
 	StockReservationResponse reserveStock(@RequestBody StockReservationRequest request);

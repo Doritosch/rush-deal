@@ -94,7 +94,7 @@ public class AutoConfirmPurchaseBatchJob {
 
 				pointEventPort.publishPointEarnRequested(
 					order.getUserId(),
-					order.getOrderId().toString(),
+					order.getOrderId(),
 					earnAmount,
 					"자동 구매확정",
 					Instant.now()

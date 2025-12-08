@@ -27,7 +27,7 @@ public class OrderRepositoryImpl implements OrderRepository {
 	}
 
 	@Override
-	public Integer getTotalPurchasedQuantity(Long userId, String timeDealId) {
+	public Integer getTotalPurchasedQuantity(Long userId, UUID timeDealId) {
 		return orderJpaRepository.getTotalPurchasedQuantity(userId, timeDealId);
 	}
 

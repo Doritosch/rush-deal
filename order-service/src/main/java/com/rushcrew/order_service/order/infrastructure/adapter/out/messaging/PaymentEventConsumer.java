@@ -37,7 +37,7 @@ public class PaymentEventConsumer {
 			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 		// 결제 요청 이벤트 발행
 		paymentEventPort.publishPaymentRequested(
-			event.orderId(),
+			UUID.fromString(event.orderId()),
 			event.userId(),
 			order.getTotalAmount(),
 			event.deductedAmount(),
@@ -77,7 +77,7 @@ public class PaymentEventConsumer {
 			timeDealStockPort.confirmStock(
 				reservation.getTimeDealStockId(),
 				reservation.getQuantity(),
-				event.orderId()
+				UUID.fromString(event.orderId())
 			);
 			reservation.confirm();
 		}
@@ -100,13 +100,13 @@ public class PaymentEventConsumer {
 			timeDealStockPort.restoreStock(
 				reservation.getTimeDealStockId(),
 				reservation.getQuantity(),
-				event.orderId(),
-				"결제 실패: " + event.failurReason()
+				UUID.fromString(event.orderId()),
+				"결제 실패: " + event.failureReason()
 			);
 			reservation.cancel();
 		}
 		// 주문 취소
-		order.cancelBeforePayment("결제 실패: " + event.failurReason());
+		order.cancelBeforePayment("결제 실패: " + event.failureReason());
 		orderRepository.save(order);
 	}
 
