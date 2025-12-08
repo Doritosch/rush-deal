@@ -46,7 +46,6 @@ public class PaymentEventPublisher implements PaymentEventPort {
 		@NonNull BigDecimal originalAmount,
 		@NonNull BigDecimal pointUsed,
 		@NonNull BigDecimal finalAmount,
-		@NonNull String paymentMethod,
 		@NonNull String sagaId,
 		@NonNull Instant timestamp
 	) {
@@ -56,7 +55,6 @@ public class PaymentEventPublisher implements PaymentEventPort {
 			.originalAmount(originalAmount)
 			.pointUsed(pointUsed)
 			.finalAmount(finalAmount)
-			.paymentMethod(paymentMethod)
 			.sagaId(sagaId)
 			.timestamp(timestamp)
 			.build();

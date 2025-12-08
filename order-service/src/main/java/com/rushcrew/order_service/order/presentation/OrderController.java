@@ -22,7 +22,6 @@ import com.rushcrew.order_service.order.application.handler.ConfirmPurchaseComma
 import com.rushcrew.order_service.order.application.handler.CreateOrderCommandHandler;
 import com.rushcrew.order_service.order.application.handler.RequestPaymentCommandHandler;
 import com.rushcrew.order_service.order.presentation.dto.request.CreateOrderRequest;
-import com.rushcrew.order_service.order.presentation.dto.request.RequestPaymentRequest;
 import com.rushcrew.order_service.order.presentation.dto.response.ConfirmPurchaseResponse;
 import com.rushcrew.order_service.order.presentation.dto.response.CreateOrderResponse;
 import com.rushcrew.order_service.order.presentation.dto.response.RequestPaymentResponse;
@@ -62,7 +61,6 @@ public class OrderController {
 				.collect(Collectors.toList()))
 			.pointUsed(request.getPointUsed())
 			.shippingInfo(request.getShippingInfo().toShippingInfo())
-			.paymentMethod(request.getPaymentMethod())
 			.build();
 
 		CreateOrderResult result = createOrderCommandHandler.handle(command);
@@ -78,12 +76,11 @@ public class OrderController {
 	@PostMapping("/{orderId}/payment")
 	public ApiResponse<RequestPaymentResponse> requestPayment(
 		@PathVariable UUID orderId,
-		@Valid @RequestBody RequestPaymentRequest request,
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	){
 		RoleChecker.checkRole(role, "USER", "MASTER");
-		RequestPaymentCommand command = new RequestPaymentCommand(orderId, userId, request.getPaymentMethod());
+		RequestPaymentCommand command = new RequestPaymentCommand(orderId, userId);
 		RequestPaymentResult result = requestPaymentCommandHandler.handle(command);
 		RequestPaymentResponse response = RequestPaymentResponse.from(result);
 

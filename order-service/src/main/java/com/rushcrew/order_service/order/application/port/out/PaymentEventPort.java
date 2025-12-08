@@ -24,7 +24,6 @@ public interface PaymentEventPort {
 		@NonNull BigDecimal originalAmount,
 		@NonNull BigDecimal pointUsed,
 		@NonNull BigDecimal finalAmount,
-		@NonNull String paymentMethod,
 		@NonNull String sagaId,
 		@NonNull Instant timestamp
 	);

@@ -11,7 +11,7 @@ public interface PointEventPort {
 	void publishPointEarnRequested(
 		@NonNull Long userId,
 		@NonNull UUID orderId,
-		@NonNull BigDecimal earnAmount,
+		@NonNull BigDecimal finalAmount,
 		@NonNull String reason,
 		@NonNull Instant timestamp
 	);

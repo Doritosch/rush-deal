@@ -73,7 +73,6 @@ public class PaymentService {
 			order.getTotalAmount(),
 			order.getPointUsed(),
 			order.getFinalAmount(),
-			command.paymentMethod(),
 			sagaId,
 			Instant.now()
 		);

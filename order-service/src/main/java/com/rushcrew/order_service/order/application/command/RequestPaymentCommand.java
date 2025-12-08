@@ -4,6 +4,5 @@ import java.util.UUID;
 
 public record RequestPaymentCommand (
 	UUID orderId,
-	Long userId,
-	String paymentMethod	// CARD, BILLING
+	Long userId
 ) {}
