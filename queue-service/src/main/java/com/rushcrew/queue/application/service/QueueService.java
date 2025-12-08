@@ -139,7 +139,7 @@ public class QueueService implements QueuePort {
 
         if (currActiveCount >= maxCapacity) {
             log.warn("[QUEUE] 활성열이 꽉 찼습니다. (Current: {}, Max: {})", currActiveCount, maxCapacity);
-            return;
+            throw new BusinessException(QueueErrorCode.ACTIVE_QUEUE_FULL);
         }
 
         // 활성 토큰 N개 계산 => (N = min(배치사이즈, 남은자리))
@@ -148,7 +148,7 @@ public class QueueService implements QueuePort {
         long tokenCountToActivate = Math.min(limitSize, availableCount);
 
         if (tokenCountToActivate <= 0) {
-            return;
+            throw new BusinessException(QueueErrorCode.NO_TOKEN_TO_ACTIVATE);
         }
 
         // 대기열에서 상위 N개 토큰 조회 (Waiting -> Active 대상) : 요청 시점(Score)이 낮은 것
@@ -156,7 +156,7 @@ public class QueueService implements QueuePort {
 
         if (waitingTokensToActivate.isEmpty()) {
             log.debug("[QUEUE] 대기열이 비어있습니다.");
-            return;
+            throw new BusinessException(QueueErrorCode.NO_TOKEN_TO_ACTIVATE);
         }
 
         // 활성 상태로 전환

@@ -1,9 +1,11 @@
 package com.rushcrew.queue.application.util;
 
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.queue.application.port.in.QueuePort;
 import com.rushcrew.queue.domain.entity.QueuePolicy;
 import com.rushcrew.queue.domain.repository.QueuePolicyRepository;
 import com.rushcrew.queue.domain.vo.TrafficSetting;
+import java.lang.reflect.Executable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -99,6 +101,7 @@ public class QueueScheduler {
     /**
      * 각 정책별로 활성화 로직 수행 (병렬 처리 가능)
      * 각 상품별로 락을 걸고 실행 (다중 서버 돌리는 상황에서 중복 실행 방지)
+     * 락 획득 실패 시 즉시 반환 (다음 스케줄에서 재시도)
      */
     private void processPolicyWithLock(QueuePolicy queuePolicy) {
         UUID productId = queuePolicy.getProductId();
@@ -133,10 +136,11 @@ public class QueueScheduler {
             }
 
             // 실행 시간 먼저 갱신 (중복 실행 방지)
-            updateLastExecutionTime(productId);
+            long executionTime = System.currentTimeMillis();
+            updateLastExecutionTime(productId, executionTime);
+
             // 대기열 -> 활성열 이동 요청
-            queueService.activateTokens(productId, setting);
-            log.info("[Scheduler] 상품({}) 활성화 완료", productId);
+            activateTokens(productId, executionTime, setting);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("[Scheduler] 락 획득 중 인터럽트 발생", e);
@@ -152,12 +156,48 @@ public class QueueScheduler {
     }
 
     /**
+     * 대기열 토큰 활성열 이동 처리 (토큰 활성화)
+     * 토큰 활성화 실패 시 마지막 실행 시간(lastExecutionTime) 롤백
+     */
+    private void activateTokens(UUID productId, long executionTime, TrafficSetting setting) {
+        try {
+            queueService.activateTokens(productId, setting);
+            log.info("[Scheduler] 상품({}) 활성화 완료", productId);
+        } catch (BusinessException e) {
+            // activateTokens 실패 시 실행 시간 롤백
+            log.error("[Scheduler] 상품({}) 활성화 실패 - 실행 시간 롤백", productId, e);
+            // 예외를 다시 던지지 않음 (다음 스케줄에서 재시도하도록)
+            rollbackLastExecutionTime(productId, executionTime, setting.getQueueGap());
+        }
+    }
+
+    /**
+     * activateTokens 실패 시 실행 시간 롤백
+     * queueGap 시간만큼 이전으로 되돌려 다음 스케줄에서 재시도 가능하도록 함
+     */
+    private void rollbackLastExecutionTime(UUID productId, long executionTime, Integer queueGap) {
+        try {
+            String lastRunKey = getLastRunKey(productId);
+            // queueGap 시간만큼 되돌려서 다음 스케줄에서 재시도 가능하도록
+            long rollbackTime = executionTime - (queueGap * 1000L);
+            redisTemplate.opsForValue().set(
+                lastRunKey,
+                String.valueOf(rollbackTime)
+            );
+            log.info("[Scheduler] 상품({}) 실행 시간 롤백 완료", productId);
+        } catch (BusinessException e) {
+            log.error("[Scheduler] 상품({}) 실행 시간 롤백 실패 - 수동 개입 필요", productId, e);
+            // TODO: 추후 따로 알림 보내는 형식으로의 조치가 필요
+        }
+    }
+
+    /**
      * 해당 상품의 스케줄러 실행 자격이 있는지 검사
      * 조건: (현재시간 - 마지막실행시간) >= queueGap
      */
     private boolean canExecute(UUID productId, int queueGap) {
         try {
-            String lastRunKey = String.format(LAST_RUN_KEY, productId);
+            String lastRunKey = getLastRunKey(productId);
             String lastRunTimeStr = redisTemplate.opsForValue().get(lastRunKey);
 
             // 첫 시작에는 true
@@ -179,9 +219,13 @@ public class QueueScheduler {
     /**
      * 마지막 실행 시간 갱신
      */
-    private void updateLastExecutionTime(UUID productId) {
-        String lastRunKey = String.format(LAST_RUN_KEY, productId);
-        redisTemplate.opsForValue().set(lastRunKey, String.valueOf(System.currentTimeMillis()));
+    private void updateLastExecutionTime(UUID productId, long executionTime) {
+        String lastRunKey = getLastRunKey(productId);
+        redisTemplate.opsForValue().set(lastRunKey, String.valueOf(executionTime));
+    }
+
+    private String getLastRunKey(UUID productId) {
+        return String.format(LAST_RUN_KEY, productId);
     }
 
     private String getLockKey(UUID productId) {
