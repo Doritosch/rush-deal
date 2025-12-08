@@ -128,11 +128,15 @@ public class QueueScheduler {
             int queueGap = setting.getQueueGap();
 
             // Redis에 기록된 마지막 실행 시간 체크 (실행 가능 여부 검사)
-            if (canExecute(productId, queueGap)) {
-                // 대기열 -> 활성열 이동 요청
-                queueService.activateTokens(productId, setting);
-                updateLastExecutionTime(productId);
+            if (!canExecute(productId, queueGap)) {
+                return;
             }
+
+            // 실행 시간 먼저 갱신 (중복 실행 방지)
+            updateLastExecutionTime(productId);
+            // 대기열 -> 활성열 이동 요청
+            queueService.activateTokens(productId, setting);
+            log.info("[Scheduler] 상품({}) 활성화 완료", productId);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("[Scheduler] 락 획득 중 인터럽트 발생", e);
@@ -142,6 +146,7 @@ public class QueueScheduler {
             // 내가 건 락인 경우에만 해제
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
+                log.info("[Scheduler] 락 해제 완료");
             }
         }
     }
@@ -165,8 +170,8 @@ public class QueueScheduler {
             // 밀리초 단위로 비교 (초 단위보다 정밀)
             return diffMillis >= (queueGap * 1000L);
         } catch (Exception e) {
-            log.error("[Scheduler] Redis 조회 실패 (상품: {})", productId, e);
-            // Redis 실패 시 false 반환 (다음 스케줄에서 재시도)
+            log.error("[Scheduler] Redis 조회 실패 (상품: {}) - 다음 스케줄링에서 재시도", productId, e);
+            // Redis 조회 실패 시 false 반환 (다음 스케줄에서 재시도)
             return false;
         }
     }
