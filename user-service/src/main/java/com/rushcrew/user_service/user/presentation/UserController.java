@@ -5,12 +5,14 @@ import com.rushcrew.user_service.user.application.command.UserCreateCommand;
 import com.rushcrew.user_service.user.application.command.UserUpdateCommand;
 import com.rushcrew.user_service.user.application.command.VerifyPasswordCommand;
 import com.rushcrew.user_service.user.application.result.UserCreateResult;
+import com.rushcrew.user_service.user.application.result.UserInfoResult;
 import com.rushcrew.user_service.user.application.result.UserResult;
 import com.rushcrew.user_service.user.application.result.VerifyPasswordResult;
 import com.rushcrew.user_service.user.presentation.dto.request.UserCreateRequest;
 import com.rushcrew.user_service.user.presentation.dto.request.UserUpdateRequest;
 import com.rushcrew.user_service.user.presentation.dto.request.VerifyPasswordRequest;
 import com.rushcrew.user_service.user.presentation.dto.response.UserCreateResponse;
+import com.rushcrew.user_service.user.presentation.dto.response.UserInfoResponse;
 import com.rushcrew.user_service.user.presentation.dto.response.UserResponse;
 import com.rushcrew.user_service.user.presentation.dto.response.VerifyPasswordResponse;
 import jakarta.validation.Valid;
@@ -18,6 +20,7 @@ import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -74,5 +77,12 @@ public class UserController {
         userService.updateUser(command);
 
         return ResponseEntity.ok().build();
+    }
+    @GetMapping("/internal/users/{userId}")
+    public ResponseEntity<UserInfoResponse> getUserById(
+        @PathVariable Long userId
+    ) {
+        UserInfoResult result = userService.getUserById(userId);
+        return ResponseEntity.ok(UserInfoResponse.fromResult(result));
     }
 }
