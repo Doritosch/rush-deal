@@ -7,7 +7,10 @@ import com.rushcrew.queue.domain.vo.TrafficSetting;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -19,18 +22,22 @@ public class QueueScheduler {
     private final QueuePolicyRepository queuePolicyRepository;
     private final QueuePort queueService;
     private final RedisTemplate<String, String> redisTemplate;
+    private final RedissonClient redissonClient;
 
     // DB 부하를 줄이기 위한 인메모리 캐시 (스레드 세이프)
     private final List<QueuePolicy> cachedPolicies = new CopyOnWriteArrayList<>();
 
     // 마지막 실행 시간 기록 Redis 키
     private static final String LAST_RUN_KEY = "queue:scheduler:last_run:%s";
+    // 락 키
+    private static final String LOCK_KEY = "lock:scheduler:product:%s";
 
     public QueueScheduler(QueuePolicyRepository queuePolicyRepository, QueuePort queueService,
-        RedisTemplate<String, String> redisTemplate) {
+        RedisTemplate<String, String> redisTemplate, RedissonClient redissonClient) {
         this.queuePolicyRepository = queuePolicyRepository;
         this.queueService = queueService;
         this.redisTemplate = redisTemplate;
+        this.redissonClient = redissonClient;
     }
 
     /**
@@ -48,9 +55,12 @@ public class QueueScheduler {
         List<QueuePolicy> allActivePolicies = queuePolicyRepository.findAllActivePolicies(now,
             oneMinuteLater);
 
+        // 새 리스트로 교체 (원자적 작업)
+        List<QueuePolicy> newPolicies = new CopyOnWriteArrayList<>(allActivePolicies);
+
         // 캐시 교체 (CopyOnWriteArrayList는 참조 교체 시 스레드 세이프)
         cachedPolicies.clear();
-        cachedPolicies.addAll(allActivePolicies);
+        cachedPolicies.addAll(newPolicies);
         log.info("[Scheduler:Refresher] 정책 캐시 갱신 완료. (로드된 정책 수: {})", allActivePolicies.size());
     }
 
@@ -75,7 +85,7 @@ public class QueueScheduler {
             if (!isWithinRunningTime(policy, now)) {
                 continue;
             }
-            processPolicy(policy);
+            processPolicyWithLock(policy);
         }
 
     }
@@ -91,22 +101,50 @@ public class QueueScheduler {
 
     /**
      * 각 정책별로 활성화 로직 수행 (병렬 처리 가능)
+     * 각 상품별로 락을 걸고 실행 (다중 서버 돌리는 상황에서 중복 실행 방지)
      */
-    private void processPolicy(QueuePolicy queuePolicy) {
+    private void processPolicyWithLock(QueuePolicy queuePolicy) {
         UUID productId = queuePolicy.getProductId();
-        TrafficSetting setting = queuePolicy.getTrafficSetting();
 
-        // 대기열 -> 활성열로 이동 주기
-        int queueGap = setting.getQueueGap();
+        String lockKey = getLockKey(productId);
+        // 락 키를 상품별로 생성하여 병렬 처리
+        RLock lock = redissonClient.getLock(lockKey);
 
-        // Redis에 기록된 마지막 실행 시간 체크 (실행 가능 여부 검사)
-        if (canExecute(productId, queueGap)) {
-            try {
+        try {
+            // tryLock(대기시간, 점유시간, 단위)
+            // waitTime = 0: 락을 못 잡으면 즉시 포기 (다른 서버가 하고 있겠거니 생각. 대기 X, 다음 턴에서)
+            // Scale-out(다중 서버) 상황에서 서버 A가 실행 중이면, 서버 B와 C는 1초 뒤(다음 스케줄링)에 다시 시도하면 되므로 굳이 기다릴 필요X
+            // (Thread Blocking 방지)
+
+            // leaseTime = 3초: 3초 뒤엔 락 자동 반납 (서버가 죽었을 때 데드락 방지)
+            // 스케줄러 주기가 1초이므로 leaseTime은 1~3초 정도로 짧게 설정
+            boolean isLocked = lock.tryLock(0, 3, TimeUnit.SECONDS);
+
+            if (!isLocked) {
+                // 이미 다른 서버가 실행 중임 -> 패스
+                return;
+            }
+
+            // 락 획득 성공
+            TrafficSetting setting = queuePolicy.getTrafficSetting();
+            // 대기열 -> 활성열로 이동 주기
+            int queueGap = setting.getQueueGap();
+
+            // Redis에 기록된 마지막 실행 시간 체크 (실행 가능 여부 검사)
+            if (canExecute(productId, queueGap)) {
                 // 대기열 -> 활성열 이동 요청
                 queueService.activateTokens(productId, setting);
                 updateLastExecutionTime(productId);
-            } catch (Exception e) {
-                log.error("[Scheduler] 상품({}) 활성화 중 에러 발생", productId, e);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("[Scheduler] 락 획득 중 인터럽트 발생", e);
+        } catch (Exception e) {
+            log.error("[Scheduler] 상품({}) 활성화 중 에러 발생", productId, e);
+        } finally {
+            // 내가 건 락인 경우에만 해제
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
             }
         }
     }
@@ -116,17 +154,24 @@ public class QueueScheduler {
      * 조건: (현재시간 - 마지막실행시간) >= queueGap
      */
     private boolean canExecute(UUID productId, int queueGap) {
-        String lastRunKey = String.format(LAST_RUN_KEY, productId);
-        String lastRunTimeStr = redisTemplate.opsForValue().get(lastRunKey);
+        try {
+            String lastRunKey = String.format(LAST_RUN_KEY, productId);
+            String lastRunTimeStr = redisTemplate.opsForValue().get(lastRunKey);
 
-        // 첫 시작에는 true
-        if (lastRunTimeStr == null) return true;
+            // 첫 시작에는 true
+            if (lastRunTimeStr == null) return true;
 
-        long lastRunTime = Long.parseLong(lastRunTimeStr);
-        long currentTime = System.currentTimeMillis();
-        long diffSeconds = (currentTime - lastRunTime) / 1000;
+            long lastRunTime = Long.parseLong(lastRunTimeStr);
+            long currentTime = System.currentTimeMillis();
+            long diffMillis = currentTime - lastRunTime;
 
-        return diffSeconds >= queueGap;
+            // 밀리초 단위로 비교 (초 단위보다 정밀)
+            return diffMillis >= (queueGap * 1000L);
+        } catch (Exception e) {
+            log.error("[Scheduler] Redis 조회 실패 (상품: {})", productId, e);
+            // Redis 실패 시 false 반환 (다음 스케줄에서 재시도)
+            return false;
+        }
     }
 
     /**
@@ -135,5 +180,9 @@ public class QueueScheduler {
     private void updateLastExecutionTime(UUID productId) {
         String lastRunKey = String.format(LAST_RUN_KEY, productId);
         redisTemplate.opsForValue().set(lastRunKey, String.valueOf(System.currentTimeMillis()));
+    }
+
+    private String getLockKey(UUID productId) {
+        return String.format(LOCK_KEY, productId);
     }
 }
