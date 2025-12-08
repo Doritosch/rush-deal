@@ -12,14 +12,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.rushcrew.common.dto.ApiResponse;
+import com.rushcrew.order_service.application.command.dto.command.CancelOrderCommand;
 import com.rushcrew.order_service.application.command.dto.command.ConfirmPurchaseCommand;
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
 import com.rushcrew.order_service.application.command.dto.command.RequestPaymentCommand;
 import com.rushcrew.order_service.application.command.dto.command.UpdateOrderCommand;
+import com.rushcrew.order_service.application.command.dto.result.CancelOrderResult;
 import com.rushcrew.order_service.application.command.dto.result.ConfirmPurchaseResult;
 import com.rushcrew.order_service.application.command.dto.result.CreateOrderResult;
 import com.rushcrew.order_service.application.command.dto.result.RequestPaymentResult;
 import com.rushcrew.order_service.application.command.dto.result.UpdateOrderResult;
+import com.rushcrew.order_service.application.command.usecase.CancelOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.ConfirmPurchaseUseCase;
 import com.rushcrew.order_service.application.command.usecase.CreateOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.RequestPaymentUseCase;
@@ -27,6 +30,7 @@ import com.rushcrew.order_service.application.command.usecase.UpdateOrderUseCase
 import com.rushcrew.order_service.global.util.RoleChecker;
 import com.rushcrew.order_service.presentation.dto.request.CreateOrderRequest;
 import com.rushcrew.order_service.presentation.dto.request.UpdateOrderRequest;
+import com.rushcrew.order_service.presentation.dto.response.CancelOrderResponse;
 import com.rushcrew.order_service.presentation.dto.response.ConfirmPurchaseResponse;
 import com.rushcrew.order_service.presentation.dto.response.CreateOrderResponse;
 import com.rushcrew.order_service.presentation.dto.response.RequestPaymentResponse;
@@ -44,6 +48,7 @@ public class OrderCommandController {
 	private final RequestPaymentUseCase requestPaymentUseCase;
 	private final ConfirmPurchaseUseCase confirmPurchaseUseCase;
 	private final UpdateOrderUseCase updateOrderUseCase;
+	private final CancelOrderUseCase cancelOrderUseCase;
 
 	/**
 	 * 주문 생성 API
@@ -138,6 +143,27 @@ public class OrderCommandController {
 		UpdateOrderResult result = updateOrderUseCase.updateOrder(command);
 
 		return ApiResponse.success(UpdateOrderResponse.from(result));
+	}
+
+	/**
+	 * 주문 취소 API
+	 */
+	@PostMapping("/{orderId}/cancel")
+	public ApiResponse<CancelOrderResponse> cancelOrder(
+		@PathVariable UUID orderId,
+		@RequestHeader("X-User-Id") Long userId,
+		@RequestHeader(value = "X-User-Role", required = false) String role
+	) {
+		RoleChecker.checkRole(role, "USER", "MASTER");
+
+		CancelOrderCommand command = CancelOrderCommand.builder()
+			.orderId(orderId)
+			.userId(userId)
+			.build();
+
+		CancelOrderResult result = cancelOrderUseCase.cancelOrder(command);
+
+		return ApiResponse.success(CancelOrderResponse.from(result));
 	}
 
 }
