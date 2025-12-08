@@ -1,9 +1,9 @@
-package com.rushcrew.queue.presentation;
+package com.rushcrew.queue.presentation.controller;
 
 import com.rushcrew.common.dto.ApiResponse;
-import com.rushcrew.queue.application.command.CreatePolicyCommand;
-import com.rushcrew.queue.application.command.SearchPolicyCommand;
-import com.rushcrew.queue.application.command.UpdatePolicyCommand;
+import com.rushcrew.queue.application.command.policy.CreatePolicyCommand;
+import com.rushcrew.queue.application.command.policy.SearchPolicyCommand;
+import com.rushcrew.queue.application.command.policy.UpdatePolicyCommand;
 import com.rushcrew.queue.application.dto.PageQuery;
 import com.rushcrew.queue.application.dto.QueuePolicyQueryResponse;
 import com.rushcrew.queue.application.service.QueuePolicyService;
