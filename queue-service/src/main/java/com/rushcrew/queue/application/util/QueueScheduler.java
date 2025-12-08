@@ -49,21 +49,26 @@ public class QueueScheduler {
      */
     @Scheduled(fixedRate = 60000)
     public void refreshPolicies() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime oneMinuteLater = now.plusMinutes(1);
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime oneMinuteLater = now.plusMinutes(1);
 
-        // 현재 유효한(진행 중인) 타임딜 정책 조회
-        // TODO: RDB 부하가 걱정된다면 이 목록을 Redis에 캐싱
-        List<QueuePolicy> allActivePolicies = queuePolicyRepository.findAllActivePolicies(now,
-            oneMinuteLater);
+            // 현재 유효한(진행 중인) 타임딜 정책 조회
+            // TODO: RDB 부하가 걱정된다면 이 목록을 Redis에 캐싱
+            List<QueuePolicy> allActivePolicies = queuePolicyRepository.findAllActivePolicies(now,
+                oneMinuteLater);
 
-        // 새 리스트로 교체 (원자적 작업)
-        List<QueuePolicy> newPolicies = new CopyOnWriteArrayList<>(allActivePolicies);
+            // 새 리스트로 교체 (원자적 작업)
+            List<QueuePolicy> newPolicies = new CopyOnWriteArrayList<>(allActivePolicies);
 
-        // 캐시 교체 (CopyOnWriteArrayList는 참조 교체 시 스레드 세이프)
-        cachedPolicies.clear();
-        cachedPolicies.addAll(newPolicies);
-        log.info("[Scheduler:Refresher] 정책 캐시 갱신 완료. (로드된 정책 수: {})", allActivePolicies.size());
+            // 캐시 교체 (CopyOnWriteArrayList는 참조 교체 시 스레드 세이프)
+            cachedPolicies.clear();
+            cachedPolicies.addAll(newPolicies);
+            log.info("[Scheduler:Refresher] 정책 캐시 갱신 완료. (로드된 정책 수: {})", allActivePolicies.size());
+        } catch (Exception e) {
+            // 기존 캐시로 계속 운영 (장애 시에도 서비스 유지. 스케줄러 영구 중단 방지)
+            log.error("[Scheduler:Refresher] 정책 캐시 갱신 실패 - 기존 캐시 유지", e);
+        }
     }
 
     /**
@@ -150,7 +155,6 @@ public class QueueScheduler {
             // 내가 건 락인 경우에만 해제
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
-                log.info("[Scheduler] 락 해제 완료");
             }
         }
     }
@@ -158,6 +162,7 @@ public class QueueScheduler {
     /**
      * 대기열 토큰 활성열 이동 처리 (토큰 활성화)
      * 토큰 활성화 실패 시 마지막 실행 시간(lastExecutionTime) 롤백
+     * TODO: 추후 모니터링 추가 필요
      */
     private void activateTokens(UUID productId, long executionTime, TrafficSetting setting) {
         try {
