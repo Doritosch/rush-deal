@@ -164,22 +164,7 @@ public class Order extends BaseEntity {
 		);
 	}
 
-	// 결제 후 주문 취소 (구매확정 전)
-	public void cancelAfterPayment(String reason) {
-		this.status.validateCanCancelAfterPayment();
-		this.status.validateTransition(OrderStatus.CANCELLED);
-		OrderStatus previousStatus = this.status;
-		this.status = OrderStatus.CANCELLED;
-		this.cancelledAt = Instant.now();
-		addHistory(
-			OrderEventType.CANCELLED_AFTER_PAYMENT,
-			previousStatus,
-			OrderStatus.CANCELLED,
-			reason != null ? reason : OrderStatus.CANCELLED.getDescription()
-		);
-	}
-
-	// 환불 (구매확정 후)
+	// 환불 (결제 완료 후)
 	public void refund(String reason) {
 		this.status.validateCanRefund();
 		this.status.validateTransition(OrderStatus.REFUNDED);
@@ -267,10 +252,6 @@ public class Order extends BaseEntity {
 
 	public boolean canCancelBeforePayment() {
 		return this.status.canCancelBeforePayment();
-	}
-
-	public boolean canCancelAfterPayment() {
-		return this.status.canCancelAfterPayment();
 	}
 
 	public boolean canRefund() {
