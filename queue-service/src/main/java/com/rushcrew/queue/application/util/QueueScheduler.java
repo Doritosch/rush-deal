@@ -160,16 +160,22 @@ public class QueueScheduler {
      * 토큰 활성화 실패 시 마지막 실행 시간(lastExecutionTime) 롤백
      */
     private void activateTokens(UUID productId, long executionTime, TrafficSetting setting) {
-        boolean success = queueService.activateTokens(productId, setting);
+        try {
+            boolean success = queueService.activateTokens(productId, setting);
 
-        if (!success) {
-            // activateTokens 실패 시 실행 시간 롤백
-            log.warn("[Scheduler] 상품({}) 활성화 실패 - 실행 시간 롤백", productId);
-            // 예외를 다시 던지지 않음 (다음 스케줄에서 재시도하도록)
+            if (!success) {
+                // activateTokens 실패 시 실행 시간 롤백
+                log.warn("[Scheduler] 상품({}) 활성화 실패 - 실행 시간 롤백", productId);
+                // 예외를 다시 던지지 않음 (다음 스케줄에서 재시도하도록)
+                rollbackLastExecutionTime(productId, executionTime, setting.getQueueGap());
+                return;
+            }
+            log.info("[Scheduler] 상품({}) 활성화 완료", productId);
+        } catch (Exception e) {
+            // 실제 에러 (Redis 장애, DB 장애 등)
+            log.error("[Scheduler] 상품({}) 활성화 중 예외 발생 - 실행 시간 롤백", productId, e);
             rollbackLastExecutionTime(productId, executionTime, setting.getQueueGap());
-            return;
         }
-        log.info("[Scheduler] 상품({}) 활성화 완료", productId);
     }
 
     /**
