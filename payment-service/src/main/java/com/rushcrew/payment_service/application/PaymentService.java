@@ -143,6 +143,19 @@ public class PaymentService {
                 .onErrorMap(e -> new BusinessException(PaymentErrorCode.FAILED_CANCEL_PAYMENT));
     }
 
+    public PaymentResult findPaymentByPaymentId(UUID paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new BusinessException(PaymentErrorCode.INVALID_PAYMENT));
+
+        return PaymentResult.from(payment);
+    }
+
+    public PaymentResult findPaymentByOrderId(UUID orderId) {
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new BusinessException(PaymentErrorCode.INVALID_PAYMENT));
+
+        return PaymentResult.from(payment);
+    }
     public Mono<Unit> handleWebhook(String body, String webhookId, String webhookTimestamp, String webhookSignature) throws Exception {
         Webhook webhook;
         try {

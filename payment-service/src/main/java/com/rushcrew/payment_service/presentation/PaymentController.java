@@ -67,6 +67,20 @@ public class PaymentController {
         return result.map(PaymentResponse::from);
     }
 
+    @GetMapping("/{paymentId}")
+    public ResponseEntity<PaymentResponse> getPaymentByPaymentId(@PathVariable("paymnentId") UUID paymentId) {
+        PaymentResult result = paymentService.findPaymentByPaymentId(paymentId);
+
+        return ResponseEntity.ok(PaymentResponse.from(result));
+    }
+
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<PaymentResponse> getPaymentByOrderId(@PathVariable("orderId") UUID orderId) {
+        PaymentResult result = paymentService.findPaymentByOrderId(orderId);
+
+        return ResponseEntity.ok(PaymentResponse.from(result));
+    }
+
     // 결제 정보를 실시간으로 전달받기 위한 웹훅입니다.
     // 관리자 콘솔에서 웹훅 정보를 등록해야 사용할 수 있습니다.
     //
