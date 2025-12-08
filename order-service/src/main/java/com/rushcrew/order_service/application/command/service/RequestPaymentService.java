@@ -31,6 +31,7 @@ public class RequestPaymentService implements RequestPaymentUseCase {
 	private final PaymentPort paymentPort;
 	private final PaymentEventPort paymentEventPort;
 	private final OutboxPort outboxPort;
+	private final ObjectMapper objectMapper;
 
 	@Override
 	@Transactional
@@ -74,14 +75,13 @@ public class RequestPaymentService implements RequestPaymentUseCase {
 
 		// ORDER_PAID 이벤트 outbox에 저장
 		try {
-			ObjectMapper objectMapper = new ObjectMapper();
 			Map<String, Object> eventPayload = new HashMap<>();
 			eventPayload.put("orderId", savedOrder.getOrderId());
 			eventPayload.put("userId", savedOrder.getUserId());
 			eventPayload.put("status", savedOrder.getStatus().name());
 			eventPayload.put("paymentAmount", savedOrder.getFinalAmount());
 			eventPayload.put("paymentCompletedAt", savedOrder.getPaymentCompletedAt());
-			eventPayload.put("autoConfirmScheduledAt", savedOrder.getAutoConfirmScheduledAt());	// 자동 구매확정일
+			eventPayload.put("autoConfirmScheduledAt", savedOrder.getAutoConfirmScheduledAt());
 
 			outboxPort.createAndSave(
 				"ORDER",
