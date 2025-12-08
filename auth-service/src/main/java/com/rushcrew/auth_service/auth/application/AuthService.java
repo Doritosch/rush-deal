@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class AuthService {
 
     private final UserClient userClient;
@@ -48,12 +48,27 @@ public class AuthService {
             result.role()
         );
 
-        return new LoginResult(
-            result.userId(),
-            result.email(),
-            result.name(),
-            tokens.accessToken(),
-            tokens.refreshToken()
-        );
+        return new LoginResult(tokens.accessToken(), tokens.refreshToken());
+    }
+
+    @Transactional
+    public void logOut(LogoutCommand command) {
+        // 토큰 폐기
+        tokenService.revokeToken(command.accessToken(), command.refreshToken());
+    }
+
+    @Transactional
+    public void logoutFromAllDevices(LogoutAllCommand command) {
+        // 전체 토큰 폐기
+        tokenService.revokeAllTokens(command.userId(), command.accessToken());
+    }
+
+    @Transactional
+    public String refreshAccessToken(RefreshCommand command) {
+        Long userId = tokenService.getUserIdFromRefreshToken(command.refreshToken());
+
+        UserInfoResult user = userClient.getUserById(userId);
+
+        return tokenService.refreshAccessToken(user, command.refreshToken());
     }
 }

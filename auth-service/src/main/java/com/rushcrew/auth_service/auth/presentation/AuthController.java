@@ -9,9 +9,14 @@ import com.rushcrew.auth_service.auth.presentation.dto.request.LoginRequest;
 import com.rushcrew.auth_service.auth.presentation.dto.request.SignUpRequest;
 import com.rushcrew.auth_service.auth.presentation.dto.response.LoginResponse;
 import com.rushcrew.auth_service.auth.presentation.dto.response.SignUpResponse;
+import com.rushcrew.auth_service.auth.presentation.util.TokenUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,10 +28,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private final TokenUtils tokenUtils;
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<SignUpResponse> signup(
+    public ResponseEntity<SignUpResponse> signUp(
         @Valid @RequestBody SignUpRequest request
     ) {
         SignUpCommand command = request.toCommand();
@@ -40,11 +46,16 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
-        @Valid @RequestBody LoginRequest request
+        @Valid @RequestBody LoginRequest request,
+        HttpServletResponse response
     ) {
         LoginCommand command = request.toCommand();
 
         LoginResult result = authService.login(command);
+
+        ResponseCookie refreshCookie = tokenUtils.createRefreshTokenCookie(result.refreshToken());
+
+        response.addHeader("Set-Cookie", refreshCookie.toString());
 
         return ResponseEntity.ok(LoginResponse.fromResult(result));
     }
