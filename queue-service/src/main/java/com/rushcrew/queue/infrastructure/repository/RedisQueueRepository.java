@@ -149,10 +149,24 @@ public class RedisQueueRepository implements QueueRepository {
 
     /**
      * 활성 토큰 수 확인 (ZSet Size 조회)
+     * 조회 직전에 이미 만료된 토큰을 삭제하여 정확한 수를 반환함 (Lazy cleanup)
      */
     @Override
     public Long countActiveTokens(UUID productId) {
-        Long count = redisTemplate.opsForZSet().zCard(getActiveKey(productId));
+        String activeKey = getActiveKey(productId);
+
+        // lazy cleanup
+        // ZSet의 Score(만료시간)가 현재 시간보다 작은(과거인) 멤버들 삭제
+        // ZREMRANGEBYSCORE key -inf current_timestamp
+        double now = System.currentTimeMillis() / 1000.0;
+        redisTemplate.opsForZSet().removeRangeByScore(
+            activeKey,
+            Double.NEGATIVE_INFINITY,
+            now
+        );
+
+        // 청소 후 남은 개수 반환
+        Long count = redisTemplate.opsForZSet().zCard(activeKey);
         return count != null ? count : 0L;
     }
 
