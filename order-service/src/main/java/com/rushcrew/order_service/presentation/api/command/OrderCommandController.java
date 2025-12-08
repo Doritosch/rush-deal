@@ -15,16 +15,19 @@ import com.rushcrew.common.dto.ApiResponse;
 import com.rushcrew.order_service.application.command.dto.command.CancelOrderCommand;
 import com.rushcrew.order_service.application.command.dto.command.ConfirmPurchaseCommand;
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
+import com.rushcrew.order_service.application.command.dto.command.RefundOrderCommand;
 import com.rushcrew.order_service.application.command.dto.command.RequestPaymentCommand;
 import com.rushcrew.order_service.application.command.dto.command.UpdateOrderCommand;
 import com.rushcrew.order_service.application.command.dto.result.CancelOrderResult;
 import com.rushcrew.order_service.application.command.dto.result.ConfirmPurchaseResult;
 import com.rushcrew.order_service.application.command.dto.result.CreateOrderResult;
+import com.rushcrew.order_service.application.command.dto.result.RefundOrderResult;
 import com.rushcrew.order_service.application.command.dto.result.RequestPaymentResult;
 import com.rushcrew.order_service.application.command.dto.result.UpdateOrderResult;
 import com.rushcrew.order_service.application.command.usecase.CancelOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.ConfirmPurchaseUseCase;
 import com.rushcrew.order_service.application.command.usecase.CreateOrderUseCase;
+import com.rushcrew.order_service.application.command.usecase.RefundOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.RequestPaymentUseCase;
 import com.rushcrew.order_service.application.command.usecase.UpdateOrderUseCase;
 import com.rushcrew.order_service.global.util.RoleChecker;
@@ -33,6 +36,7 @@ import com.rushcrew.order_service.presentation.dto.request.UpdateOrderRequest;
 import com.rushcrew.order_service.presentation.dto.response.CancelOrderResponse;
 import com.rushcrew.order_service.presentation.dto.response.ConfirmPurchaseResponse;
 import com.rushcrew.order_service.presentation.dto.response.CreateOrderResponse;
+import com.rushcrew.order_service.presentation.dto.response.RefundOrderResponse;
 import com.rushcrew.order_service.presentation.dto.response.RequestPaymentResponse;
 import com.rushcrew.order_service.presentation.dto.response.UpdateOrderResponse;
 
@@ -49,6 +53,7 @@ public class OrderCommandController {
 	private final ConfirmPurchaseUseCase confirmPurchaseUseCase;
 	private final UpdateOrderUseCase updateOrderUseCase;
 	private final CancelOrderUseCase cancelOrderUseCase;
+	private final RefundOrderUseCase refundOrderUseCase;
 
 	/**
 	 * 주문 생성 API
@@ -164,6 +169,31 @@ public class OrderCommandController {
 		CancelOrderResult result = cancelOrderUseCase.cancelOrder(command);
 
 		return ApiResponse.success(CancelOrderResponse.from(result));
+	}
+
+	/**
+	 * 주문 환불 API
+	 */
+	@PostMapping("/{orderId}/refund")
+	public ApiResponse<RefundOrderResponse> refundOrder(
+		@PathVariable UUID orderId,
+		@RequestHeader("X-User-Id") Long userId,
+		@RequestHeader(value = "X-User-Role", required = false) String role,
+		@RequestBody(required = false) java.util.Map<String, String> requestBody
+	) {
+		RoleChecker.checkRole(role, "USER", "MASTER");
+
+		String reason = requestBody != null ? requestBody.get("reason") : null;
+
+		RefundOrderCommand command = RefundOrderCommand.builder()
+			.orderId(orderId)
+			.userId(userId)
+			.reason(reason)
+			.build();
+
+		RefundOrderResult result = refundOrderUseCase.refundOrder(command);
+
+		return ApiResponse.success(RefundOrderResponse.from(result));
 	}
 
 }
