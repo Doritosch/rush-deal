@@ -38,5 +38,5 @@ public interface OrderJpaRepository extends JpaRepository<Order, UUID> {
 	@Query("SELECT o FROM Order o " +
 		"WHERE o.orderedAt >= :since " +
 		"ORDER BY o.orderedAt DESC")
-	List<Order> findRecentOrders(Instant oneDayAgo);
+	List<Order> findRecentOrders(@Param("since") Instant since);
 }
