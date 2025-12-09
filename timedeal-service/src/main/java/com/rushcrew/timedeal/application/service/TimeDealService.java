@@ -6,4 +6,6 @@ import java.util.UUID;
 public interface TimeDealService {
 
     UUID createTimeDeal(CreateTimeDealCommand command);
+
+    void forceEndTimeDeal(UUID timeDealId);
 }
