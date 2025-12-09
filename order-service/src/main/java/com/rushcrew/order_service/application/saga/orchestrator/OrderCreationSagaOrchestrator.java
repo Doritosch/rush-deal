@@ -13,6 +13,7 @@ import com.rushcrew.order_service.application.saga.step.CreateOrderStep;
 import com.rushcrew.order_service.application.saga.step.DeductPointStep;
 import com.rushcrew.order_service.application.saga.step.ReserveStockStep;
 import com.rushcrew.order_service.application.saga.step.ValidateStockStep;
+import com.rushcrew.order_service.application.port.out.SagaInstancePort;
 import com.rushcrew.order_service.domain.enums.SagaStatus;
 import com.rushcrew.order_service.domain.model.saga.SagaInstance;
 
@@ -29,11 +30,14 @@ public class OrderCreationSagaOrchestrator {
 	private final ReserveStockStep reserveStockStep;
 	private final DeductPointStep deductPointStep;
 	private final CreateOrderStep createOrderStep;
+	private final SagaInstancePort sagaInstancePort;
 
 	@Transactional
 	public CreateOrderResult execute(CreateOrderCommand command) {
 		// 1. Saga 인스턴스 생성 - sagaId 생성
 		SagaInstance sagaInstance = SagaInstance.create("ORDER_CREATION", command.userId());
+		// DB에 기록
+		saveSagaInstance(sagaInstance);
 		// 2. Saga Context 생성
 		SagaContext context = SagaContext.builder()
 			.sagaId(sagaInstance.getSagaId())
@@ -53,6 +57,7 @@ public class OrderCreationSagaOrchestrator {
 				throw new IllegalArgumentException(validateResult.getErrorMessage());
 			}
 			sagaInstance.addStep("VALIDATE_STOCK", SagaStatus.COMPLETED);
+			saveSagaInstance(sagaInstance);
 
 			// Step 2: 재고 예약
 			log.info("[Saga-{}] Step 2: ReserveStock 시작", context.getSagaId());
@@ -61,16 +66,18 @@ public class OrderCreationSagaOrchestrator {
 				throw new IllegalArgumentException(reserveResult.getErrorMessage());
 			}
 			sagaInstance.addStep("RESERVE_STOCK", SagaStatus.COMPLETED);
+			saveSagaInstance(sagaInstance);
 
 			// Step 3: 포인트 차감
 			log.info("[Saga-{}] Step 3: DeductPoint 시작", context.getSagaId());
 			SagaStepResult deductResult = deductPointStep.execute(context, sagaData);
 			if (!deductResult.isSuccess()) {
-				// 포인트 차감 실패 → 재고 복구
+				// 포인트 차감 실패 -> 재고 복구
 				reserveStockStep.compensate(context, sagaData);
 				throw new IllegalArgumentException(deductResult.getErrorMessage());
 			}
 			sagaInstance.addStep("DEDUCT_POINT", SagaStatus.COMPLETED);
+			saveSagaInstance(sagaInstance);
 
 			// Step 4: 주문 생성
 			log.info("[Saga-{}] Step 4: CreateOrder 시작", context.getSagaId());
@@ -82,9 +89,11 @@ public class OrderCreationSagaOrchestrator {
 				throw new IllegalArgumentException(createResult.getErrorMessage());
 			}
 			sagaInstance.addStep("CREATE_ORDER", SagaStatus.COMPLETED);
+			saveSagaInstance(sagaInstance);
 
 			// Saga 완료
 			sagaInstance.complete();
+			saveSagaInstance(sagaInstance);
 			log.info("[Saga-{}] 완료", context.getSagaId());
 
 			// 결과 리턴
@@ -118,9 +127,14 @@ public class OrderCreationSagaOrchestrator {
 		} catch (Exception e) {
 			// Saga 실패 처리
 			sagaInstance.fail(e.getMessage());
+			saveSagaInstance(sagaInstance);
 			log.error("[Saga-{}] 실패: {}", context.getSagaId(), e.getMessage(), e);
 			throw e;
 		}
 
+	}
+
+	private void saveSagaInstance(SagaInstance sagaInstance) {
+		sagaInstancePort.save(sagaInstance);
 	}
 }
