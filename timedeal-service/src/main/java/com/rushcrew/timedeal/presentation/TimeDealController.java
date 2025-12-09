@@ -24,7 +24,7 @@ public class TimeDealController {
     public ResponseEntity<UUID> createTimeDeal(
         @Valid @RequestBody CreateTimeDealRequest request
     ) {
-        CreateTimeDealCommand command = CreateTimeDealCommand.from(request);
+        CreateTimeDealCommand command = request.toCommand();
         UUID timeDealId = timeDealService.createTimeDeal(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(timeDealId);
     }

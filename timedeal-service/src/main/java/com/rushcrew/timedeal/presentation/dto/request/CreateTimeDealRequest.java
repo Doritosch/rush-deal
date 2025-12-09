@@ -1,5 +1,10 @@
 package com.rushcrew.timedeal.presentation.dto.request;
 
+import com.rushcrew.timedeal.application.command.CreateTimeDealCommand;
+import com.rushcrew.timedeal.domain.vo.LimitQuantity;
+import com.rushcrew.timedeal.domain.vo.Period;
+import com.rushcrew.timedeal.domain.vo.Price;
+import com.rushcrew.timedeal.domain.vo.TimeDealInfo;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
@@ -35,4 +40,14 @@ public record CreateTimeDealRequest(
     UUID productId
 ) {
 
+    public CreateTimeDealCommand toCommand() {
+        return new CreateTimeDealCommand(
+            TimeDealInfo.of(this.title, this.description),
+            Price.of(this.discountPrice),
+            LimitQuantity.of(this.limitQuantity),
+            Period.of(this.startAt, this.endAt),
+            this.status,
+            this.productId
+        );
+    }
 }
