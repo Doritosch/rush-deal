@@ -1,6 +1,7 @@
 package com.rushcrew.user_service.user.domain.repository;
 
 import com.rushcrew.user_service.user.domain.entity.User;
+import java.util.List;
 
 public interface UserRepository {
 
@@ -11,4 +12,6 @@ public interface UserRepository {
     User getByEmail(String email);
 
     User save(User user);
+
+    List<User> getAll();
 }

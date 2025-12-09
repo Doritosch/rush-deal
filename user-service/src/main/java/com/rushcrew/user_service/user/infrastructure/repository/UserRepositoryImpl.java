@@ -2,6 +2,7 @@ package com.rushcrew.user_service.user.infrastructure.repository;
 
 import com.rushcrew.user_service.user.domain.entity.User;
 import com.rushcrew.user_service.user.domain.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -31,5 +32,10 @@ public class UserRepositoryImpl implements UserRepository {
     public User getById(Long id) {
         return userJpaRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("해당하는 유저가 존재하지 않습니다"));
+    }
+
+    @Override
+    public List<User> getAll() {
+        return userJpaRepository.findAll();
     }
 }
