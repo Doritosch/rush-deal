@@ -1,9 +1,9 @@
 package com.rushcrew.timedeal.domain.entity;
 
 import com.rushcrew.common.entity.BaseEntity;
+import com.rushcrew.timedeal.domain.vo.EventType;
 import com.rushcrew.timedeal.domain.vo.OrderId;
 import com.rushcrew.timedeal.domain.vo.Quantity;
-import com.rushcrew.timedeal.domain.vo.Type;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -45,8 +45,8 @@ public class StockLog extends BaseEntity {
     private OrderId orderId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Type type;
+    @Column(name = "event_type", nullable = false)
+    private EventType eventType;
 
     @Embedded
     @AttributeOverride(name = "count", column = @Column(name = "quantity", nullable = false))
