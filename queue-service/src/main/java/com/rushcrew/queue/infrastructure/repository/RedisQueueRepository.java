@@ -42,6 +42,11 @@ public class RedisQueueRepository implements QueueRepository {
 
     /**
      * 대기열 등록 (ZSet : Sorted Set)
+     *
+     * 추가 처리 : Lazy Cleanup으로 인해 ZSet(대기열/활성열)에서는 토큰이 삭제되었는데
+     * USER_INDEX_KEY만 덩그러니 남아있는 상황이 발생하면, 해당 유저는 영원히 재진입이 불가능해짐.
+     * 따라서 진입 시도 시 USER_INDEX_KEY가 이미 있다면,
+     * "진짜 대기열/활성열에 살아있는지" 더블 체크. 없다면 좀비 키로 간주하고 삭제 후 재진입을 허용하는 방식으로 수정
      */
     @Override
     public boolean register(QueueToken token, LocalDateTime dealEndTime, Integer activeTtl) {
@@ -56,17 +61,32 @@ public class RedisQueueRepository implements QueueRepository {
 
         // redis 사용자 인덱스 키 생성
         String userIndexKey = getUserIndexKey(token.getProductId(), token.getUserId());
+        String newTokenValue = token.getId().getValue().toString();
 
         // 중복 방지 : 유저별 대기열 키 생성 (SETNX)
         // KEY: queue:user:product:{productId}:{userId} / VALUE: 토큰 UUID
         Boolean isNewUser = redisTemplate.opsForValue().setIfAbsent(
             userIndexKey,
-            token.getId().getValue().toString(),
+            newTokenValue,
             Duration.ofMinutes(secondsUntilClose) // TTL 설정: 타임딜 종료 시간에 맞춰 자동 만료
         );
 
+        // 유저별 대기열 키(USER_INDEX_KEY)가 이미 존재하는 경우 -> 진짜 유효한지 검증
         if (Objects.equals(isNewUser, Boolean.FALSE)) {
-            // 이미 대기 중인 유저
+            // USER_INDEX_KEY가 바라보는 큐 토큰 (해당 유저가 가지고 있던 토큰의 ID(UUID))
+            String oldToken = redisTemplate.opsForValue().get(userIndexKey);
+
+            // 기존 토큰이 대기열이나 활성열에 실제로 존재하는지 확인
+            if (oldToken != null && !isTokenAlive(token.getProductId(), oldToken)) {
+                // 존재하지 않음 = 만료되었거나 삭제된 좀비 키(USER_INDEX_KEY)임 -> 삭제 후 재등록 허용
+                log.info("[QUEUE:REPAIR] 좀비 키(USER_INDEX_KEY) 발견. 삭제 후 재진입 처리 userId={}, oldToken={}", token.getUserId(), oldToken);
+                redisTemplate.delete(userIndexKey);
+
+                // 삭제하고 재시도 (재귀 호출)
+                return register(token, dealEndTime, activeTtl);
+            }
+
+            // 이미 대기 중인 유저 (중복 진입 거부)
             log.warn("[QUEUE:ERROR] 이미 대기 중인 사용자입니다. userId={}", token.getUserId());
             return false;
         }
@@ -80,6 +100,22 @@ public class RedisQueueRepository implements QueueRepository {
             // 대기열 등록 (ZSet)
             return registerWaitingQueue(token, userIndexKey);
         }
+    }
+
+    /**
+     * USER_INDEX_KEY가 가리키는 토큰이 진짜 ZSet(대기열 or 활성열)에 있는지 확인
+     */
+    private boolean isTokenAlive(UUID productId, String tokenValue) {
+        String waitingKey = getWaitingKey(productId);
+        String activeKey = getActiveKey(productId);
+
+        // 대기열 확인
+        Double waitingScore = redisTemplate.opsForZSet().score(waitingKey, tokenValue);
+        if (waitingScore != null) return true;
+
+        // 활성열 확인
+        Double activeScore = redisTemplate.opsForZSet().score(activeKey, tokenValue);
+        return activeScore != null;
     }
 
     @Override
@@ -187,9 +223,8 @@ public class RedisQueueRepository implements QueueRepository {
     }
 
     /**
+     * 활성열의 토큰 삭제
      * TODO: Order Service 쪽에서 결제/주문 로직이나, 트랜잭션 종료 시점에 해당 API를 호출하여 토큰을 정리해야 함
-     * @param productId
-     * @param tokenId
      */
     @Override
     public void removeToken(UUID productId, TokenId tokenId) {
