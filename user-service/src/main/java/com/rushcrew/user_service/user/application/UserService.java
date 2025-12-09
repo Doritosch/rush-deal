@@ -3,6 +3,7 @@ package com.rushcrew.user_service.user.application;
 import com.rushcrew.user_service.user.application.command.UserCreateCommand;
 import com.rushcrew.user_service.user.application.command.UserUpdateCommand;
 import com.rushcrew.user_service.user.application.command.VerifyPasswordCommand;
+import com.rushcrew.user_service.user.application.result.UserAllResult;
 import com.rushcrew.user_service.user.application.result.UserCreateResult;
 import com.rushcrew.user_service.user.application.result.UserInfoResult;
 import com.rushcrew.user_service.user.application.result.UserResult;
@@ -11,6 +12,7 @@ import com.rushcrew.user_service.user.domain.entity.User;
 import com.rushcrew.user_service.user.domain.enums.UserRole;
 import com.rushcrew.user_service.user.domain.repository.UserRepository;
 import com.rushcrew.user_service.user.domain.service.UserValidator;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -92,5 +94,12 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(command.password());
 
         user.updateUser(encodedPassword, command.name());
+    }
+
+    public List<UserAllResult> getAllUsers() {
+        return userRepository.getAll()
+            .stream()
+            .map(UserAllResult::fromDomain)
+            .toList();
     }
 }
