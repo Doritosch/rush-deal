@@ -2,8 +2,6 @@ description = 'Order Service for rush-deal Project'
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springframework.boot:spring-boot-starter-batch'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
@@ -20,6 +18,12 @@ dependencies {
 
     // 자체 공통 모듈
     implementation 'com.github.RushCrew:rush-deal-common:v0.0.7'
+
+    // Spring Batch
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+
+    // Quartz (스케줄러)
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
 
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'
