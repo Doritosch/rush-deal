@@ -66,6 +66,7 @@ public class QueueScheduler {
             cachedPolicies.addAll(newPolicies);
             log.info("[Scheduler:Refresher] 정책 캐시 갱신 완료. (로드된 정책 수: {})", allActivePolicies.size());
         } catch (Exception e) {
+            // SQLException 터지면 스케줄링이 전부 중단될 수 있으므로 기존 캐시를 유지하여 서비스가 계속 운영되도록 함
             // 기존 캐시로 계속 운영 (장애 시에도 서비스 유지. 스케줄러 영구 중단 방지)
             log.error("[Scheduler:Refresher] 정책 캐시 갱신 실패 - 기존 캐시 유지", e);
         }

@@ -165,6 +165,16 @@ public class QueueService implements QueuePort {
     }
 
     /**
+     * 토큰 만료 처리
+     */
+    @Override
+    public void expireToken(UUID productId, String token) {
+        TokenId tokenId = validateQueueToken(token);
+        queueRepository.removeToken(productId, tokenId);
+        log.info("[QUEUE] 토큰 만료 처리 완료 (Product: {}, Token: {})", productId, token);
+    }
+
+    /**
      * 토큰 유효성 검증 (활성화 여부)
      */
     @Override

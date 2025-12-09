@@ -33,4 +33,9 @@ public interface QueuePort {
      * 스케줄러가 호출: 대기 -> 활성 전환
      */
     boolean activateTokens(UUID productId, TrafficSetting trafficSetting);
+
+    /**
+     * 토큰 만료 (삭제) 처리
+     */
+    void expireToken(UUID productId, String token);
 }

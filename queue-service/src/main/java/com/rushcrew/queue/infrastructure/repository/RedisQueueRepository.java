@@ -190,6 +190,21 @@ public class RedisQueueRepository implements QueueRepository {
     }
 
     /**
+     * TODO: Order Service 쪽에서 결제/주문 로직이나, 트랜잭션 종료 시점에 해당 API를 호출하여 토큰을 정리해야 함
+     * @param productId
+     * @param tokenId
+     */
+    @Override
+    public void removeToken(UUID productId, TokenId tokenId) {
+        // 활성열(ZSet)에서 해당 토큰 삭제
+        redisTemplate.opsForZSet()
+            .remove(
+                getActiveKey(productId),
+                tokenId.getValue().toString()
+            );
+    }
+
+    /**
      * 본인 확인 (대기열 토큰 소유권 검증)
      */
     @Override

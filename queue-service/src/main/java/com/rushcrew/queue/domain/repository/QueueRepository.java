@@ -75,4 +75,11 @@ public interface QueueRepository {
      * @return
      */
     Double getWaitingScore(UUID productId, TokenId tokenId);
+
+    /**
+     * 토큰 만료 삭제
+     * @param productId
+     * @param tokenId
+     */
+    void removeToken(UUID productId, TokenId tokenId);
 }
