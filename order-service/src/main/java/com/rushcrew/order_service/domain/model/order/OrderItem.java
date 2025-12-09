@@ -97,7 +97,7 @@ public class OrderItem extends BaseEntity {
 			.unitPrice(unitPrice)
 			.discountPrice(discountPrice)
 			.subtotal(subtotal)
-			.timeDealId(productSnapshot.timeDealId())
+			.timeDealId(UUID.fromString(productSnapshot.timeDealId()))
 			.productSnapshot(productSnapshot)
 			.build();
 	}
