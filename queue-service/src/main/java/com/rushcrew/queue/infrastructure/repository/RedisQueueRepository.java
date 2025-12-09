@@ -137,10 +137,7 @@ public class RedisQueueRepository implements QueueRepository {
         long now = System.currentTimeMillis();
         if (expireTime < now) {
             // 만료되었으면 삭제
-            redisTemplate.opsForZSet().remove(
-                activeKey,
-                tokenId.getValue()
-            );
+            removeToken(productId, tokenId);
             log.info("[QUEUE:EXPIRE:ACTIVE] 활성 토큰 만료됨. token={}", tokenId);
             return false;
         }
@@ -149,7 +146,7 @@ public class RedisQueueRepository implements QueueRepository {
 
     /**
      * 활성 토큰 수 확인 (ZSet Size 조회)
-     * 조회 직전에 이미 만료된 토큰을 삭제하여 정확한 수를 반환함 (Lazy cleanup)
+     * 조회 직전에 이미 만료된 토큰을 일괄적으로 삭제하여 정확한 수를 반환함 (Lazy cleanup)
      */
     @Override
     public Long countActiveTokens(UUID productId) {
