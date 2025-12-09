@@ -158,7 +158,7 @@ public class RedisQueueRepository implements QueueRepository {
         // lazy cleanup
         // ZSet의 Score(만료시간)가 현재 시간보다 작은(과거인) 멤버들 삭제
         // ZREMRANGEBYSCORE key -inf current_timestamp
-        double now = System.currentTimeMillis() / 1000.0;
+        double now = System.currentTimeMillis();
         redisTemplate.opsForZSet().removeRangeByScore(
             activeKey,
             Double.NEGATIVE_INFINITY,
@@ -283,6 +283,7 @@ public class RedisQueueRepository implements QueueRepository {
 
     private double getExpireAt(Integer activeTtl) {
         long now = System.currentTimeMillis();
+        // 밀리초 단위 (예: 1730000000000 (13자리))
         return now + (activeTtl * 1000L);
     }
 }
