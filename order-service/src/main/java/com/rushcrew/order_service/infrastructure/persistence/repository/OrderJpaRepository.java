@@ -1,6 +1,7 @@
 package com.rushcrew.order_service.infrastructure.persistence.repository;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -31,4 +32,11 @@ public interface OrderJpaRepository extends JpaRepository<Order, UUID> {
 
 	/* 자동 구매확정 대상 조회 --> autoConfirmTargetOrderReader()에서 메서드 네임으로 사용 */
 	Page<Order> findAllByStatusAndAutoConfirmScheduledAtBefore(OrderStatus status, Instant scheduledAt, Pageable pageable);
+
+
+	/* 캐시 워밍용 --> 서버 시작 시 캐시에 최근 주문을 적재 */
+	@Query("SELECT o FROM Order o " +
+		"WHERE o.orderedAt >= :since " +
+		"ORDER BY o.orderedAt DESC")
+	List<Order> findRecentOrders(Instant oneDayAgo);
 }
