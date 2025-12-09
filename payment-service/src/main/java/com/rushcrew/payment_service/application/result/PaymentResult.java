@@ -10,14 +10,14 @@ public record PaymentResult(
         UUID paymentId,
         UUID orderId,
         BigDecimal totalAmount,
-        PaymentStatus status
+        String status
 ) {
     public static PaymentResult from(Payment payment) {
         return new PaymentResult(
                 payment.getPaymentId(),
                 payment.getOrderId(),
                 payment.getAmount(),
-                payment.getStatus()
+                payment.getStatus().getDescription()
         );
     }
 }

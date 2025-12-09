@@ -10,14 +10,14 @@ public record PaymentPrepareResult(
         UUID paymentId,
         String portOnePaymentId,
         BigDecimal amount,
-        PaymentStatus status
+        String status
 ) {
     public static PaymentPrepareResult of(String portOnePaymentId, Payment payment) {
         return new PaymentPrepareResult(
                 payment.getPaymentId(),
                 portOnePaymentId,
                 payment.getAmount(),
-                payment.getStatus()
+                payment.getStatus().getDescription()
         );
     }
 }

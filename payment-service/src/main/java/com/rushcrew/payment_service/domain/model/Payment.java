@@ -52,4 +52,25 @@ public class Payment extends BaseEntity {
         }
         this.status = PaymentStatus.CANCELLED;
     }
+
+    public void verifyPaymentOrThrow(Long amount, String currency) {
+        if (!verifyAmount(amount)) {
+            throw new IllegalArgumentException("결제 금액이 일치하지 않습니다.");
+        }
+        if (!verifyCurrency(currency)) {
+            throw new IllegalArgumentException("지원하지 않는 통화입니다:" + currency);
+        }
+    }
+    private boolean verifyAmount(Long amount) {
+        if (this.amount.longValue() != amount) {
+            return false;
+        }
+        return true;
+    }
+    public boolean verifyCurrency(String currency) {
+        if (!"KRW".equals(currency)) {
+            return false;
+        }
+        return true;
+    }
 }

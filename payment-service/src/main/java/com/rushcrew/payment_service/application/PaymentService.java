@@ -27,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
@@ -68,9 +67,12 @@ public class PaymentService {
                 .flatMap(actualPayment -> {
                     switch (actualPayment) {
                         case PaidPayment paidPayment:
-                            if (!verifyPayment(payment, paidPayment)) {
+                            try {
+                                payment.verifyPaymentOrThrow(paidPayment.getAmount().getPaid(), paidPayment.getCurrency().getValue());
+                            } catch (IllegalArgumentException e) {
                                 return Mono.error(new BusinessException(PaymentErrorCode.FAILED_VERIFYING_PAYMENT));
                             }
+
 
                             payment.completePayment();
                             paymentRepository.save(payment);
@@ -194,18 +196,5 @@ public class PaymentService {
                             return Mono.just(Unit.INSTANCE);
                     }
                 });
-    }
-
-    private boolean verifyPayment(Payment payment, PaidPayment paidPayment) {
-        BigDecimal expectedAmount = payment.getAmount();
-        long actualAmount = paidPayment.getAmount().getTotal();
-
-        if (expectedAmount.longValue() != actualAmount) {
-            return false;
-        }
-        if (!"KRW".equals(paidPayment.getCurrency().getValue())) {
-            return false;
-        }
-        return true;
     }
 }
