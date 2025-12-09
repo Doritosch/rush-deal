@@ -8,16 +8,16 @@ import lombok.Builder;
 
 @Builder
 public record ProductSnapshot(
-	UUID timeDealStockId,
-	UUID productId,
+	String timeDealStockId,
+	String productId,
 	String productName,
 	String productDescription,
-	UUID optionId,
+	String optionId,
 	String optionName,
-	UUID sellerId,
+	String sellerId,
 	String sellerName,
 	BigDecimal originalPrice,
-	UUID timeDealId,
+	String timeDealId,
 	String timeDealTitle,
 	Integer discountRate,
 	String category
