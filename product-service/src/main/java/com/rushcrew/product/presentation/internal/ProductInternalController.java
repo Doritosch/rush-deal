@@ -2,10 +2,10 @@ package com.rushcrew.product.presentation.internal;
 
 import com.rushcrew.product.application.service.internal.ProductInternalService;
 import com.rushcrew.product.presentation.internal.dto.ProductInfoResponse;
-import com.rushcrew.product.presentation.internal.dto.ProductItemIdsRequest;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,10 +16,10 @@ public class ProductInternalController {
 
     private final ProductInternalService productService;
 
-    @PostMapping("/item-ids")
+    @GetMapping("/{productId}/info")
     public ProductInfoResponse getProductItemIds(
-        @RequestBody ProductItemIdsRequest request
+        @PathVariable UUID productId
     ) {
-        return productService.getProductItemIds(request.productId());
+        return productService.getProductItemIds(productId);
     }
 }
