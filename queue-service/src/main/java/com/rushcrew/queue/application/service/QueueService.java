@@ -54,7 +54,7 @@ public class QueueService implements QueuePort {
             policy.getTrafficSetting().getTtl());
         if (!isSuccess) {
             // 이미 대기열에 있는 경우 예외 처리
-            throw new IllegalStateException("이미 대기열에 등록된 사용자입니다.");
+            throw new BusinessException(QueueErrorCode.USER_ALREADY_IN_WAITING_QUEUE);
         }
 
         // 현재 순번 조회
@@ -80,7 +80,7 @@ public class QueueService implements QueuePort {
         boolean isOwner = queueRepository.verifyTokenOwner(productId, userId, token);
         if (!isOwner) {
             log.warn("[QUEUE:ERROR] 토큰 도용 시도 감지: User {}, Token {}", userId, token);
-            throw new SecurityException("토큰 소유자가 일치하지 않습니다.");
+            throw new BusinessException(QueueErrorCode.TOKEN_OWNER_NOT_MATCH);
         }
 
         TokenId tokenId = validateQueueToken(token);
@@ -100,8 +100,10 @@ public class QueueService implements QueuePort {
         // rank는 0부터 시작 (내 앞의 대기 인원 수 (0이면 내가 1빠))
         Long waitingRank = queueRepository.getWaitingRank(productId, tokenId);
         if (waitingRank == null) {
-            // Redis에 없으면 만료되었거나 잘못된 토큰
-            throw new IllegalArgumentException("대기열에 존재하지 않는 토큰입니다.");
+            // User Index Key는 있는데 Redis에 ZSet에 없는 경우 (만료됨)
+            // => 에러를 던지면 클라이언트가 다시 enterQueue를 호출하게 되고,
+            // 그때 QueueRepository의 register 메서드에서 Index Key 삭제하고 재진입 처리
+            throw new BusinessException(QueueErrorCode.QUEUE_TOKEN_NOT_AVAILABLE);
         }
 
         // 요청시간 LocalDateTime 타입으로 변환

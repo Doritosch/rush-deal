@@ -13,8 +13,16 @@ public enum QueueErrorCode implements ErrorCode {
     ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "ROLE_NOT_EXISTS", "유효하지 않은 권한입니다."),
     QUEUE_TOKEN_NOT_AVAILABLE(HttpStatus.NOT_FOUND, "", "잘못된 토큰 형식입니다."),
     ACTIVE_QUEUE_FULL(HttpStatus.SERVICE_UNAVAILABLE, "ACTIVE_QUEUE_FULL", "활성 큐 용량 초과로 현재 요청을 처리할 수 없습니다."),
-    NO_TOKEN_TO_ACTIVATE(HttpStatus.SERVICE_UNAVAILABLE, "NO_TOKEN_TO_ACTIVATE", "활성 큐로 이동시킬 토큰이 없습니다.")
+    NO_TOKEN_TO_ACTIVATE(HttpStatus.SERVICE_UNAVAILABLE, "NO_TOKEN_TO_ACTIVATE", "활성 큐로 이동시킬 토큰이 없습니다."),
+    USER_ALREADY_IN_WAITING_QUEUE(HttpStatus.CONFLICT, "USER_ALREADY_IN_WAITING_QUEUE", "이미 대기열에 등록된 사용자입니다."),
+    TOKEN_OWNER_NOT_MATCH(HttpStatus.NOT_FOUND, "TOKEN_OWNER_NOT_MATCH", "토큰 소유자가 일치하지 않습니다."),
+    QUEUE_TOKEN_EXPIRED(HttpStatus.SERVICE_UNAVAILABLE, "QUEUE_TOKEN_EXPIRED", "대기열에 존재하지 않는 만료 토큰입니다.")
+
+
+
+
     ;
+
 
     private final HttpStatus status;
     private final String name;

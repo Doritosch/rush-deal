@@ -237,6 +237,28 @@ public class RedisQueueRepository implements QueueRepository {
     }
 
     /**
+     * 명시적 퇴장 : 활성열/대기열 토큰 삭제 + USER_INDEX_KEY 삭제
+     * QueueService에서 사용자가 직접 취소하거나 주문 완료 시 호출
+     * 이 경우, USER_INDEX_KEY도 같이 삭제해야 바로 다시 해당 유저가 대기열 재진입 가능
+     */
+    @Override
+    public void removeTokenWithUserIdxKey(UUID productId, TokenId tokenId, Long userId) {
+        String tokenValue = tokenId.getValue().toString();
+
+        redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+            StringRedisConnection strConnection = (StringRedisConnection) connection;
+            // 활성열에서 삭제
+            strConnection.zRem(getActiveKey(productId), tokenValue);
+            // 대기열에서 삭제 (활성열에서 이미 삭제되어있다면 대기열에도 없겠지만 혹시 모르니 둘 다 삭제 처리)
+            strConnection.zRem(getWaitingKey(productId), tokenValue);
+            // 유저 인덱스 키 삭제 (재진입 허용 목적)
+            strConnection.del(getUserIndexKey(productId, userId));
+            return null;
+        });
+        log.info("[QUEUE:EXIT] 대기/활성열 퇴장 처리 완료: userId={}, token={}", userId, tokenId);
+    }
+
+    /**
      * 본인 확인 (대기열 토큰 소유권 검증)
      */
     @Override
