@@ -23,4 +23,8 @@ public enum QueueStatus {
             .findFirst()
             .orElseThrow(() -> new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND));
     }
+
+    public String getDescription() {
+        return this.description;
+    }
 }
