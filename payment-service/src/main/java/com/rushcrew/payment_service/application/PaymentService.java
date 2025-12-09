@@ -11,7 +11,6 @@ import com.rushcrew.payment_service.domain.repository.PaymentRepository;
 import com.rushcrew.payment_service.domain.repository.PaymentTransactionRepository;
 import com.rushcrew.payment_service.domain.vo.Amount;
 import com.rushcrew.payment_service.domain.vo.Card;
-import com.rushcrew.payment_service.presentation.dto.response.PaymentPrepareResponse;
 import com.rushcrew.payment_service.presentation.dto.response.PaymentResponse;
 import io.portone.sdk.server.payment.PaidPayment;
 import io.portone.sdk.server.payment.PaymentClient;
@@ -64,9 +63,12 @@ public class PaymentService {
                 .flatMap(actualPayment -> {
                     switch (actualPayment) {
                         case PaidPayment paidPayment:
-                            if (!verifyPayment(payment, paidPayment)) {
+                            try {
+                                payment.verifyPaymentOrThrow(paidPayment.getAmount().getPaid(), paidPayment.getCurrency().getValue());
+                            } catch (IllegalArgumentException e) {
                                 return Mono.error(new BusinessException(PaymentErrorCode.FAILED_VERIFYING_PAYMENT));
                             }
+
 
                             payment.completePayment();
                             paymentRepository.save(payment);
@@ -138,18 +140,5 @@ public class PaymentService {
                             return Mono.just(Unit.INSTANCE);
                     }
                 });
-    }
-
-    private boolean verifyPayment(Payment payment, PaidPayment paidPayment) {
-        BigDecimal expectedAmount = payment.getAmount();
-        long actualAmount = paidPayment.getAmount().getTotal();
-
-        if (expectedAmount.longValue() != actualAmount) {
-            return false;
-        }
-        if (!"KRW".equals(paidPayment.getCurrency().getValue())) {
-            return false;
-        }
-        return true;
     }
 }
