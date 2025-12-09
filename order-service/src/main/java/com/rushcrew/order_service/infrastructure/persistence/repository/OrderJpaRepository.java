@@ -1,5 +1,6 @@
 package com.rushcrew.order_service.infrastructure.persistence.repository;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.rushcrew.order_service.domain.enums.OrderStatus;
 import com.rushcrew.order_service.domain.model.order.Order;
 
 public interface OrderJpaRepository extends JpaRepository<Order, UUID> {
@@ -26,4 +28,7 @@ public interface OrderJpaRepository extends JpaRepository<Order, UUID> {
 		@Param("timeDealId") UUID timeDealId);
 
 	Page<Order> findByUserId(Long userId, Pageable pageable);
+
+	/* 자동 구매확정 대상 조회 --> autoConfirmTargetOrderReader()에서 메서드 네임으로 사용 */
+	Page<Order> findAllByStatusAndAutoConfirmScheduledAtBefore(OrderStatus status, Instant scheduledAt, Pageable pageable);
 }
