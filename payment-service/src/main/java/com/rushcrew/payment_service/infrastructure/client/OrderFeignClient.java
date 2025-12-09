@@ -4,5 +4,5 @@ import org.springframework.cloud.openfeign.FeignClient;
 
 @FeignClient(name = "order-service")
 public interface OrderFeignClient {
-    // TODO order 단건 조회
+    //
 }

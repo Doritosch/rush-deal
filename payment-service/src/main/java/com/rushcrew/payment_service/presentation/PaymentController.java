@@ -37,6 +37,7 @@ public class PaymentController {
         PaymentCommand command = request.toCommand();
 
         PaymentPrepareResult result = paymentService.preparePayment(command);
+
         return ResponseEntity.ok(PaymentPrepareResponse.from(result));
     }
 

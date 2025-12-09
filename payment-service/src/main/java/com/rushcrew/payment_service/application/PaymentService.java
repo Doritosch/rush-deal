@@ -12,6 +12,8 @@ import com.rushcrew.payment_service.domain.repository.PaymentRepository;
 import com.rushcrew.payment_service.domain.repository.PaymentTransactionRepository;
 import com.rushcrew.payment_service.domain.vo.Amount;
 import com.rushcrew.payment_service.domain.vo.Card;
+import com.rushcrew.payment_service.infrastructure.event.PaymentCompletedEvent;
+import com.rushcrew.payment_service.infrastructure.event.PaymentEventProducer;
 import com.rushcrew.payment_service.presentation.dto.response.PaymentResponse;
 import io.portone.sdk.server.payment.PaidPayment;
 import io.portone.sdk.server.payment.PaymentClient;
@@ -38,6 +40,8 @@ public class PaymentService {
 
     private final PaymentClient portone;
     private final WebhookVerifier portoneWebhook;
+
+    private final PaymentEventProducer paymentEventProducer;
 
     @Transactional
     public PaymentPrepareResult preparePayment(PaymentCommand command) {
@@ -107,6 +111,16 @@ public class PaymentService {
 
                                 paymentTransactionRepository.save(transaction);
                             }
+
+                            // Kafka 이벤트 발행
+                            PaymentCompletedEvent event = PaymentCompletedEvent.of(
+                                    payment.getPaymentId(),
+                                    payment.getOrderId(),
+                                    payment.getAmount(),
+                                    paidPayment.getCurrency().getValue()
+                            );
+                            paymentEventProducer.publishPaymentCompleted(event);
+
                             return Mono.just(PaymentResponse.from(PaymentResult.from(payment)));
                         default:
                             return Mono.error(new BusinessException(PaymentErrorCode.NOT_COMPLETED_PAYMENT));
