@@ -35,7 +35,10 @@ public interface QueuePort {
     boolean activateTokens(UUID productId, TrafficSetting trafficSetting);
 
     /**
+     * [명시적 대기열 퇴장/취소]
      * 토큰 만료 (삭제) 처리
+     * 대기 중 취소하거나, 주문 완료 후 호출
+     * UserId를 넘겨서 USER_INDEX_KEY까지 확실하게 지움 -> 이후에 즉시 재진입 가능하도록
      */
-    void expireToken(UUID productId, String token);
+    void exitQueue(UUID productId, String token, Long userId);
 }

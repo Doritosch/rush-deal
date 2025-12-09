@@ -167,13 +167,19 @@ public class QueueService implements QueuePort {
     }
 
     /**
-     * 토큰 만료 처리
+     * 대기열 퇴장/취소 (토큰 삭제 처리)
+     * 대기 중 취소하거나, 주문 완료 후 호출
+     * UserId를 넘겨서 USER_INDEX_KEY까지 확실하게 지움 -> 즉시 재진입 가능
      */
     @Override
-    public void expireToken(UUID productId, String token) {
+    public void exitQueue(UUID productId, String token, Long userId) {
         TokenId tokenId = validateQueueToken(token);
-        queueRepository.removeToken(productId, tokenId);
-        log.info("[QUEUE] 토큰 만료 처리 완료 (Product: {}, Token: {})", productId, token);
+        // RedisQueueRepository로 캐스팅
+        if (queueRepository instanceof RedisQueueRepository) {
+            queueRepository.removeTokenWithUserIdxKey(productId, tokenId, userId);
+        } else {
+            queueRepository.removeToken(productId, tokenId);
+        }
     }
 
     /**
