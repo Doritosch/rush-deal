@@ -25,4 +25,6 @@ public interface ProductRepository {
     void saveAndFlush(Product product);
 
     Optional<ProductOption> findOptionBySkuId(UUID skuId);
+
+    Optional<Product> findById(UUID productId);
 }

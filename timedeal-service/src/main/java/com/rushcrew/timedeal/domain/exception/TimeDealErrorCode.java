@@ -20,6 +20,9 @@ public enum TimeDealErrorCode implements ErrorCode {
     NOT_FOUND_OPTION(HttpStatus.NOT_FOUND, "TD-009", "존재하지 않는 상품옵션입니다."),
     INVALID_STOCK_COUNT(HttpStatus.BAD_REQUEST, "TD-010", "재고 수량은 0개 미만일 수 없습니다."),
     REQUIRED_STOCK_COUNT(HttpStatus.BAD_REQUEST, "TD-011", "재고 수량은 NULL일 수 없습니다."),
+    MUST_BE_CHEAPER(HttpStatus.BAD_REQUEST, "TD-012", "타임딜 할인가격은 기존 가격보다 낮아야 합니다."),
+    NOT_FOUND_TIME_DEAL(HttpStatus.NOT_FOUND, "TD-013", "존재하지 않는 타임딜입니다."),
+    ALREADY_ENDED(HttpStatus.CONFLICT, "TD-014", "이미 종료된 타임딜입니다."),
 
     ;
 

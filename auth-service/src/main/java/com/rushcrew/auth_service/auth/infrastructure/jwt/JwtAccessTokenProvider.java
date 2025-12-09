@@ -1,11 +1,14 @@
 package com.rushcrew.auth_service.auth.infrastructure.jwt;
 
+import static java.time.ZoneId.systemDefault;
+
 import com.rushcrew.auth_service.auth.application.port.AccessTokenProvider;
 import com.rushcrew.auth_service.auth.infrastructure.properties.JwtProperties;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
 import javax.crypto.SecretKey;
@@ -42,5 +45,19 @@ public class JwtAccessTokenProvider implements AccessTokenProvider {
             )
             .signWith(accessSecretKey)
             .compact();
+    }
+
+    @Override
+    public LocalDateTime getExpiryDate(String token) {
+        Date expiration = Jwts.parser()
+            .verifyWith(accessSecretKey)
+            .build()
+            .parseSignedClaims(token)
+            .getPayload()
+            .getExpiration();
+
+        return expiration.toInstant()
+            .atZone(systemDefault())
+            .toLocalDateTime();
     }
 }

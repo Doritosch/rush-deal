@@ -48,4 +48,9 @@ public class ProductRepositoryAdapter implements ProductRepository {
     public Optional<ProductOption> findOptionBySkuId(UUID skuId) {
         return jpaProductRepository.findOptionBySkuId(skuId);
     }
+
+    @Override
+    public Optional<Product> findById(UUID productId) {
+        return jpaProductRepository.findById(productId);
+    }
 }

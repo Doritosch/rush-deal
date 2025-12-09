@@ -49,6 +49,16 @@ public class TimeDealProduct extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Builder.Default
-    private TimeDealProductStatus status = TimeDealProductStatus.OUT_OF_STOCK;
+    private TimeDealProductStatus status;
+
+    public static TimeDealProduct create( // 생성시에는 재고가 안 채워졌기 때문에 품절 상태
+        TimeDeal timeDeal,
+        ProductItemIds itemIds
+    ) {
+        return TimeDealProduct.builder()
+            .timeDeal(timeDeal)
+            .itemIds(itemIds)
+            .status(TimeDealProductStatus.OUT_OF_STOCK)
+            .build();
+    }
 }
