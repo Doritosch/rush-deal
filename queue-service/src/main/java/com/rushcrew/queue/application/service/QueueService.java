@@ -1,21 +1,26 @@
 package com.rushcrew.queue.application.service;
 
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.queue.application.command.queue.EnterQueueCommand;
 import com.rushcrew.queue.application.dto.QueueRedisResponse;
 import com.rushcrew.queue.application.port.in.QueuePort;
+import com.rushcrew.queue.common.QueueErrorCode;
 import com.rushcrew.queue.domain.entity.QueuePolicy;
 import com.rushcrew.queue.domain.entity.QueueToken;
 import com.rushcrew.queue.domain.enums.QueueStatus;
 import com.rushcrew.queue.domain.repository.QueuePolicyRepository;
 import com.rushcrew.queue.domain.repository.QueueRepository;
 import com.rushcrew.queue.domain.vo.TokenId;
+import com.rushcrew.queue.domain.vo.TrafficSetting;
 import com.rushcrew.queue.infrastructure.repository.RedisQueueRepository;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.engine.internal.ManagedTypeHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,9 +46,6 @@ public class QueueService implements QueuePort {
         // 대기열 정책 확인 (RDB 조회 - 상품 존재 여부 및 시간 확인)
         QueuePolicy policy = queuePolicyRepository.findByProductId(command.productId())
             .orElseThrow(() -> new NoSuchElementException("타임딜이 운영되지 않는 상품입니다."));
-
-        // TODO: 대기열 정책에서 대기열 진입 시간 확인 로직 추가 필요
-//        if (policy.isOpen()) {}
 
         QueueToken queueToken = QueueToken.create(command.productId(), command.userId());
 
@@ -75,7 +77,7 @@ public class QueueService implements QueuePort {
     @Override
     public QueueRedisResponse getQueueRank(UUID productId, String token, Long userId, String role) {
         // 토큰 유효성 검증: 본인 확인 (대기열 토큰 소유권 검증)
-        boolean isOwner = ((RedisQueueRepository) queueRepository).verifyTokenOwner(productId, userId, token);
+        boolean isOwner = queueRepository.verifyTokenOwner(productId, userId, token);
         if (!isOwner) {
             log.warn("[QUEUE:ERROR] 토큰 도용 시도 감지: User {}, Token {}", userId, token);
             throw new SecurityException("토큰 소유자가 일치하지 않습니다.");
@@ -115,6 +117,61 @@ public class QueueService implements QueuePort {
             .build();
     }
 
+    @Override
+    public TokenId validateQueueToken(String token) {
+        TokenId tokenId;
+        try {
+            tokenId = TokenId.of(UUID.fromString(token));
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(QueueErrorCode.QUEUE_TOKEN_NOT_AVAILABLE);
+        }
+        return tokenId;
+    }
+
+    @Override
+    public void activateTokens(UUID productId, TrafficSetting trafficSetting) {
+        // 현재 활성 인원 조회
+        Long currActiveCount = queueRepository.countActiveTokens(productId);
+
+        // 최대 활성 허용 인원 대비 남은 자리 계산
+        Integer maxCapacity = trafficSetting.getMaxCapacity();
+        Integer limitSize = trafficSetting.getLimitSize(); // 한 번에 실행할 배치 크기라고 보면 됨
+
+        if (currActiveCount >= maxCapacity) {
+            log.warn("[QUEUE] 활성열이 꽉 찼습니다. (Current: {}, Max: {})", currActiveCount, maxCapacity);
+            return;
+        }
+
+        // 활성 토큰 N개 계산 => (N = min(배치사이즈, 남은자리))
+        long availableCount = maxCapacity - currActiveCount;
+        // 최대 활성 허용 수에서 남은 자리(availableCount)가 배치 크기보다 작으면 남은 자리 수의 토큰을 활성열로 이동시키는 로직
+        long tokenCountToActivate = Math.min(limitSize, availableCount);
+
+        if (tokenCountToActivate <= 0) {
+            return;
+        }
+
+        // 대기열에서 상위 N개 토큰 조회 (Waiting -> Active 대상) : 요청 시점(Score)이 낮은 것
+        List<String> waitingTokensToActivate = queueRepository.getWaitingTokens(productId, tokenCountToActivate);
+
+        if (waitingTokensToActivate.isEmpty()) {
+            log.debug("[QUEUE] 대기열이 비어있습니다.");
+            return;
+        }
+
+        // 활성 상태로 전환
+        queueRepository.activateTokens(productId, waitingTokensToActivate, trafficSetting);
+    }
+
+    /**
+     * 토큰 유효성 검증 (활성화 여부)
+     */
+    @Override
+    public boolean validateActivatedQueueToken(UUID productId, String token) {
+        TokenId tokenId = validateQueueToken(token);
+        return queueRepository.isActivatedToken(productId, tokenId);
+    }
+
     /**
      * 타임스탬프 -> LocalDateTime 변환
      */
@@ -130,16 +187,5 @@ public class QueueService implements QueuePort {
         // 진입 요청 시간 반환
         Double score = queueRepository.getWaitingScore(productId, tokenId);
         return score != null ? score.longValue() : System.currentTimeMillis();
-    }
-
-    private TokenId validateQueueToken(String token) {
-        TokenId tokenId;
-        try {
-            tokenId = TokenId.of(UUID.fromString(token));
-        } catch (IllegalArgumentException e) {
-            // TODO : BUSINESSEXCEPTION으로 수정 필요
-            throw new IllegalArgumentException("잘못된 토큰 형식입니다.");
-        }
-        return tokenId;
     }
 }
