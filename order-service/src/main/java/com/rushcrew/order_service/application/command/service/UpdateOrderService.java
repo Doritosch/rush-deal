@@ -2,16 +2,20 @@ package com.rushcrew.order_service.application.command.service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.order_service.application.command.dto.command.UpdateOrderCommand;
 import com.rushcrew.order_service.application.command.dto.result.UpdateOrderResult;
 import com.rushcrew.order_service.application.command.port.out.OrderCachePort;
 import com.rushcrew.order_service.application.command.port.out.OrderCommandPort;
 import com.rushcrew.order_service.application.command.usecase.UpdateOrderUseCase;
+import com.rushcrew.order_service.application.port.out.OutboxPort;
 import com.rushcrew.order_service.application.query.dto.OrderDetailDto;
 import com.rushcrew.order_service.domain.enums.OrderStatus;
 import com.rushcrew.order_service.domain.model.order.Order;
@@ -27,6 +31,8 @@ public class UpdateOrderService implements UpdateOrderUseCase {
 
 	private final OrderCommandPort orderCommandPort;
 	private final OrderCachePort orderCachePort;
+	private final OutboxPort outboxPort;
+	private final ObjectMapper objectMapper;
 
 	private static final int PENDING_UPDATE_MAX_MINUTES = 15; // PENDING 상태 수정 가능 시간 (15분)
 	private static final int PAID_UPDATE_MAX_DAYS = 7; // PAID 상태 수정 가능 시간 (7일)
@@ -84,6 +90,28 @@ public class UpdateOrderService implements UpdateOrderUseCase {
 		}
 
 		log.info("주문 수정 완료: orderId={}", savedOrder.getOrderId());
+
+		// Outbox 이벤트 저장
+		try {
+			Map<String, Object> eventPayload = new HashMap<>();
+			eventPayload.put("orderId", savedOrder.getOrderId());
+			eventPayload.put("userId", savedOrder.getUserId());
+			eventPayload.put("status", savedOrder.getStatus().name());
+			eventPayload.put("updatedAt", Instant.now());
+			eventPayload.put("shippingInfo", savedOrder.getShippingInfo());
+			eventPayload.put("pointUsed", savedOrder.getPointUsed());
+
+			outboxPort.createAndSave(
+				"ORDER",
+				savedOrder.getOrderId(),
+				"ORDER_UPDATED",
+				objectMapper.writeValueAsString(eventPayload)
+			);
+
+			log.info("ORDER_UPDATED 이벤트 Outbox 저장 완료: orderId={}", savedOrder.getOrderId());
+		} catch (Exception e) {
+			log.error("ORDER_UPDATED Outbox 이벤트 저장 실패: orderId={}", savedOrder.getOrderId(), e);
+		}
 
 		return UpdateOrderResult.builder()
 			.orderId(savedOrder.getOrderId())

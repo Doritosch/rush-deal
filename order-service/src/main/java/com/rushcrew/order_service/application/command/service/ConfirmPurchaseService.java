@@ -1,6 +1,8 @@
 package com.rushcrew.order_service.application.command.service;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,7 +65,7 @@ public class ConfirmPurchaseService implements ConfirmPurchaseUseCase {
 
 		// ORDER_PURCHASE_CONFIRMED 이벤트를 outbox에 저장
 		try {
-			java.util.Map<String, Object> eventPayload = new java.util.HashMap<>();
+			Map<String, Object> eventPayload = new HashMap<>();
 			eventPayload.put("orderId", savedOrder.getOrderId());
 			eventPayload.put("userId", savedOrder.getUserId());
 			eventPayload.put("status", savedOrder.getStatus().name());
