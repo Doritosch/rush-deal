@@ -4,6 +4,7 @@ import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.timedeal.application.command.CreateStockCommand;
 import com.rushcrew.timedeal.application.command.UpdateStockCountCommand;
 import com.rushcrew.timedeal.application.result.CreateStockResult;
+import com.rushcrew.timedeal.application.result.StockResult;
 import com.rushcrew.timedeal.application.result.UpdateStockCountResult;
 import com.rushcrew.timedeal.application.service.StockService;
 import com.rushcrew.timedeal.domain.entity.TimeDealProduct;
@@ -13,8 +14,11 @@ import com.rushcrew.timedeal.domain.port.StockCache;
 import com.rushcrew.timedeal.domain.repository.StockRepository;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
 import com.rushcrew.timedeal.domain.vo.TimeDealProductStatus;
+import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,6 +65,15 @@ public class StockServiceImpl implements StockService {
             stock.getId(), stock.getTimeDealProduct().getId(),
             previousStock, stock.getStockCounts().getAvailable(), quantity
         );
+    }
+
+    @Override
+    public Page<StockResult> getStocks(
+        String keyword, UUID productId, TimeDealStockStatus status, Pageable pageable
+    ) {
+        // TODO: 요청한 사용자가 MASTER 권한 가지고 있는지 체크
+        String pattern = (keyword == null || keyword.isBlank()) ? null : "%" + keyword + "%";
+        return stockRepository.findStockResults(pattern, productId, status, pageable);
     }
 
     @Override
