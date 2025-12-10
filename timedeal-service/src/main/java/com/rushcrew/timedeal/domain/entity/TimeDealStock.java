@@ -2,6 +2,7 @@ package com.rushcrew.timedeal.domain.entity;
 
 import com.rushcrew.common.entity.BaseEntity;
 import com.rushcrew.timedeal.application.command.CreateStockCommand;
+import com.rushcrew.timedeal.domain.vo.EventType;
 import com.rushcrew.timedeal.domain.vo.ProductItemIds;
 import com.rushcrew.timedeal.domain.vo.StockCounts;
 import com.rushcrew.timedeal.domain.vo.TimeDealProductStatus;
@@ -94,5 +95,24 @@ public class TimeDealStock extends BaseEntity {
         stock.stockLogs.add(log);
 
         return stock;
+    }
+
+    public void changeAvailable(Long quantity, String reason) {
+        long newAvailable = this.stockCounts.getAvailable() + quantity;
+
+        this.stockCounts = StockCounts.of(
+            newAvailable,
+            this.stockCounts.getReserved(),
+            this.stockCounts.getSold()
+        );
+
+        if (newAvailable > 0) {
+            this.timeDealProduct.updateStatus(TimeDealProductStatus.IN_STOCK);
+        } else {
+            this.timeDealProduct.updateStatus(TimeDealProductStatus.OUT_OF_STOCK);
+        }
+
+        StockLog log = StockLog.addLog(this, EventType.ADMIN_CONTROL, quantity, reason);
+        this.stockLogs.add(log);
     }
 }

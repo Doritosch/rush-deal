@@ -17,4 +17,12 @@ public class RedisStockCache implements StockCache {
         String key = "tds:" + stockId;
         redisTemplate.opsForValue().set(key, String.valueOf(available));
     }
+
+    /**
+     * quantity가 양수면 증가, 음수면 감소
+     */
+    @Override
+    public void changeCount(UUID stockId, Long quantity) {
+        redisTemplate.opsForValue().increment("tds:" + stockId, quantity);
+    }
 }

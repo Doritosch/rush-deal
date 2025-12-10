@@ -12,4 +12,11 @@ public interface StockCache {
      */
     void register(UUID stockId, Long available);
 
+    /**
+     * Redis에 캐시된 타임딜 재고 정보 수량 증가/감소
+     *
+     * @param stockId  : Redis key에 사용되는 타임딜 재고 ID
+     * @param quantity : 증가/감소할 재고 수량
+     */
+    void changeCount(UUID stockId, Long quantity);
 }
