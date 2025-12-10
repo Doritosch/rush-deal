@@ -1,10 +1,14 @@
 package com.rushcrew.timedeal.infrastructure.repository;
 
+import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.domain.entity.TimeDeal;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
+import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,5 +25,17 @@ public class TimeDealRepositoryAdapter implements TimeDealRepository {
     @Override
     public Optional<TimeDeal> findById(UUID timeDealId) {
         return timeDealJpaRepository.findById(timeDealId);
+    }
+
+    @Override
+    public Page<TimeDealResult> findNotEndedByStatus(TimeDealStatus status, Pageable pageable) {
+        return timeDealJpaRepository.findNotEndedByStatus(status, pageable);
+    }
+
+    @Override
+    public Optional<TimeDeal> findByIdAndStatusNot(
+        UUID timeDealId, TimeDealStatus timeDealStatus
+    ) {
+        return timeDealJpaRepository.findByIdAndStatusNot(timeDealId, timeDealStatus);
     }
 }
