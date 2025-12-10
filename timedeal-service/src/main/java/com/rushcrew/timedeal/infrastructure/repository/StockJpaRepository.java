@@ -49,4 +49,24 @@ public interface StockJpaRepository extends JpaRepository<TimeDealStock, UUID> {
         @Param("status") TimeDealStockStatus status,
         Pageable pageable
     );
+
+
+    @Query("""
+                  SELECT new com.rushcrew.timedeal.application.result.StockResult(
+                                  tds.id,
+                                  tdp.id,
+                                  tds.stockCounts.available,
+                                  tds.stockCounts.reserved,
+                                  tds.stockCounts.sold,
+                                  tdp.status,
+                                  tds.updatedAt
+                             )
+                  FROM TimeDealStock tds
+                  JOIN tds.timeDealProduct tdp
+                  WHERE tds.id = :stockId
+                    AND tds.deletedAt IS NULL
+        """)
+    StockResult findStockResultById(
+        @Param("stockId") UUID stockId
+    );
 }

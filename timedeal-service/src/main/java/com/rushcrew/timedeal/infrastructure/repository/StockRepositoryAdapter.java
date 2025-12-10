@@ -33,4 +33,9 @@ public class StockRepositoryAdapter implements StockRepository {
     ) {
         return stockJpaRepository.findStockResults(keyword, productId, status, pageable);
     }
+
+    @Override
+    public StockResult findStockResultById(UUID stockId) {
+        return stockJpaRepository.findStockResultById(stockId);
+    }
 }

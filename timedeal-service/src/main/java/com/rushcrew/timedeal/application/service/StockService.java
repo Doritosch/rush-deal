@@ -20,4 +20,6 @@ public interface StockService {
 
     Page<StockResult> getStocks(
         String keyword, UUID productId, TimeDealStockStatus status, Pageable pageable);
+
+    StockResult getStock(UUID stockId);
 }

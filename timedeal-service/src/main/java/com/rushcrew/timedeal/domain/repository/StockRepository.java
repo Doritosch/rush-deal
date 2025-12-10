@@ -17,4 +17,5 @@ public interface StockRepository {
     Page<StockResult> findStockResults(
         String keyword, UUID productId, TimeDealStockStatus status, Pageable pageable);
 
+    StockResult findStockResultById(UUID stockId);
 }

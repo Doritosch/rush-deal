@@ -77,6 +77,12 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
+    public StockResult getStock(UUID stockId) {
+        // TODO: 요청한 사용자가 MASTER or SELLER 권한 가지고 있는지 체크
+        return stockRepository.findStockResultById(stockId);
+    }
+
+    @Override
     @Transactional
     public void deleteStock(UUID stockId) {
         // TODO: 요청한 사용자가 MASTER 권한 가지고 있는지 체크
