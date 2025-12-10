@@ -12,9 +12,11 @@ import com.rushcrew.payment_service.domain.repository.PaymentRepository;
 import com.rushcrew.payment_service.domain.repository.PaymentTransactionRepository;
 import com.rushcrew.payment_service.domain.vo.Amount;
 import com.rushcrew.payment_service.domain.vo.Card;
+import com.rushcrew.payment_service.infrastructure.client.OrderFeignClient;
 import com.rushcrew.payment_service.infrastructure.event.PaymentCompletedEvent;
 import com.rushcrew.payment_service.infrastructure.event.PaymentEventProducer;
 import com.rushcrew.payment_service.presentation.dto.response.PaymentResponse;
+import feign.FeignException;
 import io.portone.sdk.server.payment.PaidPayment;
 import io.portone.sdk.server.payment.PaymentClient;
 import io.portone.sdk.server.payment.PaymentMethodCard;
@@ -41,11 +43,26 @@ public class PaymentService {
     private final WebhookVerifier portoneWebhook;
 
     private final PaymentEventProducer paymentEventProducer;
+    private final OrderFeignClient orderFeignClient;
 
     @Transactional
     public PaymentPrepareResult preparePayment(PaymentCommand command) {
-        // TODO: orderId로 상품 정보 조회하여 amount 검증
+        // 1. Order 서비스에서 주문 정보 조회
+//        OrderResponse orderResponse;
+//        try {
+//            orderResponse = orderFeignClient.getOrder(command.orderId());
+//        } catch (FeignException.NotFound e) {
+//            throw new BusinessException(PaymentErrorCode.ORDER_NOT_FOUND);
+//        } catch (FeignException e) {
+//            throw new BusinessException(PaymentErrorCode.ORDER_NOT_FOUND);
+//        }
+//
+//        // 2. 결제 금액과 주문 금액 검증
+//        if (!orderResponse.totalAmount().equals(command.totalAmount())) {
+//            throw new BusinessException(PaymentErrorCode.AMOUNT_MISMATCH);
+//        }
 
+        // 3. Payment 생성
         Payment payment = Payment.create(
                 command.orderId(),
                 command.totalAmount()
