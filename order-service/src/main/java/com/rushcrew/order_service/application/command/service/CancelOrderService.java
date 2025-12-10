@@ -52,16 +52,23 @@ public class CancelOrderService implements CancelOrderUseCase {
 
 		// 주문 상태 변경 (PENDING → CANCELLED)
 		order.cancelBeforePayment("사용자 요청에 의한 주문 취소");
+
+		// 각 예약된 재고에 대해 예약 취소 처리
+		for (OrderReservation reservation : order.getReservations()) {
+			if (reservation.getStatus() == ReservationStatus.RESERVED) {
+				// 예약 상태를 CANCELLED로 변경
+				reservation.cancel();
+			}
+		}
+
+		// Order와 OrderReservation 변경사항 DB에 저장 (cascade로 함께 저장됨)
 		Order savedOrder = orderCommandPort.save(order);
 
 		log.info("주문 취소 완료: orderId={}", savedOrder.getOrderId());
 
 		// 각 예약된 재고에 대해 예약 해제 이벤트 발행 (kafka 비동기 통신 - outbox 패턴)
 		for (OrderReservation reservation : savedOrder.getReservations()) {
-			if (reservation.getStatus() == ReservationStatus.RESERVED) {
-				// 예약 상태를 CANCELLED로 변경
-				reservation.cancel();
-
+			if (reservation.getStatus() == ReservationStatus.CANCELLED) {
 				// 재고 예약 취소 이벤트 발행
 				stockEventPort.publishStockReservationCancelled(
 					savedOrder.getOrderId(),
