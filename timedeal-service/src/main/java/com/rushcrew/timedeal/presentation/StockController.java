@@ -14,6 +14,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,5 +45,13 @@ public class StockController {
         UpdateStockCountCommand command = request.toCommand();
         UpdateStockCountResult result = stockService.changeStockCount(stockId, command);
         return ResponseEntity.ok(UpdateStockCountResponse.from(result));
+    }
+
+    @DeleteMapping("/{stockId}")
+    public ResponseEntity<Void> deleteStock(
+        @PathVariable UUID stockId
+    ) {
+        stockService.deleteStock(stockId);
+        return ResponseEntity.noContent().build();
     }
 }
