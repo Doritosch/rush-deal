@@ -3,6 +3,7 @@ package com.rushcrew.order_service.presentation.api.command;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -59,13 +60,12 @@ public class OrderCommandController {
 	 * 주문 생성 API
 	 */
 	@PostMapping
+	@PreAuthorize("hasAnyRole('USER', 'MASTER', 'SELLER')")
 	public ApiResponse<CreateOrderResponse> createOrder(
 		@Valid @RequestBody CreateOrderRequest request,
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER", "SELLER");
-
 		CreateOrderCommand command = CreateOrderCommand.builder()
 			.userId(userId)
 			.timeDealId(UUID.fromString(request.timeDealId()))
@@ -88,13 +88,12 @@ public class OrderCommandController {
 	 * 결제 요청 API
 	 */
 	@PostMapping("/{orderId}/payment")
+	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<RequestPaymentResponse> requestPayment(
 		@PathVariable UUID orderId,
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER");
-
 		RequestPaymentCommand command = RequestPaymentCommand.builder()
 			.orderId(orderId)
 			.userId(userId)
@@ -109,13 +108,12 @@ public class OrderCommandController {
 	 * 구매확정 API
 	 */
 	@PostMapping("/{orderId}/confirm")
+	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<ConfirmPurchaseResponse> confirmPurchase(
 		@PathVariable UUID orderId,
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER");
-
 		ConfirmPurchaseCommand command = ConfirmPurchaseCommand.builder()
 			.orderId(orderId)
 			.userId(userId)
@@ -130,14 +128,13 @@ public class OrderCommandController {
 	 * 주문 수정 API
 	 */
 	@PutMapping("/{orderId}")
+	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<UpdateOrderResponse> updateOrder(
 		@PathVariable UUID orderId,
 		@Valid @RequestBody UpdateOrderRequest request,
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER");
-
 		UpdateOrderCommand command = UpdateOrderCommand.builder()
 			.orderId(orderId)
 			.userId(userId)
@@ -154,13 +151,12 @@ public class OrderCommandController {
 	 * 주문 취소 API
 	 */
 	@PostMapping("/{orderId}/cancel")
+	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<CancelOrderResponse> cancelOrder(
 		@PathVariable UUID orderId,
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER");
-
 		CancelOrderCommand command = CancelOrderCommand.builder()
 			.orderId(orderId)
 			.userId(userId)
@@ -175,14 +171,13 @@ public class OrderCommandController {
 	 * 주문 환불 API
 	 */
 	@PostMapping("/{orderId}/refund")
+	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<RefundOrderResponse> refundOrder(
 		@PathVariable UUID orderId,
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader(value = "X-User-Role", required = false) String role,
 		@RequestBody(required = false) java.util.Map<String, String> requestBody
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER");
-
 		String reason = requestBody != null ? requestBody.get("reason") : null;
 
 		RefundOrderCommand command = RefundOrderCommand.builder()

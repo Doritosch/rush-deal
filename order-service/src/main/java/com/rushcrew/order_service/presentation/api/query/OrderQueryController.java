@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.rushcrew.common.dto.ApiResponse;
@@ -29,26 +30,23 @@ public class OrderQueryController {
 	private final GetOrderListUseCase getOrderListUseCase;
 
 	@GetMapping("/{orderId}")
+	@PreAuthorize("hasAnyRole('USER', 'MASTER', 'SELLER')")
 	public ApiResponse<OrderDetailResponse> getOrderDetail(
 		@PathVariable UUID orderId,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
+		@RequestHeader("X-User-Id") Long userId
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER", "SELLER");
-
 		OrderDetailDto dto = getOrderDetailUseCase.getOrderDetail(orderId, userId);
 
 		return ApiResponse.success(OrderDetailResponse.from(dto));
 	}
 
 	@GetMapping
+	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<Page<OrderListResponse>> getOrderList(
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader(value = "X-User-Role", required = false) String role,
 		Pageable pageable
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER");
-
 		OrderSearchCriteria criteria = OrderSearchCriteria.builder()
 			.userId(userId)
 			.build();
