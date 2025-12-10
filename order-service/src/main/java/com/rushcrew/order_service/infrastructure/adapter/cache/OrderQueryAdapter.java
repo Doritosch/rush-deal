@@ -32,8 +32,6 @@ public class OrderQueryAdapter implements OrderQueryPort {
 
 	private static final String ORDER_KEY_PREFIX = "order:";
 
-	// TODO: 권한 처리 MASTER 면 주문 목록 다 보이도록
-
 	@Override
 	public Optional<OrderDetailDto> findById(UUID orderId) {
 		String key = ORDER_KEY_PREFIX + orderId;
@@ -68,8 +66,13 @@ public class OrderQueryAdapter implements OrderQueryPort {
 
 	@Override
 	public Page<OrderListDto> findByCriteria(OrderSearchCriteria criteria, Pageable pageable) {
-		// TODO: 추후 Redis Sorted Set 등으로 최적화
+		// TODO: Query DSL 적용
 		log.info("주문 목록 조회 (DB): userId={}", criteria.getUserId());
+		if (criteria.getUserId() == null) {
+			// MASTER 권한: 전체 조회
+			return orderJpaRepository.findAll(pageable)
+				.map(OrderListDto::fromEntity);
+		}
 		return orderJpaRepository.findByUserId(criteria.getUserId(), pageable)
 			.map(OrderListDto::fromEntity);
 	}

@@ -26,11 +26,11 @@ public class OrderQueryService implements GetOrderDetailUseCase, GetOrderListUse
 	private final OrderQueryPort orderQueryPort;
 
 	@Override
-	public OrderDetailDto getOrderDetail(UUID orderId, Long userId) {
+	public OrderDetailDto getOrderDetail(UUID orderId, Long userId, boolean isMaster) {
 		log.info("주문 상세 조회: orderId={}, userId={}", orderId, userId);
 		OrderDetailDto dto = orderQueryPort.findById(orderId)
 			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
-		if (!dto.getUserId().equals(userId)) {
+		if (!isMaster && !dto.getUserId().equals(userId)) {
 			throw new BusinessException(OrderErrorCode.ORDER_ACCESS_DENIED);
 		}
 		return dto;
