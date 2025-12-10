@@ -62,4 +62,15 @@ public class StockLog extends BaseEntity {
             .quantity(Quantity.of(quantity))
             .build();
     }
+
+    public static StockLog addLog(
+        TimeDealStock timeDealStock, EventType eventType, Long quantity, String description
+    ) {
+        return com.rushcrew.timedeal.domain.entity.StockLog.builder()
+            .timeDealStock(timeDealStock)
+            .eventType(eventType)
+            .quantity(Quantity.of(quantity))
+            .description(description)
+            .build();
+    }
 }
