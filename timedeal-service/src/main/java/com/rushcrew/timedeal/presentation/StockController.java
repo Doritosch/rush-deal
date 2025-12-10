@@ -68,6 +68,14 @@ public class StockController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{stockId}")
+    public ResponseEntity<StockResponse> getStock(
+        @PathVariable UUID stockId
+    ) {
+        StockResult result = stockService.getStock(stockId);
+        return ResponseEntity.ok(StockResponse.from(result));
+    }
+
     @DeleteMapping("/{stockId}")
     public ResponseEntity<Void> deleteStock(
         @PathVariable UUID stockId
