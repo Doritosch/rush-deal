@@ -1,7 +1,9 @@
 package com.rushcrew.timedeal.domain.entity;
 
 import com.rushcrew.common.entity.BaseEntity;
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.timedeal.application.command.CreateStockCommand;
+import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
 import com.rushcrew.timedeal.domain.vo.EventType;
 import com.rushcrew.timedeal.domain.vo.ProductItemIds;
 import com.rushcrew.timedeal.domain.vo.StockCounts;
@@ -113,6 +115,26 @@ public class TimeDealStock extends BaseEntity {
         }
 
         StockLog log = StockLog.addLog(this, EventType.ADMIN_CONTROL, quantity, reason);
+        this.stockLogs.add(log);
+    }
+
+    public void delete(Long userId) {
+        if (this.stockCounts.getReserved() > 0) {
+            throw new BusinessException(TimeDealErrorCode.CAN_NOT_DELETE_STOCK);
+        }
+
+        Long beforeAvailable = this.stockCounts.getAvailable();
+
+        this.status = TimeDealStockStatus.PAUSED;
+        this.stockCounts =
+            StockCounts.of(0L, this.stockCounts.getReserved(), this.stockCounts.getSold());
+        this.softDelete(userId);
+        this.getTimeDealProduct().updateStatus(TimeDealProductStatus.OUT_OF_STOCK);
+
+        StockLog log = StockLog.addLog(
+            this, EventType.ADMIN_CONTROL, beforeAvailable,
+            "재고 삭제 전 남은 재고 처리 (" + beforeAvailable + " -> 0)"
+        );
         this.stockLogs.add(log);
     }
 }

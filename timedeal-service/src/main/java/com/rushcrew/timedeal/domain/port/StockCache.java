@@ -19,4 +19,11 @@ public interface StockCache {
      * @param quantity : 증가/감소할 재고 수량
      */
     void changeCount(UUID stockId, Long quantity);
+
+    /**
+     * Redis에 캐시된 타임딜 재고 정보 삭제(무효화)
+     *
+     * @param stockId : Redis key에 사용되는 타임딜 재고 ID
+     */
+    void evict(UUID stockId);
 }

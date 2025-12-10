@@ -11,4 +11,6 @@ public interface StockService {
     CreateStockResult createStock(CreateStockCommand command);
 
     UpdateStockCountResult changeStockCount(UUID stockId, UpdateStockCountCommand command);
+
+    void deleteStock(UUID stockId);
 }

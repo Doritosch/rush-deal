@@ -63,6 +63,18 @@ public class StockServiceImpl implements StockService {
         );
     }
 
+    @Override
+    @Transactional
+    public void deleteStock(UUID stockId) {
+        // TODO: 요청한 사용자가 MASTER 권한 가지고 있는지 체크
+
+        TimeDealStock stock = getStockOrThrow(stockId);
+
+        // TODO: 추후에 사용자 정보 가지고 오면 주석처리 풀 예정
+//        stock.delete(userId);
+        stockCache.evict(stockId);
+    }
+
     // ------------------------------------------------------------------------------------
 
     private TimeDealStock getStockOrThrow(UUID stockId) {
