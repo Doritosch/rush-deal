@@ -3,6 +3,10 @@ spring:
     name: timedeal-service
   config:
     import: "optional:file:.env"
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${TIME_DEAL_DB}
     username: ${POSTGRES_USER}
