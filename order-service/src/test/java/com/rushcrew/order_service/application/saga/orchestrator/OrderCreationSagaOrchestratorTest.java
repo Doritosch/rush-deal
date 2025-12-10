@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
 import com.rushcrew.order_service.application.command.dto.result.CreateOrderResult;
+import com.rushcrew.order_service.application.port.out.MetricsPort;
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
 import com.rushcrew.order_service.application.saga.dto.SagaStepResult;
@@ -46,6 +47,9 @@ class OrderCreationSagaOrchestratorTest {
 
 	@Mock
 	private SagaInstancePort sagaInstancePort;
+
+	@Mock
+	private MetricsPort metricsPort;
 
 	@InjectMocks
 	private OrderCreationSagaOrchestrator orchestrator;

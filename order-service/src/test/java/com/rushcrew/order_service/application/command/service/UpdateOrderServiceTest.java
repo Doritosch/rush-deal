@@ -370,10 +370,9 @@ class UpdateOrderServiceTest {
 	@Test
 	@DisplayName("REFUNDED 상태 - 수정 불가")
 	void testUpdate_REFUNDED_Failure() {
-		// given
+		// 상태 PAID에서 환불
 		order.completePayment();
-		order.confirmPurchase();
-		order.refund("환불");
+		order.refund("환불"); // 이제 정상 수행
 		UUID actualOrderId = order.getOrderId();
 		when(orderCommandPort.findById(actualOrderId)).thenReturn(Optional.of(order));
 
@@ -384,7 +383,6 @@ class UpdateOrderServiceTest {
 			.pointUsed(null)
 			.build();
 
-		// when & then
 		assertThatThrownBy(() -> updateOrderService.updateOrder(command))
 			.isInstanceOf(BusinessException.class)
 			.extracting("errorCode")
@@ -394,6 +392,7 @@ class UpdateOrderServiceTest {
 		verify(orderCommandPort, never()).save(any(Order.class));
 		verify(orderCachePort, never()).updateOrderCache(any(), any());
 	}
+
 
 	@Test
 	@DisplayName("주문을 찾을 수 없음")
