@@ -54,4 +54,12 @@ public class StockLog extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    public static StockLog init(TimeDealStock timeDealStock, Long quantity) {
+        return StockLog.builder()
+            .timeDealStock(timeDealStock)
+            .eventType(EventType.INIT)
+            .quantity(Quantity.of(quantity))
+            .build();
+    }
 }

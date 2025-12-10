@@ -2,6 +2,7 @@ package com.rushcrew.timedeal.infrastructure.repository;
 
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.domain.entity.TimeDeal;
+import com.rushcrew.timedeal.domain.entity.TimeDealProduct;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,11 +41,19 @@ public interface TimeDealJpaRepository extends JpaRepository<TimeDeal, UUID> {
                    SELECT td
                     FROM TimeDeal td
                    WHERE td.id = :timeDealId
-                    AND td.status = :timeDealStatus
+                    AND td.status <> :timeDealStatus
                     AND td.deletedAt IS NULL
         """)
     Optional<TimeDeal> findByIdAndStatusNot(
         @Param(value = "timeDealId") UUID timeDealId,
         @Param(value = "timeDealStatus") TimeDealStatus timeDealStatus
     );
+
+    @Query("""
+                  SELECT tdp
+                  FROM TimeDealProduct tdp
+                  WHERE tdp.deletedAt IS NULL
+                    AND tdp.id = :productId
+        """)
+    Optional<TimeDealProduct> findProductByProductId(UUID productId);
 }

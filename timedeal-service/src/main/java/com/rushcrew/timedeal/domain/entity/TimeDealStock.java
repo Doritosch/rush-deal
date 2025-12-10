@@ -1,8 +1,10 @@
 package com.rushcrew.timedeal.domain.entity;
 
 import com.rushcrew.common.entity.BaseEntity;
+import com.rushcrew.timedeal.application.command.CreateStockCommand;
 import com.rushcrew.timedeal.domain.vo.ProductItemIds;
 import com.rushcrew.timedeal.domain.vo.StockCounts;
+import com.rushcrew.timedeal.domain.vo.TimeDealProductStatus;
 import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -74,4 +76,23 @@ public class TimeDealStock extends BaseEntity {
     @OneToMany(mappedBy = "timeDealStock", fetch = FetchType.LAZY)
     @Builder.Default
     private List<StockLog> stockLogs = new ArrayList<>();
+
+    public static TimeDealStock create(CreateStockCommand command,
+        TimeDealProduct timeDealProduct) {
+        TimeDealStock stock = TimeDealStock.builder()
+            .timeDealProduct(timeDealProduct)
+            .timeDealId(timeDealProduct.getTimeDeal().getId())
+            .itemIds(
+                ProductItemIds.of(command.productId(), timeDealProduct.getItemIds().getOptionId()))
+            .stockCounts(StockCounts.init(command.totalStock()))
+            .status(TimeDealStockStatus.AVAILABLE)
+            .build();
+
+        timeDealProduct.updateStatus(TimeDealProductStatus.IN_STOCK);
+
+        StockLog log = StockLog.init(stock, command.totalStock());
+        stock.stockLogs.add(log);
+
+        return stock;
+    }
 }

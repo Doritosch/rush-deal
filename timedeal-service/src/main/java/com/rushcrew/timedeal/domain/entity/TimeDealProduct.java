@@ -61,4 +61,8 @@ public class TimeDealProduct extends BaseEntity {
             .status(TimeDealProductStatus.OUT_OF_STOCK)
             .build();
     }
+
+    public void updateStatus(TimeDealProductStatus timeDealProductStatus) {
+        this.status = timeDealProductStatus;
+    }
 }

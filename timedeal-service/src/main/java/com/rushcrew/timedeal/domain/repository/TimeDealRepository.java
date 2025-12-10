@@ -2,6 +2,7 @@ package com.rushcrew.timedeal.domain.repository;
 
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.domain.entity.TimeDeal;
+import com.rushcrew.timedeal.domain.entity.TimeDealProduct;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,4 +18,6 @@ public interface TimeDealRepository {
     Page<TimeDealResult> findNotEndedByStatus(TimeDealStatus status, Pageable pageable);
 
     Optional<TimeDeal> findByIdAndStatusNot(UUID timeDealId, TimeDealStatus timeDealStatus);
+
+    Optional<TimeDealProduct> findProductByProductId(UUID productId);
 }

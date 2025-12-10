@@ -2,6 +2,7 @@ package com.rushcrew.timedeal.infrastructure.repository;
 
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.domain.entity.TimeDeal;
+import com.rushcrew.timedeal.domain.entity.TimeDealProduct;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import java.util.Optional;
@@ -37,5 +38,10 @@ public class TimeDealRepositoryAdapter implements TimeDealRepository {
         UUID timeDealId, TimeDealStatus timeDealStatus
     ) {
         return timeDealJpaRepository.findByIdAndStatusNot(timeDealId, timeDealStatus);
+    }
+
+    @Override
+    public Optional<TimeDealProduct> findProductByProductId(UUID productId) {
+        return timeDealJpaRepository.findProductByProductId(productId);
     }
 }
