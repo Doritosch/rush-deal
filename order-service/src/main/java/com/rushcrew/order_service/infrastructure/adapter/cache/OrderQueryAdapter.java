@@ -32,6 +32,8 @@ public class OrderQueryAdapter implements OrderQueryPort {
 
 	private static final String ORDER_KEY_PREFIX = "order:";
 
+	// TODO: 권한 처리 MASTER 면 주문 목록 다 보이도록
+
 	@Override
 	public Optional<OrderDetailDto> findById(UUID orderId) {
 		String key = ORDER_KEY_PREFIX + orderId;

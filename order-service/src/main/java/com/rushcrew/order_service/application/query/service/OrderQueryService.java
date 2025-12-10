@@ -31,7 +31,7 @@ public class OrderQueryService implements GetOrderDetailUseCase, GetOrderListUse
 		OrderDetailDto dto = orderQueryPort.findById(orderId)
 			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
 		if (!dto.getUserId().equals(userId)) {
-			throw new BusinessException(OrderErrorCode.UNAUTHORIZED);
+			throw new BusinessException(OrderErrorCode.ORDER_ACCESS_DENIED);
 		}
 		return dto;
 	}
