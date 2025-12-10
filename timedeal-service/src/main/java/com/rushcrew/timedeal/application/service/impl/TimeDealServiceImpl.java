@@ -2,11 +2,14 @@ package com.rushcrew.timedeal.application.service.impl;
 
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.timedeal.application.command.CreateTimeDealCommand;
+import com.rushcrew.timedeal.application.command.UpdateTimeDealCommand;
 import com.rushcrew.timedeal.application.model.ProductInfo;
+import com.rushcrew.timedeal.application.result.UpdateTimeDealResult;
 import com.rushcrew.timedeal.application.service.TimeDealService;
 import com.rushcrew.timedeal.domain.entity.TimeDeal;
 import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
 import com.rushcrew.timedeal.domain.model.CreateTimeDealParams;
+import com.rushcrew.timedeal.domain.model.UpdateTimeDealParams;
 import com.rushcrew.timedeal.domain.port.ProductClient;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
 import java.util.UUID;
@@ -40,6 +43,23 @@ public class TimeDealServiceImpl implements TimeDealService {
         timeDealRepository.save(newTimeDeal);
 
         return newTimeDeal.getId();
+    }
+
+    @Override
+    @Transactional
+    public UpdateTimeDealResult updateTimeDeal(UUID timeDealId, UpdateTimeDealCommand command) {
+        // TODO: 요청사용자가 SELLER(productInfo.sellerId()) or MASTER 인지 확인하는 로직 추가 예정
+
+        TimeDeal timeDeal = timeDealRepository.findById(timeDealId)
+            .orElseThrow(() -> new BusinessException(TimeDealErrorCode.NOT_FOUND_TIME_DEAL));
+
+        UpdateTimeDealParams params = new UpdateTimeDealParams(
+            command.title(), command.description(), command.discountPrice(),
+            command.limitQuantity(), command.startAt(), command.endAt()
+        );
+        timeDeal.update(params);
+
+        return UpdateTimeDealResult.from(timeDeal);
     }
 
     @Override
