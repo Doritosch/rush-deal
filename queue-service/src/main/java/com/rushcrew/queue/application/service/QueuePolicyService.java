@@ -109,10 +109,10 @@ public class QueuePolicyService implements QueuePolicyPort {
         // 권한 유효성 검사
         queuePolicyValidator.validateMasterRole(userId, role);
         QueuePolicy queuePolicy = getQueuePolicy(policyId);
-        queuePolicy.update(queuePolicy.getTimeDealName(),
-            queuePolicy.getStatus(),
-            queuePolicy.getTimePeriod(),
-            queuePolicy.getTrafficSetting());
+        queuePolicy.update(command.timeDealName(),
+            command.status(),
+            command.timePeriod(),
+            command.trafficSetting());
         return QueuePolicyQueryResponse.from(queuePolicy);
     }
 

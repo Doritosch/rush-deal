@@ -16,7 +16,8 @@ public enum QueueErrorCode implements ErrorCode {
     NO_TOKEN_TO_ACTIVATE(HttpStatus.SERVICE_UNAVAILABLE, "NO_TOKEN_TO_ACTIVATE", "활성 큐로 이동시킬 토큰이 없습니다."),
     USER_ALREADY_IN_WAITING_QUEUE(HttpStatus.CONFLICT, "USER_ALREADY_IN_WAITING_QUEUE", "이미 대기열에 등록된 사용자입니다."),
     TOKEN_OWNER_NOT_MATCH(HttpStatus.NOT_FOUND, "TOKEN_OWNER_NOT_MATCH", "토큰 소유자가 일치하지 않습니다."),
-    QUEUE_TOKEN_EXPIRED(HttpStatus.SERVICE_UNAVAILABLE, "QUEUE_TOKEN_EXPIRED", "대기열에 존재하지 않는 만료 토큰입니다.")
+    QUEUE_TOKEN_EXPIRED(HttpStatus.SERVICE_UNAVAILABLE, "QUEUE_TOKEN_EXPIRED", "대기열에 존재하지 않는 만료 토큰입니다."),
+    NO_TIMEDEAL_PRODUCT(HttpStatus.NOT_FOUND, "NO_TIMEDEAL_PRODUCT", "타임딜이 운영되지 않는 상품입니다.")
 
 
 
