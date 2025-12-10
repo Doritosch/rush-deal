@@ -56,18 +56,8 @@ public class QueueService implements QueuePort {
             throw new BusinessException(QueueErrorCode.USER_ALREADY_IN_WAITING_QUEUE);
         }
 
-        // 현재 순번 조회
-        Long waitingRank = queueRepository.getWaitingRank(command.productId(), queueToken.getId());
-        // 요청시간 LocalDateTime 타입으로 변환
-        LocalDateTime enteredAt = convertLocalDateTime(queueToken.getRequestTime());
-
-        return QueueRedisResponse.builder()
-            .token(queueToken.getId().getValue())
-            .productId(queueToken.getProductId())
-            .rank(waitingRank)
-            .status(queueToken.getStatus())
-            .enteredAt(enteredAt)
-            .build();
+        String tokenValue = queueToken.getId().getValue().toString();
+        return getQueueRank(command.productId(), tokenValue, command.userId(), command.role());
     }
 
     /**
