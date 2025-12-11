@@ -1,5 +1,6 @@
 package com.rushcrew.order_service.application.command.port.out;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import com.rushcrew.order_service.domain.model.order.Order;
@@ -9,4 +10,6 @@ public interface OrderCommandPort {
 	Integer getTotalPurchasedQuantity(Long userId, UUID timeDealId);
 
 	Order save(Order order);
+
+	Optional<Order> findById(UUID uuid);
 }

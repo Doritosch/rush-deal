@@ -1,5 +1,6 @@
 package com.rushcrew.order_service.infrastructure.adapter.persistence;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
@@ -23,5 +24,10 @@ public class OrderCommandAdapter implements OrderCommandPort {
 	@Override
 	public Order save(Order order) {
 		return orderJpaRepository.save(order);
+	}
+
+	@Override
+	public Optional<Order> findById(UUID orderId) {
+		return orderJpaRepository.findById(orderId);
 	}
 }
