@@ -23,6 +23,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,6 +104,11 @@ public class StockServiceImpl implements StockService {
 
     @Override
     @Transactional
+    @Retryable(
+        retryFor = {ObjectOptimisticLockingFailureException.class},
+        maxAttempts = 5,
+        backoff = @Backoff(delay = 5, maxDelay = 20, multiplier = 2)
+    )
     public ReserveStockResult reserveStock(ReserveStockCommand command) {
         // TODO: 요청한 사용자가 ORDER 권한을 가지고 있는지 체크
 
