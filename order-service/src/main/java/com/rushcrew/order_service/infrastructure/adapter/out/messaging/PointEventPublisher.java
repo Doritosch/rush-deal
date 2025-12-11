@@ -1,0 +1,56 @@
+package com.rushcrew.order_service.infrastructure.adapter.out.messaging;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rushcrew.order_service.application.port.out.PointEventPort;
+import com.rushcrew.order_service.infrastructure.persistence.outbox.entity.OutboxEventEntity;
+import com.rushcrew.order_service.infrastructure.persistence.outbox.repository.OutboxEventJpaRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class PointEventPublisher implements PointEventPort {
+
+	private final OutboxEventJpaRepository outboxRepository;
+	private final ObjectMapper objectMapper;
+
+	@Override
+	public void publishPointEarnRequested(Long userId, UUID orderId, BigDecimal finalAmount, String reason, Instant timestamp) {
+		try {
+			log.info("포인트 적립 요청 이벤트 발행: userId={}, orderId={}, finalAmount={}", userId, orderId, finalAmount);
+
+			Map<String, Object> event = new HashMap<>();
+			event.put("userId", userId);
+			event.put("orderId", orderId.toString());
+			event.put("finalAmount", finalAmount);
+			event.put("reason", reason);
+			event.put("timestamp", timestamp.toString());
+
+			String payload = objectMapper.writeValueAsString(event);
+
+			OutboxEventEntity outbox = OutboxEventEntity.create(
+				"ORDER",       // aggregateType
+				orderId,                     // aggregateId
+				"POINT_EARN_REQUESTED",      // eventType
+				payload                      // json
+			);
+
+			outboxRepository.save(outbox);
+			log.info("포인트 적립 요청 이벤트 Outbox 저장 완료: orderId={}", orderId);
+
+		} catch (Exception e) {
+			log.error("포인트 적립 요청 이벤트 발행 실패: orderId={}", orderId, e);
+			throw new RuntimeException("포인트 적립 요청 이벤트 발행 실패", e);
+		}
+	}
+}

@@ -11,14 +11,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.rushcrew.common.dto.ApiResponse;
+import com.rushcrew.order_service.application.command.dto.command.ConfirmPurchaseCommand;
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
 import com.rushcrew.order_service.application.command.dto.command.RequestPaymentCommand;
+import com.rushcrew.order_service.application.command.dto.result.ConfirmPurchaseResult;
 import com.rushcrew.order_service.application.command.dto.result.CreateOrderResult;
 import com.rushcrew.order_service.application.command.dto.result.RequestPaymentResult;
+import com.rushcrew.order_service.application.command.usecase.ConfirmPurchaseUseCase;
 import com.rushcrew.order_service.application.command.usecase.CreateOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.RequestPaymentUseCase;
 import com.rushcrew.order_service.global.util.RoleChecker;
 import com.rushcrew.order_service.presentation.dto.request.CreateOrderRequest;
+import com.rushcrew.order_service.presentation.dto.response.ConfirmPurchaseResponse;
 import com.rushcrew.order_service.presentation.dto.response.CreateOrderResponse;
 import com.rushcrew.order_service.presentation.dto.response.RequestPaymentResponse;
 
@@ -32,6 +36,7 @@ public class OrderCommandController {
 
 	private final CreateOrderUseCase createOrderUseCase;
 	private final RequestPaymentUseCase requestPaymentUseCase;
+	private final ConfirmPurchaseUseCase confirmPurchaseUseCase;
 
 	/**
 	 * 주문 생성 API
@@ -62,6 +67,9 @@ public class OrderCommandController {
 		return ApiResponse.success(CreateOrderResponse.from(result));
 	}
 
+	/**
+	 * 결제 요청 API
+	 */
 	@PostMapping("/{orderId}/payment")
 	public ApiResponse<RequestPaymentResponse> requestPayment(
 		@PathVariable UUID orderId,
@@ -78,6 +86,27 @@ public class OrderCommandController {
 		RequestPaymentResult result = requestPaymentUseCase.requestPayment(command);
 
 		return ApiResponse.success(RequestPaymentResponse.from(result));
+	}
+
+	/**
+	 * 구매확정 API
+	 */
+	@PostMapping("/{orderId}/confirm")
+	public ApiResponse<ConfirmPurchaseResponse> confirmPurchase(
+		@PathVariable UUID orderId,
+		@RequestHeader("X-User-Id") Long userId,
+		@RequestHeader(value = "X-User-Role", required = false) String role
+	) {
+		RoleChecker.checkRole(role, "USER", "MASTER");
+
+		ConfirmPurchaseCommand command = ConfirmPurchaseCommand.builder()
+			.orderId(orderId)
+			.userId(userId)
+			.build();
+
+		ConfirmPurchaseResult result = confirmPurchaseUseCase.confirmPurchase(command);
+
+		return ApiResponse.success(ConfirmPurchaseResponse.from(result));
 	}
 
 }
