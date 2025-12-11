@@ -42,19 +42,4 @@ public class InternalQueueController {
         boolean result = queueService.validateActivatedQueueToken(productId, queueToken, currUserId, role);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(result));
     }
-
-    /**
-     * 대기열 취소/주문 완료 시 토큰 삭제 API
-     * 사용자가 대기 중 "취소" 버튼을 누르거나, 주문 프로세스가 끝나고 나갈 때 호출(Order-service가 호출)
-     */
-    @DeleteMapping("/{product-id}")
-    public ResponseEntity<ApiResponse<Void>> deleteQueueToken(
-        @PathVariable("product-id") UUID productId,
-        @RequestHeader(QUEUE_TOKEN_HEADER) String queueToken,
-        @RequestHeader(USER_ID_HEADER) Long currUserId,
-        @RequestHeader(USER_ROLE_HEADER) String role
-    ) {
-        queueService.exitQueue(productId, queueToken, currUserId);
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
-    }
 }
