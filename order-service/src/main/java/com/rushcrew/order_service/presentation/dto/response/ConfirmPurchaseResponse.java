@@ -10,14 +10,4 @@ public record ConfirmPurchaseResponse(
 	String orderStatus,
 	Instant purchaseConfirmedAt,
 	String message
-) {
-
-	public static ConfirmPurchaseResponse from(ConfirmPurchaseResult result) {
-		return new ConfirmPurchaseResponse(
-			result.orderId(),
-			result.orderStatus(),
-			result.purchaseConfirmedAt(),
-			"구매가 확정되었습니다."
-		);
-	}
-}
+) {}

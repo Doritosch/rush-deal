@@ -30,6 +30,8 @@ import com.rushcrew.order_service.application.command.usecase.CreateOrderUseCase
 import com.rushcrew.order_service.application.command.usecase.RefundOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.RequestPaymentUseCase;
 import com.rushcrew.order_service.application.command.usecase.UpdateOrderUseCase;
+import com.rushcrew.order_service.application.mapper.ConfirmPurchaseCommandMapper;
+import com.rushcrew.order_service.application.mapper.ConfirmPurchaseResultMapper;
 import com.rushcrew.order_service.application.mapper.CreateOrderCommandMapper;
 import com.rushcrew.order_service.application.mapper.CreateOrderResultMapper;
 import com.rushcrew.order_service.application.mapper.RequestPaymentCommandMapper;
@@ -59,6 +61,8 @@ public class OrderCommandController {
 	private final RequestPaymentCommandMapper requestPaymentCommandMapper;
 	private final RequestPaymentResultMapper requestPaymentResultMapper;
 	private final ConfirmPurchaseUseCase confirmPurchaseUseCase;
+	private final ConfirmPurchaseCommandMapper confirmPurchaseCommandMapper;
+	private final ConfirmPurchaseResultMapper confirmPurchaseResultMapper;
 	private final UpdateOrderUseCase updateOrderUseCase;
 	private final CancelOrderUseCase cancelOrderUseCase;
 	private final RefundOrderUseCase refundOrderUseCase;
@@ -106,15 +110,10 @@ public class OrderCommandController {
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER");
-
-		ConfirmPurchaseCommand command = ConfirmPurchaseCommand.builder()
-			.orderId(orderId)
-			.userId(userId)
-			.build();
-
+		ConfirmPurchaseCommand command = confirmPurchaseCommandMapper.toCommand(orderId, userId);
 		ConfirmPurchaseResult result = confirmPurchaseUseCase.confirmPurchase(command);
-
-		return ApiResponse.success(ConfirmPurchaseResponse.from(result));
+		ConfirmPurchaseResponse response = confirmPurchaseResultMapper.toResponse(result);
+		return ApiResponse.success(response);
 	}
 
 	/**
