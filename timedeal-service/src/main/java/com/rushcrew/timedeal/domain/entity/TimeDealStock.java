@@ -5,9 +5,12 @@ import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.timedeal.application.command.CreateStockCommand;
 import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
 import com.rushcrew.timedeal.domain.vo.EventType;
+import com.rushcrew.timedeal.domain.vo.OrderId;
 import com.rushcrew.timedeal.domain.vo.ProductItemIds;
+import com.rushcrew.timedeal.domain.vo.Quantity;
 import com.rushcrew.timedeal.domain.vo.StockCounts;
 import com.rushcrew.timedeal.domain.vo.TimeDealProductStatus;
+import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -134,6 +137,25 @@ public class TimeDealStock extends BaseEntity {
         StockLog log = StockLog.addLog(
             this, EventType.ADMIN_CONTROL, beforeAvailable,
             "재고 삭제 전 남은 재고 처리 (" + beforeAvailable + " -> 0)"
+        );
+        this.stockLogs.add(log);
+    }
+
+    public void reserve(Quantity quantity, OrderId orderId) {
+        if (this.stockCounts.getAvailable() < quantity.getQuantity()) {
+            throw new BusinessException(TimeDealErrorCode.OUT_OF_STOCK);
+        }
+
+        this.stockCounts = this.stockCounts.reserve(quantity);
+
+        if (this.stockCounts.getAvailable() == 0) {
+            this.timeDealProduct.getTimeDeal().updateStatus(TimeDealStatus.SOLD_OUT);
+            this.status = TimeDealStockStatus.RESERVED;
+            this.timeDealProduct.updateStatus(TimeDealProductStatus.OUT_OF_STOCK);
+        }
+
+        StockLog log = StockLog.reserve(
+            this, orderId, quantity
         );
         this.stockLogs.add(log);
     }

@@ -2,8 +2,10 @@ package com.rushcrew.timedeal.application.service.impl;
 
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.timedeal.application.command.CreateStockCommand;
+import com.rushcrew.timedeal.application.command.ReserveStockCommand;
 import com.rushcrew.timedeal.application.command.UpdateStockCountCommand;
 import com.rushcrew.timedeal.application.result.CreateStockResult;
+import com.rushcrew.timedeal.application.result.ReserveStockResult;
 import com.rushcrew.timedeal.application.result.StockResult;
 import com.rushcrew.timedeal.application.result.UpdateStockCountResult;
 import com.rushcrew.timedeal.application.service.StockService;
@@ -92,6 +94,20 @@ public class StockServiceImpl implements StockService {
         // TODO: 추후에 사용자 정보 가지고 오면 주석처리 풀 예정
 //        stock.delete(userId);
         stockCache.evict(stockId);
+    }
+
+    @Override
+    @Transactional
+    public ReserveStockResult reserveStock(ReserveStockCommand command) {
+        // TODO: 요청한 사용자가 ORDER 권한을 가지고 있는지 체크
+
+        TimeDealStock stock = getStockOrThrow(command.stockId());
+
+        stock.reserve(command.quantity(), command.orderId());
+        stockCache.reserve(command.stockId(), command.quantity().getQuantity());
+
+        return ReserveStockResult
+            .of(stock.getStockCounts().getAvailable(), "재고가 예약되었습니다.");
     }
 
     // ------------------------------------------------------------------------------------

@@ -73,4 +73,14 @@ public class StockLog extends BaseEntity {
             .description(description)
             .build();
     }
+
+    public static StockLog reserve(TimeDealStock stock, OrderId orderId, Quantity quantity) {
+        return StockLog.builder()
+            .timeDealStock(stock)
+            .orderId(orderId)
+            .eventType(EventType.RESERVE)
+            .description("주문")
+            .quantity(quantity)
+            .build();
+    }
 }

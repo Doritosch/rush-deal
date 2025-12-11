@@ -99,6 +99,10 @@ public class TimeDeal extends BaseEntity {
         return timeDeal;
     }
 
+    public void updateStatus(TimeDealStatus timeDealStatus) {
+        this.status = timeDealStatus;
+    }
+
     public void update(UpdateTimeDealParams params) {
         updateTimeDealInfo(params.title(), params.description());
         this.price = params.discountPrice() != null ? Price.of(params.discountPrice()) : this.price;
