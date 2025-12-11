@@ -22,9 +22,9 @@ public class QueueEventConsumer {
 
     /**
      * 주문 완료 시 발행되는 토큰 만료 요청 이벤트를 수신
-     * Topic: queue-token-remove-topic
+     * Topic: order-complete-token-remove
      */
-    @KafkaListener(topics = "queue-token-remove-topic", groupId = "queue-service-group")
+    @KafkaListener(topics = "order-complete-token-remove", groupId = "queue-service-group")
     public void consumeTokenRemoveEvent(String message) {
         try {
             log.info("[QUEUE:Kafka:Consume] 토큰 삭제 요청 수신: {}", message);
