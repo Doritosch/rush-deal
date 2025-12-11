@@ -1,6 +1,6 @@
 package com.rushcrew.queue.presentation.controller;
 
-import com.rushcrew.queue.application.util.QueueScheduler;
+import com.rushcrew.queue.infrastructure.scheduler.QueueScheduler;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
