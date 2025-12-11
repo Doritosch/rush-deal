@@ -1,5 +1,6 @@
 package com.rushcrew.queue.infrastructure.filter;
 
+import com.rushcrew.common.enums.UserRole;
 import com.rushcrew.queue.infrastructure.security.UserDetailsImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

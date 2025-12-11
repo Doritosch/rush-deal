@@ -1,8 +1,8 @@
 package com.rushcrew.queue.application.validator;
 
+import com.rushcrew.common.enums.UserRole;
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.queue.common.QueueErrorCode;
-import com.rushcrew.queue.domain.enums.UserRole;
 import org.springframework.stereotype.Component;
 
 @Component

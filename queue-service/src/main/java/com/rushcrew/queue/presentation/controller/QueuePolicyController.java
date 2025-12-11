@@ -8,6 +8,7 @@ import com.rushcrew.queue.application.dto.PageQuery;
 import com.rushcrew.queue.application.dto.QueuePolicyQueryResponse;
 import com.rushcrew.queue.application.service.QueuePolicyService;
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
+import com.rushcrew.queue.infrastructure.security.UserDetailsImpl;
 import com.rushcrew.queue.presentation.dto.request.CreatePolicyRequest;
 import com.rushcrew.queue.presentation.dto.request.UpdatePolicyRequest;
 import com.rushcrew.queue.presentation.dto.response.CreatePolicyResponse;
@@ -20,6 +21,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -50,15 +53,20 @@ public class QueuePolicyController {
 
     /**
      * 타임딜 정책 생성 : MASTER 권한만 가능
+     * 게이트웨이 헤더의 X-User-Role이 'MASTER'인 경우에만 접근 가능
      */
     @PostMapping
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<ApiResponse<CreatePolicyResponse>> registerPolicy(
         @Valid @RequestBody CreatePolicyRequest request,
-        @RequestHeader(USER_ID_HEADER) Long currUserId,
-        @RequestHeader(USER_ROLE_HEADER) String role
+        @AuthenticationPrincipal UserDetailsImpl principal
     ) {
         CreatePolicyCommand command = request.toCommand();
-        QueuePolicyQueryResponse result = queuePolicyService.createQueuePolicy(command, currUserId, role);
+        QueuePolicyQueryResponse result = queuePolicyService.createQueuePolicy(
+            command,
+            principal.userId(),
+            principal.role()
+        );
         CreatePolicyResponse response = presentationMapper.toCreatePolicyResponse(result);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
@@ -95,7 +103,8 @@ public class QueuePolicyController {
     public ResponseEntity<ApiResponse<QueuePolicyResponse>> getPolicyInfo(
         @PathVariable("policy-id") UUID policyId,
         @RequestHeader(USER_ID_HEADER) Long currUserId,
-        @RequestHeader(USER_ROLE_HEADER) String role
+        @RequestHeader(USER_ROLE_HEADER) String role,
+        @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         QueuePolicyQueryResponse result = queuePolicyService.getQueuePolicyInfo(policyId, currUserId, role);
         QueuePolicyResponse response = presentationMapper.toQueuePolicyResponse(result);
