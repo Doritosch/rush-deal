@@ -1,4 +1,4 @@
-package com.rushcrew.order_service.application.mapper;
+package com.rushcrew.order_service.application.command.mapper;
 
 import org.springframework.stereotype.Component;
 

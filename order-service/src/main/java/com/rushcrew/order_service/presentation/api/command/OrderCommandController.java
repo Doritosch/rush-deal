@@ -1,7 +1,6 @@
 package com.rushcrew.order_service.presentation.api.command;
 
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,14 +29,14 @@ import com.rushcrew.order_service.application.command.usecase.CreateOrderUseCase
 import com.rushcrew.order_service.application.command.usecase.RefundOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.RequestPaymentUseCase;
 import com.rushcrew.order_service.application.command.usecase.UpdateOrderUseCase;
-import com.rushcrew.order_service.application.mapper.ConfirmPurchaseCommandMapper;
-import com.rushcrew.order_service.application.mapper.ConfirmPurchaseResultMapper;
-import com.rushcrew.order_service.application.mapper.CreateOrderCommandMapper;
-import com.rushcrew.order_service.application.mapper.CreateOrderResultMapper;
-import com.rushcrew.order_service.application.mapper.RequestPaymentCommandMapper;
-import com.rushcrew.order_service.application.mapper.RequestPaymentResultMapper;
-import com.rushcrew.order_service.application.mapper.UpdateOrderCommandMapper;
-import com.rushcrew.order_service.application.mapper.UpdateOrderResultMapper;
+import com.rushcrew.order_service.application.command.mapper.ConfirmPurchaseCommandMapper;
+import com.rushcrew.order_service.application.command.mapper.ConfirmPurchaseResultMapper;
+import com.rushcrew.order_service.application.command.mapper.CreateOrderCommandMapper;
+import com.rushcrew.order_service.application.command.mapper.CreateOrderResultMapper;
+import com.rushcrew.order_service.application.command.mapper.RequestPaymentCommandMapper;
+import com.rushcrew.order_service.application.command.mapper.RequestPaymentResultMapper;
+import com.rushcrew.order_service.application.command.mapper.UpdateOrderCommandMapper;
+import com.rushcrew.order_service.application.command.mapper.UpdateOrderResultMapper;
 import com.rushcrew.order_service.global.util.RoleChecker;
 import com.rushcrew.order_service.presentation.dto.request.CreateOrderRequest;
 import com.rushcrew.order_service.presentation.dto.request.UpdateOrderRequest;
