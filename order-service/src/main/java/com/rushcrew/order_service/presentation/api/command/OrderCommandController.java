@@ -32,6 +32,8 @@ import com.rushcrew.order_service.application.command.usecase.RequestPaymentUseC
 import com.rushcrew.order_service.application.command.usecase.UpdateOrderUseCase;
 import com.rushcrew.order_service.application.mapper.CreateOrderCommandMapper;
 import com.rushcrew.order_service.application.mapper.CreateOrderResultMapper;
+import com.rushcrew.order_service.application.mapper.RequestPaymentCommandMapper;
+import com.rushcrew.order_service.application.mapper.RequestPaymentResultMapper;
 import com.rushcrew.order_service.global.util.RoleChecker;
 import com.rushcrew.order_service.presentation.dto.request.CreateOrderRequest;
 import com.rushcrew.order_service.presentation.dto.request.UpdateOrderRequest;
@@ -54,11 +56,12 @@ public class OrderCommandController {
 	private final CreateOrderCommandMapper createOrderCommandMapper;
 	private final CreateOrderResultMapper createOrderResultMapper;
 	private final RequestPaymentUseCase requestPaymentUseCase;
+	private final RequestPaymentCommandMapper requestPaymentCommandMapper;
+	private final RequestPaymentResultMapper requestPaymentResultMapper;
 	private final ConfirmPurchaseUseCase confirmPurchaseUseCase;
 	private final UpdateOrderUseCase updateOrderUseCase;
 	private final CancelOrderUseCase cancelOrderUseCase;
 	private final RefundOrderUseCase refundOrderUseCase;
-
 
 	/**
 	 * 주문 생성 API
@@ -77,7 +80,6 @@ public class OrderCommandController {
 		return ApiResponse.success(response);
 	}
 
-
 	/**
 	 * 결제 요청 API
 	 */
@@ -88,15 +90,10 @@ public class OrderCommandController {
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER");
-
-		RequestPaymentCommand command = RequestPaymentCommand.builder()
-			.orderId(orderId)
-			.userId(userId)
-			.build();
-
+		RequestPaymentCommand command = requestPaymentCommandMapper.toCommand(orderId, userId);
 		RequestPaymentResult result = requestPaymentUseCase.requestPayment(command);
-
-		return ApiResponse.success(RequestPaymentResponse.from(result));
+		RequestPaymentResponse response = requestPaymentResultMapper.toResponse(result);
+		return ApiResponse.success(response);
 	}
 
 	/**
