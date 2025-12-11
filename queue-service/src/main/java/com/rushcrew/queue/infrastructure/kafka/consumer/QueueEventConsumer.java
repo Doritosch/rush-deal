@@ -1,6 +1,7 @@
 package com.rushcrew.queue.infrastructure.kafka.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rushcrew.queue.application.port.in.QueuePort;
 import com.rushcrew.queue.application.port.in.TokenRemoveEvent;
 import com.rushcrew.queue.application.service.QueueService;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class QueueEventConsumer {
 
-    private final QueueService queueService;
+    private final QueuePort queueService;
     private final ObjectMapper objectMapper;
 
     public QueueEventConsumer(QueueService queueService, ObjectMapper objectMapper) {
@@ -40,7 +41,7 @@ public class QueueEventConsumer {
                 event.userId(), event.productId());
         } catch (Exception e) {
             log.error("[QUEUE:Kafka:Error] 토큰 만료 처리 중 오류 발생. Message: {}", message, e);
-            // 필요 시 Dead Letter Queue(DLQ)로 보내거나 재시도 로직 추가
+            // 필요 시 (DLQ)로 보내거나 재시도 로직 추가
         }
     }
 }

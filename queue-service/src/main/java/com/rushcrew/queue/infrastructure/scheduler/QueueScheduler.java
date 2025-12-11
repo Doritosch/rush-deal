@@ -1,11 +1,10 @@
-    package com.rushcrew.queue.application.util;
+    package com.rushcrew.queue.infrastructure.scheduler;
 
     import com.rushcrew.common.exception.BusinessException;
     import com.rushcrew.queue.application.port.in.QueuePort;
     import com.rushcrew.queue.domain.entity.QueuePolicy;
     import com.rushcrew.queue.domain.repository.QueuePolicyRepository;
     import com.rushcrew.queue.domain.vo.TrafficSetting;
-    import java.lang.reflect.Executable;
     import java.time.LocalDateTime;
     import java.util.List;
     import java.util.UUID;
