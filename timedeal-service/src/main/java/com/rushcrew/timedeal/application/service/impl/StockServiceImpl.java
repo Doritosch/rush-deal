@@ -4,8 +4,13 @@ import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.timedeal.application.command.ConfirmStockCommand;
 import com.rushcrew.timedeal.application.command.CreateStockCommand;
 import com.rushcrew.timedeal.application.command.ReserveStockCommand;
+import com.rushcrew.timedeal.application.command.RestoreStockCommand;
 import com.rushcrew.timedeal.application.command.UpdateStockCountCommand;
+import com.rushcrew.timedeal.application.event.StockChangedEvent;
+import com.rushcrew.timedeal.application.event.StockCreatedEvent;
+import com.rushcrew.timedeal.application.event.StockDeletedEvent;
 import com.rushcrew.timedeal.application.event.StockReservedEvent;
+import com.rushcrew.timedeal.application.event.StockRestoredEvent;
 import com.rushcrew.timedeal.application.result.ConfirmStockResult;
 import com.rushcrew.timedeal.application.result.CreateStockResult;
 import com.rushcrew.timedeal.application.result.ReserveStockResult;
@@ -16,9 +21,9 @@ import com.rushcrew.timedeal.domain.entity.StockLog;
 import com.rushcrew.timedeal.domain.entity.TimeDealProduct;
 import com.rushcrew.timedeal.domain.entity.TimeDealStock;
 import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
-import com.rushcrew.timedeal.domain.port.StockCache;
 import com.rushcrew.timedeal.domain.repository.StockRepository;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
+import com.rushcrew.timedeal.domain.vo.EventType;
 import com.rushcrew.timedeal.domain.vo.OrderId;
 import com.rushcrew.timedeal.domain.vo.Quantity;
 import com.rushcrew.timedeal.domain.vo.TimeDealProductStatus;
@@ -42,7 +47,6 @@ public class StockServiceImpl implements StockService {
 
     private final TimeDealRepository timeDealRepository;
     private final StockRepository stockRepository;
-    private final StockCache stockCache;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -56,7 +60,8 @@ public class StockServiceImpl implements StockService {
 
         TimeDealStock newStock = TimeDealStock.create(command, timeDealProduct);
         stockRepository.save(newStock);
-        stockCache.register(newStock.getId(), command.totalStock());
+
+        eventPublisher.publishEvent(new StockCreatedEvent(newStock.getId(), command.totalStock()));
 
         return CreateStockResult.of(newStock, command.totalStock());
     }
@@ -73,7 +78,8 @@ public class StockServiceImpl implements StockService {
         validQuantity(stock, quantity);
 
         stock.changeAvailable(quantity, command.reason());
-        stockCache.changeCount(stockId, quantity);
+
+        eventPublisher.publishEvent(new StockChangedEvent(stockId, quantity));
 
         return UpdateStockCountResult.of(
             stock.getId(), stock.getTimeDealProduct().getId(),
@@ -105,7 +111,8 @@ public class StockServiceImpl implements StockService {
 
         // TODO: 추후에 사용자 정보 가지고 오면 주석처리 풀 예정
 //        stock.delete(userId);
-        stockCache.evict(stockId);
+
+        eventPublisher.publishEvent(new StockDeletedEvent(stockId));
     }
 
     @Override
@@ -142,6 +149,29 @@ public class StockServiceImpl implements StockService {
         stock.confirm(OrderId.of(orderId), command.quantity());
 
         return ConfirmStockResult.of(orderId);
+    }
+
+    @Override
+    @Transactional
+    public void restoreStock(RestoreStockCommand command) {
+        // TODO: 요청한 사용자가 ORDER 권한을 가지고 있는지 체크
+
+        UUID orderId = command.orderId().getOrderId();
+        TimeDealStock stock = getStockOrThrow(command.stockId());
+        StockLog log = getLastLogOrThrow(command.stockId(), orderId);
+        validateOrderQuantity(log, command.quantity());
+
+        if (log.getEventType() == EventType.RESERVE) {
+            stock.restoreFromReserved(OrderId.of(orderId), command.quantity(), command.reason());
+        } else if (log.getEventType() == EventType.SELL) {
+            stock.restoreFromSold(OrderId.of(orderId), command.quantity(), command.reason());
+        } else {
+            throw new BusinessException(TimeDealErrorCode.INVALID_ORDER_STATE);
+        }
+
+        eventPublisher.publishEvent(
+            new StockRestoredEvent(command.stockId(), command.quantity().getQuantity())
+        );
     }
 
     // ------------------------------------------------------------------------------------

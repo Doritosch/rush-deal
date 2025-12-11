@@ -34,4 +34,12 @@ public interface StockCache {
      * @param quantity : value에서 차감할 재고 수량 (예약된 재고 수량)
      */
     void reserve(UUID stockId, Long quantity);
+
+    /**
+     * Redis에 캐시된 재고 수량 복구(증가)
+     *
+     * @param stockId  : Redis key에 사용되는 타임딜 재고 ID
+     * @param quantity : value에서 증가할 재고 수량 (복구된 재고 수량)
+     */
+    void restore(UUID stockId, Long quantity);
 }
