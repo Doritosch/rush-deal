@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
@@ -33,7 +34,8 @@ public class SecurityConfig {
                 // Actuator나 헬스 체크 경로는 열어두는 것이 좋음
                 .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
-            );
+            )
+            .addFilterBefore(authorizationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }
