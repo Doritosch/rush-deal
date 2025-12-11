@@ -23,6 +23,8 @@ import com.rushcrew.order_service.application.command.dto.result.CreateOrderResu
 import com.rushcrew.order_service.application.command.dto.result.RefundOrderResult;
 import com.rushcrew.order_service.application.command.dto.result.RequestPaymentResult;
 import com.rushcrew.order_service.application.command.dto.result.UpdateOrderResult;
+import com.rushcrew.order_service.application.command.mapper.CancelOrderCommandMapper;
+import com.rushcrew.order_service.application.command.mapper.CancelOrderResultMapper;
 import com.rushcrew.order_service.application.command.usecase.CancelOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.ConfirmPurchaseUseCase;
 import com.rushcrew.order_service.application.command.usecase.CreateOrderUseCase;
@@ -68,6 +70,8 @@ public class OrderCommandController {
 	private final UpdateOrderCommandMapper updateOrderCommandMapper;
 	private final UpdateOrderResultMapper updateOrderResultMapper;
 	private final CancelOrderUseCase cancelOrderUseCase;
+	private final CancelOrderCommandMapper cancelOrderCommandMapper;
+	private final CancelOrderResultMapper cancelOrderResultMapper;
 	private final RefundOrderUseCase refundOrderUseCase;
 
 	/**
@@ -146,15 +150,10 @@ public class OrderCommandController {
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER");
-
-		CancelOrderCommand command = CancelOrderCommand.builder()
-			.orderId(orderId)
-			.userId(userId)
-			.build();
-
+		CancelOrderCommand command = cancelOrderCommandMapper.toCommand(orderId, userId);
 		CancelOrderResult result = cancelOrderUseCase.cancelOrder(command);
-
-		return ApiResponse.success(CancelOrderResponse.from(result));
+		CancelOrderResponse response = cancelOrderResultMapper.toResponse(result);
+		return ApiResponse.success(response);
 	}
 
 	/**
