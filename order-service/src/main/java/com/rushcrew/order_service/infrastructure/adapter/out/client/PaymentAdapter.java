@@ -27,8 +27,7 @@ public class PaymentAdapter implements PaymentPort {
 
 			PaymentRequest request = PaymentRequest.builder()
 				.orderId(orderId)
-				.userId(userId)
-				.finalAmount(finalAmount)
+				.totalAmount(finalAmount)
 				.build();
 
 			PaymentResponse response = paymentFeignClient.requestPayment(request);
@@ -54,8 +53,7 @@ public class PaymentAdapter implements PaymentPort {
 
 			PaymentRequest request = PaymentRequest.builder()
 				.orderId(orderId)
-				.userId(userId)
-				.finalAmount(finalAmount)
+				.totalAmount(finalAmount)
 				.build();
 
 			paymentFeignClient.cancelPayment(request);
