@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.rushcrew.common.dto.ApiResponse;
@@ -25,6 +26,8 @@ import com.rushcrew.order_service.application.command.dto.result.RequestPaymentR
 import com.rushcrew.order_service.application.command.dto.result.UpdateOrderResult;
 import com.rushcrew.order_service.application.command.mapper.CancelOrderCommandMapper;
 import com.rushcrew.order_service.application.command.mapper.CancelOrderResultMapper;
+import com.rushcrew.order_service.application.command.mapper.RefundOrderCommandMapper;
+import com.rushcrew.order_service.application.command.mapper.RefundOrderResultMapper;
 import com.rushcrew.order_service.application.command.usecase.CancelOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.ConfirmPurchaseUseCase;
 import com.rushcrew.order_service.application.command.usecase.CreateOrderUseCase;
@@ -73,6 +76,8 @@ public class OrderCommandController {
 	private final CancelOrderCommandMapper cancelOrderCommandMapper;
 	private final CancelOrderResultMapper cancelOrderResultMapper;
 	private final RefundOrderUseCase refundOrderUseCase;
+	private final RefundOrderCommandMapper refundOrderCommandMapper;
+	private final RefundOrderResultMapper refundOrderResultMapper;
 
 	/**
 	 * 주문 생성 API
@@ -164,21 +169,13 @@ public class OrderCommandController {
 		@PathVariable UUID orderId,
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader(value = "X-User-Role", required = false) String role,
-		@RequestBody(required = false) java.util.Map<String, String> requestBody
+		@RequestParam(value = "reason", required = false) String reason
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER");
-
-		String reason = requestBody != null ? requestBody.get("reason") : null;
-
-		RefundOrderCommand command = RefundOrderCommand.builder()
-			.orderId(orderId)
-			.userId(userId)
-			.reason(reason)
-			.build();
-
+		RefundOrderCommand command = refundOrderCommandMapper.toCommand(orderId, userId, reason);
 		RefundOrderResult result = refundOrderUseCase.refundOrder(command);
-
-		return ApiResponse.success(RefundOrderResponse.from(result));
+		RefundOrderResponse response = refundOrderResultMapper.toResponse(result);
+		return ApiResponse.success(response);
 	}
 
 }
