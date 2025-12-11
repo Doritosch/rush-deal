@@ -26,4 +26,12 @@ public interface StockCache {
      * @param stockId : Redis key에 사용되는 타임딜 재고 ID
      */
     void evict(UUID stockId);
+
+    /**
+     * Redis에 캐시된 재고 수량 차감
+     *
+     * @param stockId  : Redis key에 사용되는 타임딜 재고 ID
+     * @param quantity : value에서 차감할 재고 수량 (예약된 재고 수량)
+     */
+    void reserve(UUID stockId, Long quantity);
 }
