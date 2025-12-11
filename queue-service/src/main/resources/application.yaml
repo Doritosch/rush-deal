@@ -52,3 +52,4 @@ eureka:
 
 server:
   port: 8011
+
