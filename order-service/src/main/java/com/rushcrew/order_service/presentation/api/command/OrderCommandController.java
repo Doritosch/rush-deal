@@ -36,6 +36,8 @@ import com.rushcrew.order_service.application.mapper.CreateOrderCommandMapper;
 import com.rushcrew.order_service.application.mapper.CreateOrderResultMapper;
 import com.rushcrew.order_service.application.mapper.RequestPaymentCommandMapper;
 import com.rushcrew.order_service.application.mapper.RequestPaymentResultMapper;
+import com.rushcrew.order_service.application.mapper.UpdateOrderCommandMapper;
+import com.rushcrew.order_service.application.mapper.UpdateOrderResultMapper;
 import com.rushcrew.order_service.global.util.RoleChecker;
 import com.rushcrew.order_service.presentation.dto.request.CreateOrderRequest;
 import com.rushcrew.order_service.presentation.dto.request.UpdateOrderRequest;
@@ -64,6 +66,8 @@ public class OrderCommandController {
 	private final ConfirmPurchaseCommandMapper confirmPurchaseCommandMapper;
 	private final ConfirmPurchaseResultMapper confirmPurchaseResultMapper;
 	private final UpdateOrderUseCase updateOrderUseCase;
+	private final UpdateOrderCommandMapper updateOrderCommandMapper;
+	private final UpdateOrderResultMapper updateOrderResultMapper;
 	private final CancelOrderUseCase cancelOrderUseCase;
 	private final RefundOrderUseCase refundOrderUseCase;
 
@@ -127,17 +131,10 @@ public class OrderCommandController {
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER");
-
-		UpdateOrderCommand command = UpdateOrderCommand.builder()
-			.orderId(orderId)
-			.userId(userId)
-			.shippingInfo(request.shippingInfo() != null ? request.shippingInfo().toShippingInfo() : null)
-			.pointUsed(request.pointUsed())
-			.build();
-
+		UpdateOrderCommand command = updateOrderCommandMapper.toCommand(orderId, userId, request);
 		UpdateOrderResult result = updateOrderUseCase.updateOrder(command);
-
-		return ApiResponse.success(UpdateOrderResponse.from(result));
+		UpdateOrderResponse response = updateOrderResultMapper.toResponse(result);
+		return ApiResponse.success(response);
 	}
 
 	/**
