@@ -12,6 +12,8 @@ import lombok.Builder;
 public record CreateOrderCommand(
 	Long userId,
 	UUID timeDealId,
+	String queueToken,
+	String role,
 	List<OrderItemCommand> orderItems,
 	BigDecimal pointUsed,
 	ShippingInfo shippingInfo
