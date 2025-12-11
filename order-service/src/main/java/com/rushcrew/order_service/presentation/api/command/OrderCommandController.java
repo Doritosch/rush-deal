@@ -30,6 +30,8 @@ import com.rushcrew.order_service.application.command.usecase.CreateOrderUseCase
 import com.rushcrew.order_service.application.command.usecase.RefundOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.RequestPaymentUseCase;
 import com.rushcrew.order_service.application.command.usecase.UpdateOrderUseCase;
+import com.rushcrew.order_service.application.mapper.CreateOrderCommandMapper;
+import com.rushcrew.order_service.application.mapper.CreateOrderResultMapper;
 import com.rushcrew.order_service.global.util.RoleChecker;
 import com.rushcrew.order_service.presentation.dto.request.CreateOrderRequest;
 import com.rushcrew.order_service.presentation.dto.request.UpdateOrderRequest;
@@ -49,11 +51,14 @@ import lombok.RequiredArgsConstructor;
 public class OrderCommandController {
 
 	private final CreateOrderUseCase createOrderUseCase;
+	private final CreateOrderCommandMapper createOrderCommandMapper;
+	private final CreateOrderResultMapper createOrderResultMapper;
 	private final RequestPaymentUseCase requestPaymentUseCase;
 	private final ConfirmPurchaseUseCase confirmPurchaseUseCase;
 	private final UpdateOrderUseCase updateOrderUseCase;
 	private final CancelOrderUseCase cancelOrderUseCase;
 	private final RefundOrderUseCase refundOrderUseCase;
+
 
 	/**
 	 * 주문 생성 API
@@ -66,26 +71,12 @@ public class OrderCommandController {
 		@RequestHeader("X-Queue-Token") String queueToken
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER", "SELLER");
-
-		CreateOrderCommand command = CreateOrderCommand.builder()
-			.userId(userId)
-			.timeDealId(UUID.fromString(request.timeDealId()))
-			.queueToken(queueToken)
-			.role(role)
-			.orderItems(request.orderItems().stream()
-				.map(item -> CreateOrderCommand.OrderItemCommand.builder()
-					.timeDealStockId(UUID.fromString(item.timeDealStockId()))
-					.quantity(item.quantity())
-					.build())
-				.collect(Collectors.toList()))
-			.pointUsed(request.pointUsed())
-			.shippingInfo(request.shippingInfo().toShippingInfo())
-			.build();
-
+		CreateOrderCommand command = createOrderCommandMapper.toCommand(request, userId, role, queueToken);
 		CreateOrderResult result = createOrderUseCase.createOrder(command);
-
-		return ApiResponse.success(CreateOrderResponse.from(result));
+		CreateOrderResponse response = createOrderResultMapper.toResponse(result);
+		return ApiResponse.success(response);
 	}
+
 
 	/**
 	 * 결제 요청 API
