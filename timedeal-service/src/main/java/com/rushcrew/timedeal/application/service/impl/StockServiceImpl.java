@@ -4,6 +4,7 @@ import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.timedeal.application.command.CreateStockCommand;
 import com.rushcrew.timedeal.application.command.ReserveStockCommand;
 import com.rushcrew.timedeal.application.command.UpdateStockCountCommand;
+import com.rushcrew.timedeal.application.event.StockReservedEvent;
 import com.rushcrew.timedeal.application.result.CreateStockResult;
 import com.rushcrew.timedeal.application.result.ReserveStockResult;
 import com.rushcrew.timedeal.application.result.StockResult;
@@ -19,6 +20,7 @@ import com.rushcrew.timedeal.domain.vo.TimeDealProductStatus;
 import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ public class StockServiceImpl implements StockService {
     private final TimeDealRepository timeDealRepository;
     private final StockRepository stockRepository;
     private final StockCache stockCache;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -104,7 +107,9 @@ public class StockServiceImpl implements StockService {
         TimeDealStock stock = getStockOrThrow(command.stockId());
 
         stock.reserve(command.quantity(), command.orderId());
-        stockCache.reserve(command.stockId(), command.quantity().getQuantity());
+        eventPublisher.publishEvent(
+            new StockReservedEvent(command.stockId(), command.quantity().getQuantity())
+        );
 
         return ReserveStockResult
             .of(stock.getStockCounts().getAvailable(), "재고가 예약되었습니다.");
