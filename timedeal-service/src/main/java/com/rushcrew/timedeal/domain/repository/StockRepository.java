@@ -1,6 +1,7 @@
 package com.rushcrew.timedeal.domain.repository;
 
 import com.rushcrew.timedeal.application.result.StockResult;
+import com.rushcrew.timedeal.domain.entity.StockLog;
 import com.rushcrew.timedeal.domain.entity.TimeDealStock;
 import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
 import java.util.Optional;
@@ -18,4 +19,6 @@ public interface StockRepository {
         String keyword, UUID productId, TimeDealStockStatus status, Pageable pageable);
 
     StockResult findStockResultById(UUID stockId);
+
+    Optional<StockLog> findLastByStockIdAndOrderId(UUID stockId, UUID orderId);
 }

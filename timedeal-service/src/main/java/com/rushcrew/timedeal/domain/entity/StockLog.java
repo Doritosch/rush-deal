@@ -83,4 +83,16 @@ public class StockLog extends BaseEntity {
             .quantity(quantity)
             .build();
     }
+
+    public static StockLog confirm(
+        TimeDealStock stock, OrderId orderId, Quantity quantity
+    ) {
+        return StockLog.builder()
+            .timeDealStock(stock)
+            .orderId(orderId)
+            .eventType(EventType.SELL)
+            .description("결제")
+            .quantity(quantity)
+            .build();
+    }
 }

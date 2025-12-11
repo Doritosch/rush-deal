@@ -43,6 +43,14 @@ public class StockCounts {
         );
     }
 
+    public StockCounts confirm(Quantity quantity) {
+        return StockCounts.of(
+            this.getAvailable(),
+            this.reserved - quantity.getQuantity(),
+            this.sold + quantity.getQuantity()
+        );
+    }
+
     private void validateNotNull(Long available, Long reserved, Long sold) {
         if (available == null || reserved == null || sold == null) {
             throw new BusinessException(TimeDealErrorCode.REQUIRED_STOCK_COUNT);

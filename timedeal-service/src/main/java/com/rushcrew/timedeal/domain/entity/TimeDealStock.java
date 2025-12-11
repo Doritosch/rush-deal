@@ -159,4 +159,15 @@ public class TimeDealStock extends BaseEntity {
         );
         this.stockLogs.add(log);
     }
+
+    public void confirm(OrderId orderId, Quantity quantity) {
+        this.stockCounts = this.stockCounts.confirm(quantity);
+
+        if (this.stockCounts.getAvailable() == 0 && this.stockCounts.getReserved() == 0) {
+            this.status = TimeDealStockStatus.SOLD;
+        }
+
+        StockLog log = StockLog.confirm(this, orderId, quantity);
+        this.stockLogs.add(log);
+    }
 }

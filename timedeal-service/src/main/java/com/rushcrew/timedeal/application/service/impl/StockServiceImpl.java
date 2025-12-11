@@ -1,23 +1,29 @@
 package com.rushcrew.timedeal.application.service.impl;
 
 import com.rushcrew.common.exception.BusinessException;
+import com.rushcrew.timedeal.application.command.ConfirmStockCommand;
 import com.rushcrew.timedeal.application.command.CreateStockCommand;
 import com.rushcrew.timedeal.application.command.ReserveStockCommand;
 import com.rushcrew.timedeal.application.command.UpdateStockCountCommand;
 import com.rushcrew.timedeal.application.event.StockReservedEvent;
+import com.rushcrew.timedeal.application.result.ConfirmStockResult;
 import com.rushcrew.timedeal.application.result.CreateStockResult;
 import com.rushcrew.timedeal.application.result.ReserveStockResult;
 import com.rushcrew.timedeal.application.result.StockResult;
 import com.rushcrew.timedeal.application.result.UpdateStockCountResult;
 import com.rushcrew.timedeal.application.service.StockService;
+import com.rushcrew.timedeal.domain.entity.StockLog;
 import com.rushcrew.timedeal.domain.entity.TimeDealProduct;
 import com.rushcrew.timedeal.domain.entity.TimeDealStock;
 import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
 import com.rushcrew.timedeal.domain.port.StockCache;
 import com.rushcrew.timedeal.domain.repository.StockRepository;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
+import com.rushcrew.timedeal.domain.vo.OrderId;
+import com.rushcrew.timedeal.domain.vo.Quantity;
 import com.rushcrew.timedeal.domain.vo.TimeDealProductStatus;
 import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -123,11 +129,37 @@ public class StockServiceImpl implements StockService {
             .of(stock.getStockCounts().getAvailable(), "재고가 예약되었습니다.");
     }
 
+    @Override
+    @Transactional
+    public ConfirmStockResult confirmStock(ConfirmStockCommand command) {
+        // TODO: 요청한 사용자가 ORDER 권한을 가지고 있는지 체크
+
+        UUID orderId = command.orderId().getOrderId();
+        TimeDealStock stock = getStockOrThrow(command.stockId());
+        StockLog log = getLastLogOrThrow(command.stockId(), orderId);
+        validateOrderQuantity(log, command.quantity());
+
+        stock.confirm(OrderId.of(orderId), command.quantity());
+
+        return ConfirmStockResult.of(orderId);
+    }
+
     // ------------------------------------------------------------------------------------
 
     private TimeDealStock getStockOrThrow(UUID stockId) {
         return stockRepository.findNotDeletedById(stockId)
             .orElseThrow(() -> new BusinessException(TimeDealErrorCode.NOT_FOUND_STOCK));
+    }
+
+    private StockLog getLastLogOrThrow(UUID stockId, UUID orderId) {
+        return stockRepository.findLastByStockIdAndOrderId(stockId, orderId)
+            .orElseThrow(() -> new BusinessException(TimeDealErrorCode.NOT_FOUND_ORDER));
+    }
+
+    private void validateOrderQuantity(StockLog log, Quantity quantity) {
+        if (!Objects.equals(log.getQuantity().getQuantity(), quantity.getQuantity())) {
+            throw new BusinessException(TimeDealErrorCode.INVALID_ORDER_INFO);
+        }
     }
 
     private void validQuantity(TimeDealStock stock, Long quantity) {
