@@ -9,7 +9,7 @@ import com.rushcrew.order_service.infrastructure.dto.payment.PaymentResponse;
 
 @FeignClient(name = "payment-service")
 public interface PaymentFeignClient {
-	@PostMapping("/api/v1/payments/request")
+	@PostMapping("/api/v1/payments")
 	PaymentResponse requestPayment(@RequestBody PaymentRequest request);
 
 	@PostMapping("/api/v1/payments/cancel")

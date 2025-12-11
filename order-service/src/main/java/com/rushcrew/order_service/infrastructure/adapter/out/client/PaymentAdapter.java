@@ -27,8 +27,7 @@ public class PaymentAdapter implements PaymentPort {
 
 			PaymentRequest request = PaymentRequest.builder()
 				.orderId(orderId)
-				.userId(userId)
-				.finalAmount(finalAmount)
+				.amount(finalAmount)
 				.build();
 
 			PaymentResponse response = paymentFeignClient.requestPayment(request);

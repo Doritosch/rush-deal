@@ -1,6 +1,7 @@
 package com.rushcrew.product.domain.entity;
 
 import com.rushcrew.common.entity.BaseEntity;
+import com.rushcrew.product.domain.model.UpdateOptionParams;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -45,5 +46,14 @@ public class ProductOption extends BaseEntity {
             .size(size)
             .color(color)
             .build();
+    }
+
+    public void update(UpdateOptionParams params) {
+        if (params.size() != null) {
+            this.size = params.size();
+        }
+        if (params.color() != null) {
+            this.color = params.color();
+        }
     }
 }
