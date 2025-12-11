@@ -1,5 +1,6 @@
 package com.rushcrew.queue.infrastructure.config;
 
+import com.rushcrew.queue.application.port.in.TokenRemoveEvent;
 import com.rushcrew.queue.infrastructure.kafka.consumer.QueueEventConsumer;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,7 @@ import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.ContainerProperties.AckMode;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.util.backoff.FixedBackOff;
 
@@ -41,16 +43,26 @@ public class KafkaConsumerConfig {
      * JSON 메시지 어떻게 역직렬화할지 정의
      */
     @Bean
-    public ConsumerFactory<String, QueueEventConsumer> consumerFactory() {
+    public ConsumerFactory<String, TokenRemoveEvent> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
         // 로컬 환경: localhost:9092 / Docker 내부 통신: kafka:29092
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServer);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "queue-service-group");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*"); // 모든 패키지 신뢰 (JSON 파싱 신뢰 패키지 설정)
-        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(),
-            new JsonDeserializer<>(QueueEventConsumer.class, false));
+
+        // JSON 역직렬화 설정
+        JsonDeserializer<TokenRemoveEvent> deserializer = new JsonDeserializer<>(TokenRemoveEvent.class);
+        deserializer.setRemoveTypeHeaders(false);
+        deserializer.addTrustedPackages("*"); // 모든 패키지 신뢰
+        deserializer.setUseTypeMapperForKey(true);
+
+        // ErrorHandlingDeserializer: 역직렬화 실패 시 무한 루프 방지
+        return new DefaultKafkaConsumerFactory<>(
+            props,
+            new StringDeserializer(),
+            new ErrorHandlingDeserializer<>(deserializer)
+        );
     }
 
     /**
@@ -58,8 +70,8 @@ public class KafkaConsumerConfig {
      * 여기서 재시도(Retry) 및 DLQ(Dead Letter Queue) 전략 주입
      */
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, QueueEventConsumer> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, QueueEventConsumer> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, TokenRemoveEvent> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, TokenRemoveEvent> factory =
             new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
 
