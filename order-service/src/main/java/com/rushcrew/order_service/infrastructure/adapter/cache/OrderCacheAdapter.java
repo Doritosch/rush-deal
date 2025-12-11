@@ -1,5 +1,6 @@
 package com.rushcrew.order_service.infrastructure.adapter.cache;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.core.RedisTemplate;
@@ -57,6 +58,25 @@ public class OrderCacheAdapter implements OrderCachePort {
 
 		} catch (JsonProcessingException e) {
 			log.error("주문 캐시 저장 실패: orderId={}", result.orderId(), e);
+		}
+	}
+
+	@Override
+	public void updateOrderCache(UUID orderId, OrderDetailDto orderDetailDto) {
+		try {
+			String key = ORDER_KEY_PREFIX + orderId;
+
+			redisTemplate.opsForValue().set(
+				key,
+				objectMapper.writeValueAsString(orderDetailDto),
+				ORDER_CACHE_TTL,
+				TimeUnit.SECONDS
+			);
+
+			log.info("주문 캐시 업데이트 완료: orderId={}", orderId);
+
+		} catch (JsonProcessingException e) {
+			log.error("주문 캐시 업데이트 실패: orderId={}", orderId, e);
 		}
 	}
 

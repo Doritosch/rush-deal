@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,17 +15,22 @@ import com.rushcrew.common.dto.ApiResponse;
 import com.rushcrew.order_service.application.command.dto.command.ConfirmPurchaseCommand;
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
 import com.rushcrew.order_service.application.command.dto.command.RequestPaymentCommand;
+import com.rushcrew.order_service.application.command.dto.command.UpdateOrderCommand;
 import com.rushcrew.order_service.application.command.dto.result.ConfirmPurchaseResult;
 import com.rushcrew.order_service.application.command.dto.result.CreateOrderResult;
 import com.rushcrew.order_service.application.command.dto.result.RequestPaymentResult;
+import com.rushcrew.order_service.application.command.dto.result.UpdateOrderResult;
 import com.rushcrew.order_service.application.command.usecase.ConfirmPurchaseUseCase;
 import com.rushcrew.order_service.application.command.usecase.CreateOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.RequestPaymentUseCase;
+import com.rushcrew.order_service.application.command.usecase.UpdateOrderUseCase;
 import com.rushcrew.order_service.global.util.RoleChecker;
 import com.rushcrew.order_service.presentation.dto.request.CreateOrderRequest;
+import com.rushcrew.order_service.presentation.dto.request.UpdateOrderRequest;
 import com.rushcrew.order_service.presentation.dto.response.ConfirmPurchaseResponse;
 import com.rushcrew.order_service.presentation.dto.response.CreateOrderResponse;
 import com.rushcrew.order_service.presentation.dto.response.RequestPaymentResponse;
+import com.rushcrew.order_service.presentation.dto.response.UpdateOrderResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +43,7 @@ public class OrderCommandController {
 	private final CreateOrderUseCase createOrderUseCase;
 	private final RequestPaymentUseCase requestPaymentUseCase;
 	private final ConfirmPurchaseUseCase confirmPurchaseUseCase;
+	private final UpdateOrderUseCase updateOrderUseCase;
 
 	/**
 	 * 주문 생성 API
@@ -107,6 +114,30 @@ public class OrderCommandController {
 		ConfirmPurchaseResult result = confirmPurchaseUseCase.confirmPurchase(command);
 
 		return ApiResponse.success(ConfirmPurchaseResponse.from(result));
+	}
+
+	/**
+	 * 주문 수정 API
+	 */
+	@PutMapping("/{orderId}")
+	public ApiResponse<UpdateOrderResponse> updateOrder(
+		@PathVariable UUID orderId,
+		@Valid @RequestBody UpdateOrderRequest request,
+		@RequestHeader("X-User-Id") Long userId,
+		@RequestHeader(value = "X-User-Role", required = false) String role
+	) {
+		RoleChecker.checkRole(role, "USER", "MASTER");
+
+		UpdateOrderCommand command = UpdateOrderCommand.builder()
+			.orderId(orderId)
+			.userId(userId)
+			.shippingInfo(request.shippingInfo() != null ? request.shippingInfo().toShippingInfo() : null)
+			.pointUsed(request.pointUsed())
+			.build();
+
+		UpdateOrderResult result = updateOrderUseCase.updateOrder(command);
+
+		return ApiResponse.success(UpdateOrderResponse.from(result));
 	}
 
 }
