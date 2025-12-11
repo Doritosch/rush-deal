@@ -4,8 +4,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.rushcrew.order_service.application.command.dto.result.RequestPaymentResult;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
