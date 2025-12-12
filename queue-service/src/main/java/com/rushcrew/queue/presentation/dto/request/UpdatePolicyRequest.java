@@ -13,6 +13,7 @@ public record UpdatePolicyRequest(
     QueuePolicyStatus status,
     LocalDateTime startTime,
     LocalDateTime endTime,
+    Integer maxCapacity,
     Integer limitSize,
     Integer queueGap,
     Integer ttl
@@ -20,7 +21,7 @@ public record UpdatePolicyRequest(
     public UpdatePolicyCommand toCommand() {
         // vo 생성 시 유효성 검증
         TimePeriod timePeriod = new TimePeriod(startTime, endTime);
-        TrafficSetting traffic = new TrafficSetting(limitSize, queueGap, ttl);
+        TrafficSetting traffic = new TrafficSetting(maxCapacity, limitSize, queueGap, ttl);
 
         return UpdatePolicyCommand.builder()
             .productId(productId)

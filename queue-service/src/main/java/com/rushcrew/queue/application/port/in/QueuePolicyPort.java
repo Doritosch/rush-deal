@@ -1,8 +1,8 @@
 package com.rushcrew.queue.application.port.in;
 
-import com.rushcrew.queue.application.command.CreatePolicyCommand;
-import com.rushcrew.queue.application.command.SearchPolicyCommand;
-import com.rushcrew.queue.application.command.UpdatePolicyCommand;
+import com.rushcrew.queue.application.command.policy.CreatePolicyCommand;
+import com.rushcrew.queue.application.command.policy.SearchPolicyCommand;
+import com.rushcrew.queue.application.command.policy.UpdatePolicyCommand;
 import com.rushcrew.queue.application.dto.PageQuery;
 import com.rushcrew.queue.application.dto.QueuePolicyQueryResponse;
 import java.util.UUID;

@@ -5,6 +5,7 @@ import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import com.rushcrew.queue.domain.repository.QueuePolicyRepository;
 import com.rushcrew.queue.infrastructure.repository.jpa.JpaQueuePolicyRepository;
 import jakarta.persistence.criteria.Predicate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -62,5 +63,10 @@ public class QueuePolicyRepositoryImpl implements QueuePolicyRepository {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
         return jpaQueuePolicyRepository.findAll(spec, pageable);
+    }
+
+    @Override
+    public List<QueuePolicy> findAllActivePolicies(LocalDateTime now, LocalDateTime nowPlus1Min) {
+        return jpaQueuePolicyRepository.findAllActivePolicies(now, nowPlus1Min);
     }
 }

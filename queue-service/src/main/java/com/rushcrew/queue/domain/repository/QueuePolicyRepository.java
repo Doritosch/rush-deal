@@ -2,6 +2,8 @@ package com.rushcrew.queue.domain.repository;
 
 import com.rushcrew.queue.domain.entity.QueuePolicy;
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -39,4 +41,10 @@ public interface QueuePolicyRepository {
      * @return
      */
     Page<QueuePolicy> findAllByCondition(UUID productId, QueuePolicyStatus status, Pageable pageable);
+
+    /**
+     * 현재 활성화된 모든 타임딜 정책 조회
+     * (현재 서버가 처리해야 할 모든 타임딜)
+     */
+    List<QueuePolicy> findAllActivePolicies(LocalDateTime now, LocalDateTime nowPlus1Min);
 }

@@ -1,0 +1,139 @@
+package com.rushcrew.order_service.application.command.service;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rushcrew.common.exception.BusinessException;
+import com.rushcrew.order_service.application.command.dto.command.RefundOrderCommand;
+import com.rushcrew.order_service.application.command.dto.result.RefundOrderResult;
+import com.rushcrew.order_service.application.command.port.out.OrderCommandPort;
+import com.rushcrew.order_service.application.command.usecase.RefundOrderUseCase;
+import com.rushcrew.order_service.application.port.out.OutboxPort;
+import com.rushcrew.order_service.application.port.out.PaymentPort;
+import com.rushcrew.order_service.application.port.out.PointEventPort;
+import com.rushcrew.order_service.application.port.out.StockEventPort;
+import com.rushcrew.order_service.domain.model.order.Order;
+import com.rushcrew.order_service.domain.model.order.OrderItem;
+import com.rushcrew.order_service.global.error.OrderErrorCode;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class RefundOrderService implements RefundOrderUseCase {
+
+	private final OrderCommandPort orderCommandPort;
+	private final PaymentPort paymentPort;
+	private final PointEventPort pointEventPort;
+	private final StockEventPort stockEventPort;
+	private final OutboxPort outboxPort;
+	private final ObjectMapper objectMapper;
+
+	@Override
+	@Transactional
+	public RefundOrderResult refundOrder(RefundOrderCommand command) {
+		log.info("환불 처리 시작: orderId={}, userId={}", command.orderId(), command.userId());
+
+		Order order = orderCommandPort.findById(command.orderId())
+			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
+
+		if (!order.isOwnedBy(command.userId())) {
+			throw new BusinessException(OrderErrorCode.ORDER_ACCESS_DENIED);
+		}
+
+		if (!order.canRefund()) {
+			throw new BusinessException(OrderErrorCode.ORDER_CANNOT_REFUND);
+		}
+
+		// 결제 취소 (동기)
+		try {
+			paymentPort.cancelPayment(
+				order.getOrderId(),
+				order.getUserId(),
+				order.getFinalAmount()
+			);
+			log.info("결제 취소 완료: orderId={}, refundAmount={}",
+				order.getOrderId(), order.getFinalAmount());
+		} catch (Exception e) {
+			log.error("결제 취소 실패: orderId={}, refundAmount={}",
+				order.getOrderId(), order.getFinalAmount(), e);
+			throw new RuntimeException("결제 취소 실패: " + e.getMessage(), e);
+		}
+
+		// 주문 상태 변경: PAID → REFUNDED
+		order.refund(command.reason() != null ? command.reason() : "사용자 요청에 의한 환불");
+		Order savedOrder = orderCommandPort.save(order);	// DB 저장
+
+		log.info("주문 환불 완료: orderId={}, refundedAt={}",
+			savedOrder.getOrderId(), savedOrder.getRefundedAt());
+
+		// 포인트 환불 이벤트 발행
+		if (savedOrder.getPointUsed().compareTo(BigDecimal.ZERO) > 0) {
+			try {
+				pointEventPort.publishPointRefundRequested(
+					savedOrder.getUserId(),
+					savedOrder.getOrderId(),
+					savedOrder.getPointUsed(),
+					"주문 환불에 의한 포인트 환불",
+					Instant.now()
+				);
+			} catch (Exception e) {
+				log.error("포인트 이벤트 발행 실패", e);
+				// 실패해도 주문 환불은 계속 진행
+			}
+		}
+
+		// 재고 복구 이벤트 발행
+		for (OrderItem orderItem : savedOrder.getOrderItems()) {
+			try {
+				stockEventPort.publishStockRollbackRequested(
+					savedOrder.getOrderId(),
+					orderItem.getTimeDealStockId(),
+					orderItem.getQuantity(),
+					"주문 환불에 의한 재고 복구",
+					Instant.now()
+				);
+			} catch (Exception e) {
+				log.error("재고 이벤트 발행 실패", e);
+				// 실패해도 주문 환불은 계속 진행
+			}
+		}
+		log.info("재고 복구 이벤트 발행 완료: orderId={}, itemCount={}",
+			savedOrder.getOrderId(), savedOrder.getOrderItems().size());
+
+		// ORDER_REFUNDED 이벤트를 Outbox에 저장
+		try {
+			Map<String, Object> eventPayload = new HashMap<>();
+			eventPayload.put("orderId", savedOrder.getOrderId());
+			eventPayload.put("userId", savedOrder.getUserId());
+			eventPayload.put("status", savedOrder.getStatus().name());
+			eventPayload.put("refundAmount", savedOrder.getFinalAmount());
+			eventPayload.put("refundedAt", savedOrder.getRefundedAt());
+
+			outboxPort.createAndSave(
+				"ORDER",
+				savedOrder.getOrderId(),
+				"ORDER_REFUNDED",
+				objectMapper.writeValueAsString(eventPayload)
+			);
+		} catch (Exception e) {
+			log.error("ORDER_REFUNDED 이벤트 저장 실패: orderId={}", savedOrder.getOrderId(), e);
+			// 이벤트 저장 실패는 치명적이지 않으므로 계속 진행
+		}
+
+		log.info("환불 처리 완료: orderId={}", savedOrder.getOrderId());
+
+		return RefundOrderResult.builder()
+			.orderId(savedOrder.getOrderId())
+			.message("환불이 완료되었습니다.")
+			.build();
+	}
+}
