@@ -15,6 +15,9 @@ public record CreateOrderRequest(
 	@NotBlank(message = "타임딜 ID는 필수입니다")
 	String timeDealId,
 
+	@NotBlank(message = "상품 ID는 필수입니다")
+	String productId,
+
 	@NotNull(message = "주문 아이템은 필수입니다")
 	@Size(min = 1, message = "최소 1개 이상의 상품이 필요합니다")
 	@Valid
