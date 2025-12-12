@@ -55,7 +55,9 @@ public class RedisConfig {
 
         // 로컬 개발 환경에서는 localhost 기준
         config.useSingleServer()
-            .setAddress("redis://" + redisHost + ":" + redisPort);
+            .setAddress("redis://" + redisHost + ":" + redisPort)
+            .setConnectionMinimumIdleSize(5) // 최소 유휴 연결 수
+            .setConnectionPoolSize(20);      // 최대 연결 풀 크기
         return Redisson.create(config);
     }
 

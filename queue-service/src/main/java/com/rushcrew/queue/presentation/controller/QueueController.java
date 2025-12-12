@@ -5,6 +5,7 @@ import com.rushcrew.common.dto.ApiResponse;
 import com.rushcrew.queue.application.command.queue.EnterQueueCommand;
 import com.rushcrew.queue.application.dto.QueueRedisResponse;
 import com.rushcrew.queue.application.port.in.QueuePort;
+import com.rushcrew.queue.application.service.QueueService;
 import com.rushcrew.queue.domain.enums.QueueStatus;
 import com.rushcrew.queue.presentation.dto.request.EnterQueueRequest;
 import com.rushcrew.queue.presentation.dto.response.QueueResponse;
@@ -12,7 +13,9 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -31,7 +34,7 @@ public class QueueController {
     private static final String USER_ROLE_HEADER = "X-User-Role";
     private static final String QUEUE_TOKEN_HEADER = "X-Queue-Token";
 
-    public QueueController(QueuePort queuePort) {
+    public QueueController(QueuePort queuePort, QueueService queueService) {
         this.queuePort = queuePort;
     }
 
@@ -63,6 +66,21 @@ public class QueueController {
         QueueRedisResponse redisResult = queuePort.getQueueRank(productId, queueToken, currUserId, role);
         QueueResponse response = toQueueResponse(redisResult);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
+    }
+
+    /**
+     * 대기열 취소/주문 완료 시 토큰 삭제 API
+     * 사용자가 대기 중 "취소" 버튼을 누르거나, 주문 프로세스가 끝나고 나갈 때 호출
+     */
+    @DeleteMapping("/{product-id}")
+    public ResponseEntity<ApiResponse<Void>> deleteQueueToken(
+        @PathVariable("product-id") UUID productId,
+        @RequestHeader(QUEUE_TOKEN_HEADER) String queueToken,
+        @RequestHeader(USER_ID_HEADER) Long currUserId,
+        @RequestHeader(USER_ROLE_HEADER) String role
+    ) {
+        queuePort.exitQueue(productId, queueToken, currUserId);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
     }
 
     // TODO: 추후 presenataion mapper 클래스로 이동 예정
