@@ -5,11 +5,10 @@ import com.rushcrew.common.dto.ApiResponse;
 import com.rushcrew.queue.application.command.queue.EnterQueueCommand;
 import com.rushcrew.queue.application.dto.QueueRedisResponse;
 import com.rushcrew.queue.application.port.in.QueuePort;
-import com.rushcrew.queue.application.service.QueueService;
-import com.rushcrew.queue.domain.enums.QueueStatus;
 import com.rushcrew.queue.infrastructure.security.UserDetailsImpl;
 import com.rushcrew.queue.presentation.dto.request.EnterQueueRequest;
 import com.rushcrew.queue.presentation.dto.response.QueueResponse;
+import com.rushcrew.queue.presentation.mapper.QueuePresentationMapper;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -31,11 +30,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class QueueController {
 
     private final QueuePort queuePort; // Service 대신 인터페이스 의존 (DIP)
+    private final QueuePresentationMapper queueMapper;
 
     private static final String QUEUE_TOKEN_HEADER = "X-Queue-Token";
 
-    public QueueController(QueuePort queuePort) {
+    public QueueController(QueuePort queuePort, QueuePresentationMapper queueMapper) {
         this.queuePort = queuePort;
+        this.queueMapper = queueMapper;
     }
 
     /**
@@ -50,7 +51,7 @@ public class QueueController {
         EnterQueueCommand command = EnterQueueCommand.of(request.productId(), principal.userId(),
             principal.role());
         QueueRedisResponse redisResult = queuePort.enterQueue(command);
-        QueueResponse response = toQueueResponse(redisResult);
+        QueueResponse response = queueMapper.toQueueResponse(redisResult);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
@@ -65,7 +66,7 @@ public class QueueController {
         @AuthenticationPrincipal UserDetailsImpl principal
     ) {
         QueueRedisResponse redisResult = queuePort.getQueueRank(productId, queueToken, principal.userId());
-        QueueResponse response = toQueueResponse(redisResult);
+        QueueResponse response = queueMapper.toQueueResponse(redisResult);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
     }
 
@@ -82,19 +83,5 @@ public class QueueController {
     ) {
         queuePort.exitQueue(productId, queueToken, principal.userId());
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
-    }
-
-    // TODO: 추후 presenataion mapper 클래스로 이동 예정
-    private QueueResponse toQueueResponse(QueueRedisResponse redisResponse) {
-        String message = redisResponse.status().equals(QueueStatus.WAITING) ?
-            "대기 중입니다." : "입장 가능합니다.";
-        return QueueResponse.builder()
-            .token(redisResponse.token())
-            .productId(redisResponse.productId())
-            .rank(redisResponse.rank())
-            .status(redisResponse.status().getDescription())
-            .enteredAt(redisResponse.enteredAt())
-            .message(message)
-            .build();
     }
 }
