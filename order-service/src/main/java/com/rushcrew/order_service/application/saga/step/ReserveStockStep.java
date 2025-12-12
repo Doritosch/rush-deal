@@ -1,6 +1,7 @@
 package com.rushcrew.order_service.application.saga.step;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -188,7 +189,7 @@ public class ReserveStockStep {
 			timeDealId,
 			userId,
 			availableStock,
-			java.time.Instant.now()
+			Instant.now()
 		);
 	}
 

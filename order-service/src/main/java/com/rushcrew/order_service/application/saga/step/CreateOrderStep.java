@@ -55,11 +55,11 @@ public class CreateOrderStep {
 						.timeDealStockId(String.valueOf(itemResult.timeDealStockId()))
 						.productId(String.valueOf(itemResult.productId()))
 						.productName(itemResult.productName())
-						.productDescription("") // stockDetail에서 가져와야 함
+						// .productDescription("")
 						.optionName(itemResult.optionName())
 						.timeDealId(String.valueOf(timeDeal.timeDealId()))
 						.timeDealTitle(timeDeal.title())
-						.discountRate(timeDeal.discountRate())
+						// .discountRate(timeDeal.discountRate())
 						.build();
 
 					return OrderItem.create(
