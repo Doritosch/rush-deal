@@ -70,6 +70,7 @@ public class OrderCommandController {
 		CreateOrderCommand command = CreateOrderCommand.builder()
 			.userId(userId)
 			.timeDealId(UUID.fromString(request.timeDealId()))
+			.productId(UUID.fromString(request.productId()))
 			.queueToken(queueToken)
 			.role(role)
 			.orderItems(request.orderItems().stream()
