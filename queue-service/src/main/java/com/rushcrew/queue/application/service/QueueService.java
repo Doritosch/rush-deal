@@ -82,7 +82,7 @@ public class QueueService implements QueuePort {
             throw new BusinessException(QueueErrorCode.TOKEN_OWNER_NOT_MATCH);
         }
 
-        TokenId tokenId = validateQueueToken(token);
+        TokenId tokenId = extractValidQueueTokenId(token);
 
         // 활성 상태 여부 확인
         if (queueRepository.isActivatedToken(productId, tokenId)) {
@@ -119,7 +119,7 @@ public class QueueService implements QueuePort {
     }
 
     @Override
-    public TokenId validateQueueToken(String token) {
+    public TokenId extractValidQueueTokenId(String token) {
         TokenId tokenId;
         try {
             tokenId = TokenId.of(UUID.fromString(token));
@@ -172,7 +172,7 @@ public class QueueService implements QueuePort {
      */
     @Override
     public void exitQueue(UUID productId, String token, Long userId) {
-        TokenId tokenId = validateQueueToken(token);
+        TokenId tokenId = extractValidQueueTokenId(token);
         // RedisQueueRepository로 캐스팅
         if (queueRepository instanceof RedisQueueRepository) {
             queueRepository.removeTokenWithUserIdxKey(productId, tokenId, userId);
@@ -186,7 +186,7 @@ public class QueueService implements QueuePort {
      */
     @Override
     public boolean validateActivatedQueueToken(UUID productId, String token) {
-        TokenId tokenId = validateQueueToken(token);
+        TokenId tokenId = extractValidQueueTokenId(token);
         return queueRepository.isActivatedToken(productId, tokenId);
     }
 

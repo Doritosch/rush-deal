@@ -21,7 +21,7 @@ public interface QueuePort {
     /**
      * 토큰 형식 검증
      */
-    TokenId validateQueueToken(String token);
+    TokenId extractValidQueueTokenId(String token);
 
     /**
      * 토큰 형식 검증 + 유저 토큰 활성화 여부
