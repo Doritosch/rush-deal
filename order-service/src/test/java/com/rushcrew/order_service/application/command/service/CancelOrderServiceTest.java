@@ -74,12 +74,12 @@ class CancelOrderServiceTest {
 		);
 
 		ProductSnapshot snapshot = ProductSnapshot.builder()
-			.timeDealStockId(timeDealStockId)
-			.productId(UUID.randomUUID())
+			.timeDealStockId(String.valueOf(timeDealStockId))
+			.productId(String.valueOf(UUID.randomUUID()))
 			.productName("테스트 상품")
 			.productDescription("테스트 설명")
 			.optionName("옵션1")
-			.timeDealId(UUID.randomUUID())
+			.timeDealId(String.valueOf(UUID.randomUUID()))
 			.timeDealTitle("타임딜 제목")
 			.discountRate(20)
 			.build();
