@@ -15,7 +15,7 @@ public class CreateOrderResponse {
 	private UUID orderId;
 	private String orderStatus;
 	private BigDecimal totalAmount;
-	private BigDecimal pointUsed;
+	private Long pointUsed;
 	private BigDecimal finalAmount;
 	private Instant orderedAt;
 	private Instant reservationExpiresAt;

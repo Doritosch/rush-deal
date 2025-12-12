@@ -9,5 +9,5 @@ public interface PointEventPort {
 	void publishPointEarnRequested(Long userId, UUID orderId, BigDecimal finalAmount, String reason, Instant timestamp);
 
 	/* 포인트 환불 요청 이벤트 발행 */
-	void publishPointRefundRequested(Long userId, UUID orderId, BigDecimal pointUsed, String reason, Instant timestamp);
+	void publishPointRefundRequested(Long userId, UUID orderId, Long pointUsed, String reason, Instant timestamp);
 }

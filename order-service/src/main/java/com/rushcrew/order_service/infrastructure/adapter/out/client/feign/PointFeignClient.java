@@ -8,8 +8,6 @@ import com.rushcrew.order_service.infrastructure.dto.point.PointDeductRequest;
 import com.rushcrew.order_service.infrastructure.dto.point.PointDeductResponse;
 import com.rushcrew.order_service.infrastructure.dto.point.PointRefundRequest;
 
-// TODO: 영재님 API 확인 요청
-
 @FeignClient(name = "user-service")
 public interface PointFeignClient {
 

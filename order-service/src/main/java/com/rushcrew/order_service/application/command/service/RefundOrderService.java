@@ -76,7 +76,7 @@ public class RefundOrderService implements RefundOrderUseCase {
 			savedOrder.getOrderId(), savedOrder.getRefundedAt());
 
 		// 포인트 환불 이벤트 발행
-		if (savedOrder.getPointUsed().compareTo(BigDecimal.ZERO) > 0) {
+		if (savedOrder.getPointUsed() != null && savedOrder.getPointUsed() > 0L) {
 			try {
 				pointEventPort.publishPointRefundRequested(
 					savedOrder.getUserId(),

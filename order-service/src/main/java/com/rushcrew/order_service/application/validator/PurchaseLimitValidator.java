@@ -21,7 +21,7 @@ public class PurchaseLimitValidator {
 
 	public void validate(
 		Long userId,
-		UUID timeDealId,
+		UUID productId,
 		List<CreateOrderCommand.OrderItemCommand> items,
 		TimeDealInfo timeDeal
 	) {
@@ -30,7 +30,7 @@ public class PurchaseLimitValidator {
 			.mapToInt(CreateOrderCommand.OrderItemCommand::quantity).sum();
 
 		// 기존 구매 수량
-		Integer totalPurchased = orderCommandPort.getTotalPurchasedQuantity(userId, timeDealId);
+		Integer totalPurchased = orderCommandPort.getTotalPurchasedQuantity(userId, productId);
 
 		// 제한 수량 확인
 		Integer limitQuantity = timeDeal.limitQuantity();

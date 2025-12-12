@@ -9,7 +9,7 @@ public record OrderCreatedEvent(
 	Long userId,
 	String status,
 	BigDecimal totalAmount,
-	BigDecimal pointUsed,
+	Long pointUsed,
 	BigDecimal finalAmount,
 	Instant orderedAt
 ) {}

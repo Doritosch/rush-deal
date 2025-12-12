@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PointDeductRequest {
 	private Long userId;
-	private BigDecimal amount;
+	private Long pointUsed;
 	private String sagaId;
-	private String reason;
 }

@@ -8,7 +8,7 @@ public record UpdateOrderResponse(
 	UUID orderId,
 	String orderStatus,
 	ShippingInfoResponse shippingInfo,
-	BigDecimal pointUsed,
+	Long pointUsed,
 	BigDecimal totalAmount,
 	BigDecimal finalAmount,
 	Instant updatedAt,

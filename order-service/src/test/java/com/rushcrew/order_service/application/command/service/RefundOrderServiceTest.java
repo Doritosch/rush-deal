@@ -96,7 +96,7 @@ class RefundOrderServiceTest {
 		verify(order).refund("고객 변심");
 		verify(orderCommandPort).save(order);
 		verify(pointEventPort).publishPointRefundRequested(
-			eq(userId), eq(orderId), eq(BigDecimal.valueOf(5000)),
+			eq(userId), eq(orderId), eq(5000L),
 			eq("주문 환불에 의한 포인트 환불"), any(Instant.class)
 		);
 		verify(stockEventPort, times(2)).publishStockRollbackRequested(
@@ -111,7 +111,7 @@ class RefundOrderServiceTest {
 	void testRefundOrder_Success_NoPointUsed() throws Exception {
 		// given
 		Order order = createOrderForSuccessCase();
-		when(order.getPointUsed()).thenReturn(BigDecimal.ZERO);
+		when(order.getPointUsed()).thenReturn(0L);
 		when(orderCommandPort.findById(orderId)).thenReturn(Optional.of(order));
 		when(orderCommandPort.save(any(Order.class))).thenReturn(order);
 		when(objectMapper.writeValueAsString(any())).thenReturn("{\"orderId\":\"test\"}");
@@ -300,7 +300,7 @@ class RefundOrderServiceTest {
 		when(order.getOrderId()).thenReturn(orderId);
 		when(order.getUserId()).thenReturn(userId);
 		when(order.getFinalAmount()).thenReturn(BigDecimal.valueOf(50000));
-		when(order.getPointUsed()).thenReturn(BigDecimal.valueOf(5000));
+		when(order.getPointUsed()).thenReturn(5000L);
 		when(order.getStatus()).thenReturn(OrderStatus.REFUNDED);
 		when(order.getRefundedAt()).thenReturn(Instant.now());
 		when(order.getOrderItems()).thenReturn(orderItems);
