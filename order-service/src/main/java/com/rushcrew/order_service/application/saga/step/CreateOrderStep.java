@@ -52,14 +52,14 @@ public class CreateOrderStep {
 				.map(itemResult -> {
 					// ProductSnapshot 생성
 					ProductSnapshot snapshot = ProductSnapshot.builder()
-						.timeDealStockId(itemResult.timeDealStockId())
-						.productId(itemResult.productId())
+						.timeDealStockId(String.valueOf(itemResult.timeDealStockId()))
+						.productId(String.valueOf(itemResult.productId()))
 						.productName(itemResult.productName())
-						.productDescription("") // stockDetail에서 가져와야 함
+						// .productDescription("")
 						.optionName(itemResult.optionName())
-						.timeDealId(timeDeal.timeDealId())
+						.timeDealId(String.valueOf(timeDeal.timeDealId()))
 						.timeDealTitle(timeDeal.title())
-						.discountRate(timeDeal.discountRate())
+						// .discountRate(timeDeal.discountRate())
 						.build();
 
 					return OrderItem.create(

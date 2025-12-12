@@ -21,7 +21,10 @@ public record CreatePolicyRequest(
     LocalDateTime startTime,
     @NotNull(message = "종료 시간은 필수입니다")
     LocalDateTime endTime,
-    @NotNull(message = "허용 인원은 필수입니다")
+    @NotNull(message = "최대 허용 인원은 필수입니다")
+    @Min(value = 1, message = "최대 허용 인원은 최소 1명 이상이어야 합니다")
+    Integer maxCapacity,
+    @NotNull(message = "상태 변경 당 허용 인원은 필수입니다")
     @Min(value = 1, message = "허용 인원은 최소 1명 이상이어야 합니다")
     Integer limitSize,
     @NotNull(message = "활성 체크 주기는 필수입니다")
@@ -34,7 +37,7 @@ public record CreatePolicyRequest(
     public CreatePolicyCommand toCommand() {
         // vo 생성 시 유효성 검증
         TimePeriod timePeriod = new TimePeriod(startTime, endTime);
-        TrafficSetting traffic = new TrafficSetting(limitSize, queueGap, ttl);
+        TrafficSetting traffic = new TrafficSetting(maxCapacity, limitSize, queueGap, ttl);
 
         return CreatePolicyCommand.builder()
             .productId(productId)

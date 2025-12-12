@@ -13,6 +13,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        default_schema: payment_schema
+        hbm2ddl:
+          create_namespaces: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 server:
   port: 8010
@@ -21,3 +25,10 @@ eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+
+portone:
+  secret:
+    api: ${PORTONE_API_SECRET}
+    store-id: ${PORTONE_STORE_ID}
+    channel-key: ${PORTONE_CHANNEL_KEY}
+    webhook: ${PORTONE_WEBHOOK}

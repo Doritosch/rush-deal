@@ -11,7 +11,7 @@ public enum QueueErrorCode implements ErrorCode {
     FORBIDDEN_ACCESS(HttpStatus.FORBIDDEN, "FORBIDDEN_ACCESS", "접근 권한이 없습니다."),
     POLICY_ALREADY_DELETED(HttpStatus.NOT_FOUND, "POLICY_ALREADY_DELETED", "이미 삭제된 정책 정보입니다."),
     ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "ROLE_NOT_EXISTS", "유효하지 않은 권한입니다."),
-
+    QUEUE_TOKEN_NOT_AVAILABLE(HttpStatus.NOT_FOUND, "", "잘못된 토큰 형식입니다.")
 
     ;
 

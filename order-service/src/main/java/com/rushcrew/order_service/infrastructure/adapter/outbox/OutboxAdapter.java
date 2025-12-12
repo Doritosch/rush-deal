@@ -1,5 +1,6 @@
 package com.rushcrew.order_service.infrastructure.adapter.outbox;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
@@ -33,7 +34,7 @@ public class OutboxAdapter implements OutboxPort {
 			.eventType(eventType)
 			.payload(payload)
 			.status("PENDING")
-			.createdAt(java.time.Instant.now())
+			.createdAt(Instant.now())
 			.retryCount(0)
 			.build();
 
