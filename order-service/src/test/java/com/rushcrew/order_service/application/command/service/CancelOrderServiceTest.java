@@ -95,7 +95,7 @@ class CancelOrderServiceTest {
 		order = Order.create(
 			userId,
 			List.of(orderItem),
-			BigDecimal.valueOf(1000),
+			1000L,
 			shippingInfo
 		);
 

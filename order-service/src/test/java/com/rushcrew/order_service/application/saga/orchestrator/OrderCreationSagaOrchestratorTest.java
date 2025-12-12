@@ -81,7 +81,7 @@ class OrderCreationSagaOrchestratorTest {
 					.quantity(2)
 					.build()
 			))
-			.pointUsed(BigDecimal.valueOf(1000))
+			.pointUsed(1000L)
 			.shippingInfo(shippingInfo)
 			.build();
 	}
@@ -148,7 +148,7 @@ class OrderCreationSagaOrchestratorTest {
 		assertThat(result.userId()).isEqualTo(1L);
 		assertThat(result.orderStatus()).isEqualTo("PENDING");
 		assertThat(result.totalAmount()).isEqualByComparingTo(BigDecimal.valueOf(16000));
-		assertThat(result.pointUsed()).isEqualByComparingTo(BigDecimal.valueOf(1000));
+		assertThat(result.pointUsed()).isEqualByComparingTo(1000L);
 		assertThat(result.finalAmount()).isEqualByComparingTo(BigDecimal.valueOf(15000));
 		assertThat(result.orderItems()).isNotEmpty();
 		assertThat(result.orderItems()).hasSize(1);

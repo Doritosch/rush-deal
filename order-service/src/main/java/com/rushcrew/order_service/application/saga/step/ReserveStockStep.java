@@ -108,7 +108,9 @@ public class ReserveStockStep {
 			// SagaData에 저장
 			data.setOrderItems(orderItems);
 			data.setTotalAmount(calculateTotalAmount(orderItems));
-			data.setFinalAmount(data.getTotalAmount().subtract(command.pointUsed()));
+			data.setFinalAmount(
+				data.getTotalAmount().subtract(BigDecimal.valueOf(command.pointUsed()))
+			);
 			context.setData("reservedStocks", reservedStocks);
 
 			log.info("[Saga-{}] ReserveStock 실행 완료: {} 건", context.getSagaId(), reservedStocks.size());

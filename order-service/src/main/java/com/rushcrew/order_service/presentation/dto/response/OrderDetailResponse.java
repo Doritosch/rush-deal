@@ -21,7 +21,7 @@ public class OrderDetailResponse {
 	private Long userId;
 	private String orderStatus;
 	private BigDecimal totalAmount;
-	private BigDecimal pointUsed;
+	private Long pointUsed;
 	private BigDecimal finalAmount;
 	private Instant orderedAt;
 	private Instant paymentCompletedAt;
