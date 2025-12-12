@@ -32,12 +32,9 @@ public class QueueController {
 
     private final QueuePort queuePort; // Service 대신 인터페이스 의존 (DIP)
 
-    // API Gateway에서 인증 후, USER ID와 ROLE을 헤더에 담아 전달
-    private static final String USER_ID_HEADER = "X-User-Id";
-    private static final String USER_ROLE_HEADER = "X-User-Role";
     private static final String QUEUE_TOKEN_HEADER = "X-Queue-Token";
 
-    public QueueController(QueuePort queuePort, QueueService queueService) {
+    public QueueController(QueuePort queuePort) {
         this.queuePort = queuePort;
     }
 
@@ -67,7 +64,7 @@ public class QueueController {
         @RequestHeader(QUEUE_TOKEN_HEADER) String queueToken,
         @AuthenticationPrincipal UserDetailsImpl principal
     ) {
-        QueueRedisResponse redisResult = queuePort.getQueueRank(productId, queueToken, principal.userId(), principal.role());
+        QueueRedisResponse redisResult = queuePort.getQueueRank(productId, queueToken, principal.userId());
         QueueResponse response = toQueueResponse(redisResult);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
     }
