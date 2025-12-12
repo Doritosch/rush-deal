@@ -37,6 +37,12 @@ spring:
               uri: lb://auth-service
               predicates:
                 - Path=/api/v1/auth/**
+
+            - id: queue-service
+              uri: lb://queue-service
+              predicates:
+                - Path=/api/v1/queues/**, /api/v1/queue/policies/**, /api/v1/internal/queues/**
+
           discovery:
             locator:
               enabled: true
