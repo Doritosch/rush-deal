@@ -6,8 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,13 +18,16 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.ContainerProperties.AckMode;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.util.backoff.FixedBackOff;
 
 @Slf4j
@@ -29,13 +35,30 @@ import org.springframework.util.backoff.FixedBackOff;
 @Configuration
 public class KafkaConsumerConfig {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
-
     @Value("${spring.kafka.bootstrap-servers}")
     private String kafkaServer;
 
-    public KafkaConsumerConfig(KafkaTemplate<String, Object> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
+    /**
+     * KafkaTemplate 설정
+     * Json 직렬화 가능한 ProducerFactory 사용
+     */
+    @Bean
+    public KafkaTemplate<String, Object> kafkaTemplate() {
+        return new KafkaTemplate<>(producerFactory());
+    }
+
+    /**
+     * Producer Factory 설정
+     * DLQ로 메시지를 보낼 때(Produce), 자바 객체를 JSON으로 직렬화하기 위해 필요함
+     */
+    @Bean
+    public ProducerFactory<String, Object> producerFactory() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServer);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        // value 보낼 때 JsonSerializer 사용하도록 설정
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        return new DefaultKafkaProducerFactory<>(props);
     }
 
     /**
@@ -91,7 +114,7 @@ public class KafkaConsumerConfig {
     @Bean
     public CommonErrorHandler errorHandler() {
         // DLT 발행자: 실패한 메시지를 '원본토픽명.DLT'로 자동 발행
-        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate(),
             (record, ex) -> {
                 log.error("[QUEUE:Kafka:DLQ] 3회 재시도 실패, DLQ로 이동합니다. TOPIC: {}, Value: {}",
                     record.topic(), record.value());
