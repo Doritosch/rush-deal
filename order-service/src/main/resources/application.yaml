@@ -2,10 +2,6 @@ spring:
   application:
     name: order-service
 
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
-
   batch:
     jdbc:
       initialize-schema: never   # SQL 스크립트로 처리
@@ -18,34 +14,6 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
-
-  quartz:
-    job-store-type: jdbc
-    jdbc:
-      initialize-schema: always   # Quartz 자동 초기화 사용
-    properties:
-      org:
-        quartz:
-          scheduler:
-            instanceName: OrderScheduler
-            instanceId: AUTO
-
-          dataSource:
-            main:
-              driver: org.postgresql.Driver
-              URL: ${DB_URL}
-              user: ${DB_USERNAME}
-              password: ${DB_PASSWORD}
-
-          jobStore:
-            class: org.quartz.impl.jdbcjobstore.JobStoreTX
-            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-            tablePrefix: quartz_schema.QRTZ_
-            isClustered: true
-            useProperties: false
-
-          threadPool:
-            threadCount: 10
 
   jpa:
     hibernate:
@@ -73,7 +41,6 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
-#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 server:
   port: 8050
