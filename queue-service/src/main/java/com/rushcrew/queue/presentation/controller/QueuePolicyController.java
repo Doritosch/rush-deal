@@ -64,8 +64,7 @@ public class QueuePolicyController {
         CreatePolicyCommand command = request.toCommand();
         QueuePolicyQueryResponse result = queuePolicyService.createQueuePolicy(
             command,
-            principal.userId(),
-            principal.role()
+            principal.userId()
         );
         CreatePolicyResponse response = presentationMapper.toCreatePolicyResponse(result);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
@@ -76,6 +75,7 @@ public class QueuePolicyController {
      * 타임딜 정책 목록 조회 : 상품별, 상태별(RUNNING, PAUSED, STOPPED)
      */
     @GetMapping
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<ApiResponse<PagedPolicyResponse>> getTimeDealPolicies(
         @RequestParam(required = false) UUID productId,
         @RequestParam(required = false) String status,
@@ -83,14 +83,13 @@ public class QueuePolicyController {
         @RequestParam(name = "size", defaultValue = "10") int size,
         @RequestParam(name = "sort-by", defaultValue = "createdAt") String sortBy,
         @RequestParam(name = "sort-direction", defaultValue = "DESC") Sort.Direction sortDirection,
-        @RequestHeader(USER_ID_HEADER) Long currUserId,
-        @RequestHeader(USER_ROLE_HEADER) String role
+        @AuthenticationPrincipal UserDetailsImpl principal
     ) {
 
         PageQuery pageQuery = PageQuery.of(page, size, sortBy, sortDirection);
         SearchPolicyCommand command = SearchPolicyCommand.of(productId, status);
         Page<QueuePolicyQueryResponse> pageResult = queuePolicyService.searchPolicies(
-            pageQuery, command, currUserId, role);
+            pageQuery, command, principal.userId());
         PagedPolicyResponse response = presentationMapper.toPagedPolicyResponse(pageResult);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
     }
@@ -100,13 +99,12 @@ public class QueuePolicyController {
      * 타임딜 정책 정보 조회 (단건)
      */
     @GetMapping("/{policy-id}")
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<ApiResponse<QueuePolicyResponse>> getPolicyInfo(
         @PathVariable("policy-id") UUID policyId,
-        @RequestHeader(USER_ID_HEADER) Long currUserId,
-        @RequestHeader(USER_ROLE_HEADER) String role,
-        @AuthenticationPrincipal UserDetailsImpl userDetails
+        @AuthenticationPrincipal UserDetailsImpl principal
     ) {
-        QueuePolicyQueryResponse result = queuePolicyService.getQueuePolicyInfo(policyId, currUserId, role);
+        QueuePolicyQueryResponse result = queuePolicyService.getQueuePolicyInfo(policyId, principal.userId());
         QueuePolicyResponse response = presentationMapper.toQueuePolicyResponse(result);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
     }
@@ -116,15 +114,15 @@ public class QueuePolicyController {
      * 타임딜 정책 수정
      */
     @PatchMapping("/{policy-id}")
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<ApiResponse<QueuePolicyResponse>> updatePolicy(
         @PathVariable("policy-id") UUID policyId,
         @RequestBody UpdatePolicyRequest request,
-        @RequestHeader(USER_ID_HEADER) Long currUserId,
-        @RequestHeader(USER_ROLE_HEADER) String role
+        @AuthenticationPrincipal UserDetailsImpl principal
     ) {
         UpdatePolicyCommand command = request.toCommand();
         QueuePolicyQueryResponse result = queuePolicyService.updateQueuePolicy(command, policyId,
-            currUserId, role);
+            principal.userId());
         QueuePolicyResponse response = presentationMapper.toQueuePolicyResponse(result);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
     }
@@ -133,12 +131,12 @@ public class QueuePolicyController {
      * 타임딜 정책 삭제
      */
     @DeleteMapping("/{policy-id}")
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<ApiResponse<Void>> deletePolicy(
         @PathVariable("policy-id") UUID policyId,
-        @RequestHeader(USER_ID_HEADER) Long currUserId,
-        @RequestHeader(USER_ROLE_HEADER) String role
+        @AuthenticationPrincipal UserDetailsImpl principal
     ) {
-        queuePolicyService.deleteQueuePolicy(policyId, currUserId, role);
+        queuePolicyService.deleteQueuePolicy(policyId, principal.userId());
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
     }
 }
