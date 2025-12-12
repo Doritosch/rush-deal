@@ -26,7 +26,7 @@ public class QueueToken {
             .id(TokenId.generate())
             .productId(productId)
             .userId(userId)
-            .status(QueueStatus.WAITING)
+            .status(QueueStatus.WAITING) // 처음 생성 시 기본값 WAITING
             .requestTime(System.currentTimeMillis())
             .build();
     }

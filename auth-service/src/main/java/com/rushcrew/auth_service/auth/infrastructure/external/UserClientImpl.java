@@ -4,9 +4,11 @@ import com.rushcrew.auth_service.auth.application.client.UserClient;
 import com.rushcrew.auth_service.auth.application.command.LoginCommand;
 import com.rushcrew.auth_service.auth.application.command.SignUpCommand;
 import com.rushcrew.auth_service.auth.application.result.UserCreateResult;
+import com.rushcrew.auth_service.auth.application.result.UserInfoResult;
 import com.rushcrew.auth_service.auth.application.result.VerifyPasswordResult;
 import com.rushcrew.auth_service.auth.infrastructure.external.dto.UserCreateRequest;
 import com.rushcrew.auth_service.auth.infrastructure.external.dto.UserCreateResponse;
+import com.rushcrew.auth_service.auth.infrastructure.external.dto.UserInfoResponse;
 import com.rushcrew.auth_service.auth.infrastructure.external.dto.VerifyPasswordRequest;
 import com.rushcrew.auth_service.auth.infrastructure.external.dto.VerifyPasswordResponse;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,13 @@ public class UserClientImpl implements UserClient {
         VerifyPasswordRequest request = VerifyPasswordRequest.fromCommand(command);
 
         VerifyPasswordResponse response = userFeignClient.verifyPassword(request);
+
+        return response.toResult();
+    }
+
+    @Override
+    public UserInfoResult getUserById(Long userId) {
+        UserInfoResponse response = userFeignClient.getUserById(userId);
 
         return response.toResult();
     }
