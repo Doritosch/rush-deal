@@ -15,15 +15,9 @@ import lombok.RequiredArgsConstructor;
 public class QueueTokenValidator {
 	private final QueuePort queuePort;
 
-	public void validate(UUID timeDealId, Long userId, String queueToken, String role) {
-		if (!queuePort.validateToken(timeDealId, userId, queueToken, role)) {
+	public void validate(UUID productId, Long userId, String queueToken, String role) {
+		if (!queuePort.validateToken(productId, userId, queueToken, role)) {
 			throw new BusinessException(OrderErrorCode.INVALID_QUEUE_TOKEN);
 		}
 	}
-
-	// public void validate(UUID timeDealId, Long userId) {
-	// 	if (!queuePort.validateToken(timeDealId, userId)) {
-	// 		throw new BusinessException(OrderErrorCode.INVALID_QUEUE_TOKEN);
-	// 	}
-	// }
 }

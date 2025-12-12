@@ -20,10 +20,10 @@ public class QueueAdapter implements QueuePort {
 	private final QueueFeignClient feignClient;
 
 	@Override
-	public boolean validateToken(UUID timeDealId, Long userId, String queueToken, String role) {
+	public boolean validateToken(UUID productId, Long userId, String queueToken, String role) {
 		try {
 			ApiResponse<Boolean> response = feignClient.validateToken(
-				timeDealId.toString(),
+				productId.toString(),
 				queueToken,
 				userId,
 				role
