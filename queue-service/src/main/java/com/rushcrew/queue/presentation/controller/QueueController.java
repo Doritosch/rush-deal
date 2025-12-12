@@ -7,12 +7,15 @@ import com.rushcrew.queue.application.dto.QueueRedisResponse;
 import com.rushcrew.queue.application.port.in.QueuePort;
 import com.rushcrew.queue.application.service.QueueService;
 import com.rushcrew.queue.domain.enums.QueueStatus;
+import com.rushcrew.queue.infrastructure.security.UserDetailsImpl;
 import com.rushcrew.queue.presentation.dto.request.EnterQueueRequest;
 import com.rushcrew.queue.presentation.dto.response.QueueResponse;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,12 +45,13 @@ public class QueueController {
      * 대기열 진입 요청 API
      */
     @PostMapping("/enter")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<QueueResponse>> enterQueue(
         @Valid @RequestBody EnterQueueRequest request,
-        @RequestHeader(USER_ID_HEADER) Long currUserId,
-        @RequestHeader(USER_ROLE_HEADER) String role
+        @AuthenticationPrincipal UserDetailsImpl principal
     ) {
-        EnterQueueCommand command = EnterQueueCommand.of(request.productId(), currUserId, role);
+        EnterQueueCommand command = EnterQueueCommand.of(request.productId(), principal.userId(),
+            principal.role());
         QueueRedisResponse redisResult = queuePort.enterQueue(command);
         QueueResponse response = toQueueResponse(redisResult);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
@@ -57,13 +61,13 @@ public class QueueController {
      * 대기열 순번 조회(Polling) API
      */
     @GetMapping("/rank")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<QueueResponse>> getQueueRank(
         @RequestParam UUID productId,
         @RequestHeader(QUEUE_TOKEN_HEADER) String queueToken,
-        @RequestHeader(USER_ID_HEADER) Long currUserId,
-        @RequestHeader(USER_ROLE_HEADER) String role
+        @AuthenticationPrincipal UserDetailsImpl principal
     ) {
-        QueueRedisResponse redisResult = queuePort.getQueueRank(productId, queueToken, currUserId, role);
+        QueueRedisResponse redisResult = queuePort.getQueueRank(productId, queueToken, principal.userId(), principal.role());
         QueueResponse response = toQueueResponse(redisResult);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
     }
@@ -73,13 +77,13 @@ public class QueueController {
      * 사용자가 대기 중 "취소" 버튼을 누르거나, 주문 프로세스가 끝나고 나갈 때 호출
      */
     @DeleteMapping("/{product-id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Void>> deleteQueueToken(
         @PathVariable("product-id") UUID productId,
         @RequestHeader(QUEUE_TOKEN_HEADER) String queueToken,
-        @RequestHeader(USER_ID_HEADER) Long currUserId,
-        @RequestHeader(USER_ROLE_HEADER) String role
+        @AuthenticationPrincipal UserDetailsImpl principal
     ) {
-        queuePort.exitQueue(productId, queueToken, currUserId);
+        queuePort.exitQueue(productId, queueToken, principal.userId());
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
     }
 
