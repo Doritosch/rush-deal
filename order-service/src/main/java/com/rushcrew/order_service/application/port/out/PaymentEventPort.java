@@ -10,4 +10,7 @@ import java.util.UUID;
 public interface PaymentEventPort {
 	/* 결제 완료 이벤트 발행 */
 	void publishPaymentCompleted(UUID orderId, Long userId, BigDecimal finalAmount, Instant now);
+
+	/* 환불 요청 이벤트 발행 */
+	void publishRefundRequested(UUID orderId, Long userId, BigDecimal finalAmount, String s, Instant now);
 }

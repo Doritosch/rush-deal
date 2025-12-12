@@ -36,18 +36,10 @@ public enum OrderStatus {
 		}
 	}
 
-	public void validateCanCancelAfterPayment() {
+	public void validateCanRefund() {
 		if (this != PAID) {
 			throw new IllegalStateException(
-				"결제 후 주문 취소는 PAID 상태에서만 가능합니다. (현재 상태: %s)".formatted(this)
-			);
-		}
-	}
-
-	public void validateCanRefund() {
-		if (this != PURCHASE_CONFIRMED) {
-			throw new IllegalStateException(
-				"환불은 PURCHASE_CONFIRMED 상태에서만 가능합니다. (현재 상태: %s)".formatted(this)
+				"환불은 PAID 상태에서만 가능합니다. (현재 상태: %s)".formatted(this)
 			);
 		}
 	}
@@ -97,12 +89,8 @@ public enum OrderStatus {
 		return this == PENDING;
 	}
 
-	public boolean canCancelAfterPayment() {
-		return this == PAID;
-	}
-
 	public boolean canRefund() {
-		return this == PURCHASE_CONFIRMED;
+		return this == PAID;
 	}
 
 	public boolean canConfirmPurchase() {
@@ -120,8 +108,8 @@ public enum OrderStatus {
 	private boolean isValidTransition(OrderStatus targetStatus) {
 		return switch (this) {
 			case PENDING -> targetStatus == PAID || targetStatus == CANCELLED;
-			case PAID -> targetStatus == PURCHASE_CONFIRMED || targetStatus == CANCELLED;
-			case PURCHASE_CONFIRMED -> targetStatus == REFUNDED;
+			case PAID -> targetStatus == PURCHASE_CONFIRMED || targetStatus == REFUNDED;
+			case PURCHASE_CONFIRMED -> false; // 구매확정 후 환불 불가
 			case CANCELLED, REFUNDED -> false;
 		};
 	}

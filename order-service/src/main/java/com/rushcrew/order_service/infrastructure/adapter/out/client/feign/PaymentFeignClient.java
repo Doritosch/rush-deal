@@ -11,4 +11,7 @@ import com.rushcrew.order_service.infrastructure.dto.payment.PaymentResponse;
 public interface PaymentFeignClient {
 	@PostMapping("/api/v1/payments")
 	PaymentResponse requestPayment(@RequestBody PaymentRequest request);
+
+	@PostMapping("/api/v1/payments/cancel")
+	void cancelPayment(@RequestBody PaymentRequest request);
 }

@@ -1,6 +1,8 @@
 package com.rushcrew.order_service.application.command.service;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,7 +75,7 @@ public class CancelOrderService implements CancelOrderUseCase {
 
 		// outbox에 ORDER_CANCELLED 이벤트 저장
 		try {
-			java.util.Map<String, Object> eventPayload = new java.util.HashMap<>();
+			Map<String, Object> eventPayload = new HashMap<>();
 			eventPayload.put("orderId", savedOrder.getOrderId());
 			eventPayload.put("userId", savedOrder.getUserId());
 			eventPayload.put("status", savedOrder.getStatus().name());
@@ -89,7 +91,6 @@ public class CancelOrderService implements CancelOrderUseCase {
 			log.error("ORDER_CANCELLED 이벤트 저장 실패: orderId={}", savedOrder.getOrderId(), e);
 		}
 
-		// 7. 결과 반환
 		return CancelOrderResult.builder()
 			.orderId(savedOrder.getOrderId())
 			.orderStatus(savedOrder.getStatus().name())
