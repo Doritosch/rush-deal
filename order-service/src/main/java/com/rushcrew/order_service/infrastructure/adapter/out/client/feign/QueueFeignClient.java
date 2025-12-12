@@ -12,7 +12,7 @@ public interface QueueFeignClient {
 
 	@GetMapping("/api/v1/internal/queues/tokens/verify")
 	ApiResponse<Boolean> validateToken(
-		@RequestParam("productId") String timeDealId,
+		@RequestParam("productId") String productId,
 		@RequestHeader("X-Queue-Token") String queueToken,
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader("X-User-Role") String role

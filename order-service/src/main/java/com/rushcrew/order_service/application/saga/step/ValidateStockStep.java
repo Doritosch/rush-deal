@@ -43,7 +43,7 @@ public class ValidateStockStep {
 
 			// 1. 대기열 토큰 검증
 			// queueTokenValidator.validate(command.timeDealId(), command.userId());
-			queueTokenValidator.validate(command.timeDealId(), command.userId(), command.queueToken(), command.role());
+			queueTokenValidator.validate(command.productId(), command.userId(), command.queueToken(), command.role());
 			log.info("[Saga-{}] 대기열 토큰 검증 완료", context.getSagaId());	// 주문 - 큐 서비스 통신 확인용
 			log.debug("[Saga-{}] 대기열 토큰 검증 완료", context.getSagaId());
 
