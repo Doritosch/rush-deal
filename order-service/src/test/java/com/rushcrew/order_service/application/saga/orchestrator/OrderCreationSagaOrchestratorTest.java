@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
 import com.rushcrew.order_service.application.command.dto.result.CreateOrderResult;
+import com.rushcrew.order_service.application.port.out.MetricsPort;
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
 import com.rushcrew.order_service.application.saga.dto.SagaStepResult;
@@ -26,6 +27,7 @@ import com.rushcrew.order_service.application.saga.step.CreateOrderStep;
 import com.rushcrew.order_service.application.saga.step.DeductPointStep;
 import com.rushcrew.order_service.application.saga.step.ReserveStockStep;
 import com.rushcrew.order_service.application.saga.step.ValidateStockStep;
+import com.rushcrew.order_service.application.port.out.SagaInstancePort;
 import com.rushcrew.order_service.domain.vo.ShippingInfo;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OrderCreationSagaOrchestrator 테스트")
@@ -43,6 +45,12 @@ class OrderCreationSagaOrchestratorTest {
 	@Mock
 	private CreateOrderStep createOrderStep;
 
+	@Mock
+	private SagaInstancePort sagaInstancePort;
+
+	@Mock
+	private MetricsPort metricsPort;
+
 	@InjectMocks
 	private OrderCreationSagaOrchestrator orchestrator;
 
@@ -51,6 +59,8 @@ class OrderCreationSagaOrchestratorTest {
 
 	@BeforeEach
 	void setUp() {
+		when(sagaInstancePort.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
 		orderId = UUID.randomUUID();
 
 		ShippingInfo shippingInfo = ShippingInfo.create(
