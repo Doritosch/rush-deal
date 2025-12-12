@@ -15,7 +15,7 @@ public class QuartzConfig {
 
 	/* 자동 구매확정 Job Detail */
 	@Bean
-	public JobDetail autoConfirmJobDeatail() {
+	public JobDetail autoConfirmJobDetail() {
 		return JobBuilder.newJob(AutoConfirmScheduler.class)
 			.withIdentity("autoConfirmPurchaseJob")
 			.storeDurably()
@@ -26,14 +26,16 @@ public class QuartzConfig {
 	@Bean
 	public Trigger autoConfirmTrigger() {
 		return TriggerBuilder.newTrigger()
-			.forJob(autoConfirmJobDeatail())
+			.forJob(autoConfirmJobDetail())
 			.withIdentity("autoConfirmPurchaseTrigger")
 			.withSchedule(
+				CronScheduleBuilder.cronSchedule("0/10 * * * * ?") // 10초마다 실행
 				// 테스트: 1분마다 실행
-				CronScheduleBuilder.cronSchedule("0 * * * * ?")
+				// CronScheduleBuilder.cronSchedule("0 * * * * ?")
 
 				// // 운영: 매 시간 정각 실행
 				// CronScheduleBuilder.cronSchedule("0 0 * * * ?")
 			).build();
 	}
+
 }

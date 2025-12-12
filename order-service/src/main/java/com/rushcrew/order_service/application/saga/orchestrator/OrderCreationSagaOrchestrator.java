@@ -13,6 +13,7 @@ import com.rushcrew.order_service.application.saga.step.CreateOrderStep;
 import com.rushcrew.order_service.application.saga.step.DeductPointStep;
 import com.rushcrew.order_service.application.saga.step.ReserveStockStep;
 import com.rushcrew.order_service.application.saga.step.ValidateStockStep;
+import com.rushcrew.order_service.application.port.out.MetricsPort;
 import com.rushcrew.order_service.application.port.out.SagaInstancePort;
 import com.rushcrew.order_service.domain.enums.SagaStatus;
 import com.rushcrew.order_service.domain.model.saga.SagaInstance;
@@ -31,6 +32,7 @@ public class OrderCreationSagaOrchestrator {
 	private final DeductPointStep deductPointStep;
 	private final CreateOrderStep createOrderStep;
 	private final SagaInstancePort sagaInstancePort;
+	private final MetricsPort metricsPort;
 
 	@Transactional
 	public CreateOrderResult execute(CreateOrderCommand command) {
@@ -94,6 +96,7 @@ public class OrderCreationSagaOrchestrator {
 			// Saga 완료
 			sagaInstance.complete();
 			saveSagaInstance(sagaInstance);
+			metricsPort.recordSagaSuccess(); // 성공 메트릭 기록
 			log.info("[Saga-{}] 완료", context.getSagaId());
 
 			// 결과 리턴
@@ -128,6 +131,7 @@ public class OrderCreationSagaOrchestrator {
 			// Saga 실패 처리
 			sagaInstance.fail(e.getMessage());
 			saveSagaInstance(sagaInstance);
+			metricsPort.recordSagaFailure(); // 실패 메트릭 기록
 			log.error("[Saga-{}] 실패: {}", context.getSagaId(), e.getMessage(), e);
 			throw e;
 		}

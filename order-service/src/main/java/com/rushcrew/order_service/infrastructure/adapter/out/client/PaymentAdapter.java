@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.rushcrew.order_service.application.port.out.PaymentPort;
 import com.rushcrew.order_service.infrastructure.adapter.out.client.feign.PaymentFeignClient;
+import com.rushcrew.order_service.infrastructure.dto.payment.PaymentPrepareResponse;
 import com.rushcrew.order_service.infrastructure.dto.payment.PaymentRequest;
 import com.rushcrew.order_service.infrastructure.dto.payment.PaymentResponse;
 
@@ -27,10 +28,17 @@ public class PaymentAdapter implements PaymentPort {
 
 			PaymentRequest request = PaymentRequest.builder()
 				.orderId(orderId)
-				.amount(finalAmount)
+				.totalAmount(finalAmount)
 				.build();
 
-			PaymentResponse response = paymentFeignClient.requestPayment(request);
+			PaymentPrepareResponse paymentResponse  = paymentFeignClient.requestPayment(request);
+
+			PaymentResponse response = PaymentResponse.builder()
+				.paymentId(paymentResponse.paymentId())
+				.orderId(orderId)
+				.success("결제요청".equals(paymentResponse.status()))
+				.message(paymentResponse.status())
+				.build();
 
 			if (response.isSuccess()) {
 				log.info("결제 요청 성공: orderId={}, paymentId={}", orderId, response.getPaymentId());
@@ -53,8 +61,7 @@ public class PaymentAdapter implements PaymentPort {
 
 			PaymentRequest request = PaymentRequest.builder()
 				.orderId(orderId)
-				.userId(userId)
-				.finalAmount(finalAmount)
+				.totalAmount(finalAmount)
 				.build();
 
 			paymentFeignClient.cancelPayment(request);

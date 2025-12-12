@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.rushcrew.order_service.infrastructure.monitoring.CustomMetrics;
 import com.rushcrew.order_service.infrastructure.persistence.outbox.entity.OutboxEventEntity;
 import com.rushcrew.order_service.infrastructure.persistence.outbox.repository.OutboxEventJpaRepository;
 
@@ -22,7 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 public class OutboxEventScheduler {
 
 	private final OutboxEventJpaRepository outboxRepository;
-	private final KafkaTemplate<String, Object> kafkaTemplate;
+	private final KafkaTemplate<String, String> kafkaTemplate;
+	// private final KafkaTemplate<String, Object> kafkaTemplate;
+	private final CustomMetrics customMetrics;
 
 	/**
 	 * 5초마다 PENDING 이벤트를 Kafka로 발행
@@ -58,6 +61,7 @@ public class OutboxEventScheduler {
 
 				event.markAsPublished();
 				outboxRepository.save(event);
+				customMetrics.recordOutboxPublished(); // 발행 메트릭 기록
 				log.debug("Outbox 이벤트 발행 성공: eventId={}, eventType={}",
 					event.getEventId(), event.getEventType());
 

@@ -10,5 +10,5 @@ import lombok.Getter;
 @Builder
 public class PaymentRequest {
 	private UUID orderId;
-	private BigDecimal amount;
+	private BigDecimal totalAmount;
 }

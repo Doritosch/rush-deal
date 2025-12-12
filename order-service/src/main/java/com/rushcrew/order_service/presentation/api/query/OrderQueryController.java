@@ -35,8 +35,9 @@ public class OrderQueryController {
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER", "SELLER");
+		boolean isMaster = "MASTER".equalsIgnoreCase(role);
 
-		OrderDetailDto dto = getOrderDetailUseCase.getOrderDetail(orderId, userId);
+		OrderDetailDto dto = getOrderDetailUseCase.getOrderDetail(orderId, userId, isMaster);
 
 		return ApiResponse.success(OrderDetailResponse.from(dto));
 	}
@@ -48,9 +49,10 @@ public class OrderQueryController {
 		Pageable pageable
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER");
+		boolean isMaster = "MASTER".equalsIgnoreCase(role);
 
 		OrderSearchCriteria criteria = OrderSearchCriteria.builder()
-			.userId(userId)
+			.userId(isMaster ? null : userId)
 			.build();
 
 		Page<OrderListDto> dtos = getOrderListUseCase.getOrderList(criteria, pageable);
