@@ -24,10 +24,8 @@ import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
 import com.rushcrew.timedeal.domain.repository.StockRepository;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
 import com.rushcrew.timedeal.domain.vo.OrderId;
-import com.rushcrew.timedeal.domain.vo.Quantity;
 import com.rushcrew.timedeal.domain.vo.TimeDealProductStatus;
 import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
-import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -143,7 +141,9 @@ public class StockServiceImpl implements StockService {
         UUID orderId = command.orderId().getOrderId();
         TimeDealStock stock = getStockOrThrow(command.stockId());
         StockLog log = getLastLogOrThrow(command.stockId(), orderId);
-        validateOrderQuantity(log, command.quantity());
+
+        // 주문 당시 기록된 수량과 현재 처리하려는 수량이 동일한지 검증
+        log.validateOrderQuantity(command.quantity());
 
         stock.confirm(OrderId.of(orderId), command.quantity());
 
@@ -178,12 +178,6 @@ public class StockServiceImpl implements StockService {
     private StockLog getLastLogOrThrow(UUID stockId, UUID orderId) {
         return stockRepository.findLastByStockIdAndOrderId(stockId, orderId)
             .orElseThrow(() -> new BusinessException(TimeDealErrorCode.NOT_FOUND_ORDER));
-    }
-
-    private void validateOrderQuantity(StockLog log, Quantity quantity) {
-        if (!Objects.equals(log.getQuantity().getQuantity(), quantity.getQuantity())) {
-            throw new BusinessException(TimeDealErrorCode.INVALID_ORDER_INFO);
-        }
     }
 
     private void validQuantity(TimeDealStock stock, Long quantity) {
