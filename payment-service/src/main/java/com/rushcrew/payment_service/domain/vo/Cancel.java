@@ -1,6 +1,8 @@
 package com.rushcrew.payment_service.domain.vo;
 
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -21,8 +23,6 @@ public class Cancel {
 
     private Instant cancelledAt;
 
-    private PaymentStatus cancelStatus;
-
     public Cancel(
             BigDecimal cancelAmount,
             String cancelReason
@@ -30,6 +30,5 @@ public class Cancel {
         this.cancelAmount = cancelAmount;
         this.cancelReason = cancelReason;
         this.cancelledAt = Instant.now();
-        this.cancelStatus = PaymentStatus.READY;
     }
 }
