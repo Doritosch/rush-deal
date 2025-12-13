@@ -23,7 +23,6 @@ import com.rushcrew.timedeal.domain.entity.TimeDealStock;
 import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
 import com.rushcrew.timedeal.domain.repository.StockRepository;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
-import com.rushcrew.timedeal.domain.vo.EventType;
 import com.rushcrew.timedeal.domain.vo.OrderId;
 import com.rushcrew.timedeal.domain.vo.Quantity;
 import com.rushcrew.timedeal.domain.vo.TimeDealProductStatus;
@@ -161,13 +160,8 @@ public class StockServiceImpl implements StockService {
         StockLog log = getLastLogOrThrow(command.stockId(), orderId);
         validateOrderQuantity(log, command.quantity());
 
-        if (log.getEventType() == EventType.RESERVE) {
-            stock.restoreFromReserved(OrderId.of(orderId), command.quantity(), command.reason());
-        } else if (log.getEventType() == EventType.SELL) {
-            stock.restoreFromSold(OrderId.of(orderId), command.quantity(), command.reason());
-        } else {
-            throw new BusinessException(TimeDealErrorCode.INVALID_ORDER_STATE);
-        }
+        log.getEventType().applyRestore(
+            stock, OrderId.of(orderId), command.quantity(), command.reason());
 
         eventPublisher.publishEvent(
             new StockRestoredEvent(command.stockId(), command.quantity().getQuantity())
