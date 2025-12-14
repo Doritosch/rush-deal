@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.engine.internal.ManagedTypeHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,7 +44,7 @@ public class QueueService implements QueuePort {
     public QueueRedisResponse enterQueue(EnterQueueCommand command) {
         // 대기열 정책 확인 (RDB 조회 - 상품 존재 여부 및 시간 확인)
         QueuePolicy policy = queuePolicyRepository.findByProductId(command.productId())
-            .orElseThrow(() -> new NoSuchElementException("타임딜이 운영되지 않는 상품입니다."));
+            .orElseThrow(() -> new BusinessException(QueueErrorCode.NO_TIMEDEAL_PRODUCT));
 
         QueueToken queueToken = QueueToken.create(command.productId(), command.userId());
 
@@ -54,21 +53,11 @@ public class QueueService implements QueuePort {
             policy.getTrafficSetting().getTtl());
         if (!isSuccess) {
             // 이미 대기열에 있는 경우 예외 처리
-            throw new IllegalStateException("이미 대기열에 등록된 사용자입니다.");
+            throw new BusinessException(QueueErrorCode.USER_ALREADY_IN_WAITING_QUEUE);
         }
 
-        // 현재 순번 조회
-        Long waitingRank = queueRepository.getWaitingRank(command.productId(), queueToken.getId());
-        // 요청시간 LocalDateTime 타입으로 변환
-        LocalDateTime enteredAt = convertLocalDateTime(queueToken.getRequestTime());
-
-        return QueueRedisResponse.builder()
-            .token(queueToken.getId().getValue())
-            .productId(queueToken.getProductId())
-            .rank(waitingRank)
-            .status(queueToken.getStatus())
-            .enteredAt(enteredAt)
-            .build();
+        String tokenValue = queueToken.getId().getValue().toString();
+        return getQueueRank(command.productId(), tokenValue, command.userId(), command.role());
     }
 
     /**
@@ -80,10 +69,10 @@ public class QueueService implements QueuePort {
         boolean isOwner = queueRepository.verifyTokenOwner(productId, userId, token);
         if (!isOwner) {
             log.warn("[QUEUE:ERROR] 토큰 도용 시도 감지: User {}, Token {}", userId, token);
-            throw new SecurityException("토큰 소유자가 일치하지 않습니다.");
+            throw new BusinessException(QueueErrorCode.TOKEN_OWNER_NOT_MATCH);
         }
 
-        TokenId tokenId = validateQueueToken(token);
+        TokenId tokenId = extractValidQueueTokenId(token);
 
         // 활성 상태 여부 확인
         if (queueRepository.isActivatedToken(productId, tokenId)) {
@@ -100,8 +89,10 @@ public class QueueService implements QueuePort {
         // rank는 0부터 시작 (내 앞의 대기 인원 수 (0이면 내가 1빠))
         Long waitingRank = queueRepository.getWaitingRank(productId, tokenId);
         if (waitingRank == null) {
-            // Redis에 없으면 만료되었거나 잘못된 토큰
-            throw new IllegalArgumentException("대기열에 존재하지 않는 토큰입니다.");
+            // User Index Key는 있는데 Redis에 ZSet에 없는 경우 (만료됨)
+            // => 에러를 던지면 클라이언트가 다시 enterQueue를 호출하게 되고,
+            // 그때 QueueRepository의 register 메서드에서 Index Key 삭제하고 재진입 처리
+            throw new BusinessException(QueueErrorCode.QUEUE_TOKEN_NOT_AVAILABLE);
         }
 
         // 요청시간 LocalDateTime 타입으로 변환
@@ -118,7 +109,7 @@ public class QueueService implements QueuePort {
     }
 
     @Override
-    public TokenId validateQueueToken(String token) {
+    public TokenId extractValidQueueTokenId(String token) {
         TokenId tokenId;
         try {
             tokenId = TokenId.of(UUID.fromString(token));
@@ -129,7 +120,7 @@ public class QueueService implements QueuePort {
     }
 
     @Override
-    public void activateTokens(UUID productId, TrafficSetting trafficSetting) {
+    public boolean activateTokens(UUID productId, TrafficSetting trafficSetting) {
         // 현재 활성 인원 조회
         Long currActiveCount = queueRepository.countActiveTokens(productId);
 
@@ -139,7 +130,7 @@ public class QueueService implements QueuePort {
 
         if (currActiveCount >= maxCapacity) {
             log.warn("[QUEUE] 활성열이 꽉 찼습니다. (Current: {}, Max: {})", currActiveCount, maxCapacity);
-            return;
+            return false;
         }
 
         // 활성 토큰 N개 계산 => (N = min(배치사이즈, 남은자리))
@@ -148,7 +139,7 @@ public class QueueService implements QueuePort {
         long tokenCountToActivate = Math.min(limitSize, availableCount);
 
         if (tokenCountToActivate <= 0) {
-            return;
+            return false;
         }
 
         // 대기열에서 상위 N개 토큰 조회 (Waiting -> Active 대상) : 요청 시점(Score)이 낮은 것
@@ -156,11 +147,28 @@ public class QueueService implements QueuePort {
 
         if (waitingTokensToActivate.isEmpty()) {
             log.debug("[QUEUE] 대기열이 비어있습니다.");
-            return;
+            return false;
         }
 
         // 활성 상태로 전환
         queueRepository.activateTokens(productId, waitingTokensToActivate, trafficSetting);
+        return true;
+    }
+
+    /**
+     * 대기열 퇴장/취소 (토큰 삭제 처리)
+     * 대기 중 취소하거나, 주문 완료 후 호출
+     * UserId를 넘겨서 USER_INDEX_KEY까지 확실하게 지움 -> 즉시 재진입 가능
+     */
+    @Override
+    public void exitQueue(UUID productId, String token, Long userId) {
+        TokenId tokenId = extractValidQueueTokenId(token);
+        // RedisQueueRepository로 캐스팅
+        if (queueRepository instanceof RedisQueueRepository) {
+            queueRepository.removeTokenWithUserIdxKey(productId, tokenId, userId);
+        } else {
+            queueRepository.removeToken(productId, tokenId);
+        }
     }
 
     /**
@@ -168,7 +176,7 @@ public class QueueService implements QueuePort {
      */
     @Override
     public boolean validateActivatedQueueToken(UUID productId, String token) {
-        TokenId tokenId = validateQueueToken(token);
+        TokenId tokenId = extractValidQueueTokenId(token);
         return queueRepository.isActivatedToken(productId, tokenId);
     }
 

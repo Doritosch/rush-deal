@@ -1,6 +1,7 @@
 package com.rushcrew.queue.application.service;
 
 import com.rushcrew.common.exception.BusinessException;
+import com.rushcrew.queue.application.command.policy.CreatePolicyCommand;
 import com.rushcrew.queue.application.command.policy.SearchPolicyCommand;
 import com.rushcrew.queue.application.command.policy.UpdatePolicyCommand;
 import com.rushcrew.queue.application.dto.PageQuery;
@@ -35,8 +36,7 @@ public class QueuePolicyService implements QueuePolicyPort {
      */
     @Override
     @Transactional
-    public QueuePolicyQueryResponse createQueuePolicy(
-        com.rushcrew.queue.application.command.policy.CreatePolicyCommand command, Long userId, String role) {
+    public QueuePolicyQueryResponse createQueuePolicy(CreatePolicyCommand command, Long userId, String role) {
         // 권한 유효성 검사
         queuePolicyValidator.validateMasterRole(userId, role);
 
@@ -109,10 +109,10 @@ public class QueuePolicyService implements QueuePolicyPort {
         // 권한 유효성 검사
         queuePolicyValidator.validateMasterRole(userId, role);
         QueuePolicy queuePolicy = getQueuePolicy(policyId);
-        queuePolicy.update(queuePolicy.getTimeDealName(),
-            queuePolicy.getStatus(),
-            queuePolicy.getTimePeriod(),
-            queuePolicy.getTrafficSetting());
+        queuePolicy.update(command.timeDealName(),
+            command.status(),
+            command.timePeriod(),
+            command.trafficSetting());
         return QueuePolicyQueryResponse.from(queuePolicy);
     }
 
