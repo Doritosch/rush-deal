@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.rushcrew.common.entity.BaseEntity;
@@ -286,5 +288,28 @@ public class Order extends BaseEntity {
 	public BigDecimal getFinalAmount() {
 		return amount.getFinalAmount();
 	}
+
+	public Map<String, Object> toEventPayload() {
+		Map<String, Object> payload = new HashMap<>();
+		payload.put("orderId", this.orderId);
+		payload.put("userId", this.userId);
+		payload.put("amount", Map.of(
+			"totalAmount", this.amount.getTotalAmount(),
+			"finalAmount", this.amount.getFinalAmount(),
+			"pointUsed", this.amount.getPointUsed()
+		));
+		payload.put("status", this.status.name());
+		payload.put("items", this.orderItems.stream()
+			.map(item -> Map.of(
+				"timeDealStockId", item.getTimeDealStockId(),
+				"quantity", item.getQuantity(),
+				"unitPrice", item.getUnitPrice(),
+				"discountPrice", item.getDiscountPrice()
+			))
+			.toList()
+		);
+		return payload;
+	}
+
 
 }

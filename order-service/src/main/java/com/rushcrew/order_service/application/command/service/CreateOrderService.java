@@ -21,10 +21,10 @@ public class CreateOrderService implements CreateOrderUseCase {
 
 	@Override
 	public CreateOrderResult createOrder(CreateOrderCommand command) {
-		log.info("주문 생성 시작: userId={}, productId={}", command.userId(), command.productId());
-		CreateOrderResult result = sagaOrchestrator.execute(command);	// Saga 실행
-		orderCachePort.saveOrderCache(result);	// Redis 캐시 저장
-		log.info("주문 생성 완료: orderId={}", result.orderId());
-		return result;
+		log.info("주문 생성 Saga 시작: userId={}", command.userId());
+		// Saga 시작만 수행
+		var sagaId = sagaOrchestrator.execute(command);
+		// 즉시 응답 (비동기 처리)
+		return CreateOrderResult.accepted(sagaId);
 	}
 }

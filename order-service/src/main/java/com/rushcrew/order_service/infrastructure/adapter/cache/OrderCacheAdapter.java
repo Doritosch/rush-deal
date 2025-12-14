@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rushcrew.order_service.application.command.dto.result.CreateOrderResult;
+import com.rushcrew.order_service.application.command.dto.result.CreatedOrderInfo;
 import com.rushcrew.order_service.application.command.port.out.OrderCachePort;
 import com.rushcrew.order_service.application.query.dto.OrderDetailDto;
 
@@ -28,36 +28,36 @@ public class OrderCacheAdapter implements OrderCachePort {
 	private static final long ORDER_CACHE_TTL = 3600; // 1시간
 
 	@Override
-	public void saveOrderCache(CreateOrderResult result) {
+	public void saveOrderCache(CreatedOrderInfo info) {
 		try {
 			// 1. 주문 상세 정보 저장 (String)
-			String orderKey = ORDER_KEY_PREFIX + result.orderId();
-			OrderDetailDto dto = convertToOrderDetailDto(result);
+			String orderKey = ORDER_KEY_PREFIX + info.orderId();
 
 			redisTemplate.opsForValue().set(
 				orderKey,
-				objectMapper.writeValueAsString(dto),
+				objectMapper.writeValueAsString(info),
 				ORDER_CACHE_TTL,
 				TimeUnit.SECONDS
 			);
 
 			// 2. 사용자별 주문 목록에 추가 (Sorted Set)
-			String userOrdersKey = USER_ORDERS_KEY_PREFIX + result.userId();
-			double score = result.orderedAt().toEpochMilli(); // 타임스탬프를 score로 사용
+			String userOrdersKey = USER_ORDERS_KEY_PREFIX + info.userId();
+			double score = info.orderedAt().toEpochMilli(); // 타임스탬프를 score로 사용
 
 			redisTemplate.opsForZSet().add(
 				userOrdersKey,
-				result.orderId().toString(),
+				info.orderId().toString(),
 				score
 			);
 
 			// 3. 사용자별 주문 목록 TTL 설정
 			redisTemplate.expire(userOrdersKey, 24, TimeUnit.HOURS);
 
-			log.info("주문 캐시 저장 완료: orderId={}", result.orderId());
+			log.info("주문 캐시 저장 완료: orderId={}", info.orderId());
 
 		} catch (JsonProcessingException e) {
-			log.error("주문 캐시 저장 실패: orderId={}", result.orderId(), e);
+			log.error("주문 캐시 저장 실패: orderId={}", info.orderId(), e);
+			throw new RuntimeException("Redis 캐시 저장 실패", e);
 		}
 	}
 
@@ -77,19 +77,28 @@ public class OrderCacheAdapter implements OrderCachePort {
 
 		} catch (JsonProcessingException e) {
 			log.error("주문 캐시 업데이트 실패: orderId={}", orderId, e);
+			throw new RuntimeException("Redis 캐시 업데이트 실패", e);
 		}
 	}
 
-	private OrderDetailDto convertToOrderDetailDto(CreateOrderResult result) {
-		return OrderDetailDto.builder()
-			.orderId(result.orderId())
-			.userId(result.userId())
-			.orderStatus(result.orderStatus())
-			.totalAmount(result.totalAmount())
-			.pointUsed(result.pointUsed())
-			.finalAmount(result.finalAmount())
-			.orderedAt(result.orderedAt())
-			.orderItems(result.orderItems())
-			.build();
+	@Override
+	public boolean existsInCache(UUID orderId) {
+		try {
+			String key = ORDER_KEY_PREFIX + orderId;
+			Boolean exists = redisTemplate.hasKey(key);
+
+			if (exists != null && exists) {
+				log.debug("캐시에 존재하는 주문: orderId={}", orderId);
+				return true;
+			}
+
+			log.debug("캐시에 존재하지 않는 주문: orderId={}", orderId);
+			return false;
+
+		} catch (Exception e) {
+			log.error("캐시 존재 여부 확인 실패: orderId={}", orderId, e);
+			// Redis 장애 시에도 false 반환 (멱등성 체크 실패해도 업데이트는 진행)
+			return false;
+		}
 	}
 }

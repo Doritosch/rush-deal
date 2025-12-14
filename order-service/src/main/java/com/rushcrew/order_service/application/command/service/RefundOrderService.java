@@ -1,6 +1,5 @@
 package com.rushcrew.order_service.application.command.service;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,8 +81,7 @@ public class RefundOrderService implements RefundOrderUseCase {
 					savedOrder.getUserId(),
 					savedOrder.getOrderId(),
 					savedOrder.getPointUsed(),
-					"주문 환불에 의한 포인트 환불",
-					Instant.now()
+					"주문 환불에 의한 포인트 환불"
 				);
 			} catch (Exception e) {
 				log.error("포인트 이벤트 발행 실패", e);

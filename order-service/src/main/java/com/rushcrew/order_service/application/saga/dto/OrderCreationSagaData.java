@@ -1,11 +1,10 @@
 package com.rushcrew.order_service.application.saga.dto;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
-import com.rushcrew.order_service.application.command.dto.result.CreateOrderResult;
+import com.rushcrew.order_service.domain.vo.ProductSnapshot;
 
 import lombok.*;
 
@@ -15,14 +14,28 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderCreationSagaData {
+
+	/**
+	 * 주문 요청 원본
+	 */
 	private CreateOrderCommand command;
 
-	// Step 실행 결과
-	private BigDecimal totalAmount;
-	private BigDecimal finalAmount;
-	private List<CreateOrderResult.OrderItemResult> orderItems;
+	/**
+	 * ValidateStockStep에서 확정된 상품 스냅샷
+	 * (타임딜, 옵션, 가격, 할인 정보 포함)
+	 */
+	private List<ProductSnapshot> productSnapshots;
 
-	// 생성된 주문 ID
+	/**
+	 * 주문 생성 결과
+	 */
 	private UUID orderId;
 
+	public void bindOrderId(UUID orderId) {
+		this.orderId = orderId;
+	}
+
+	public boolean isOrderCreated() {
+		return orderId != null;
+	}
 }

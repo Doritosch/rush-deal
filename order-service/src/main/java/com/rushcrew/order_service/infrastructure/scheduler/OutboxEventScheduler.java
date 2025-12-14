@@ -166,6 +166,10 @@ public class OutboxEventScheduler {
 			// 포인트 이벤트
 			case "POINT_EARN_REQUESTED" -> "point.earn.requested";
 			case "POINT_REFUND_REQUESTED" -> "point.refund.requested";
+			case "POINT_DEDUCT_REQUESTED" -> "point.deduct.requested";
+
+			// 재고 예약 이벤트
+			case "STOCK_RESERVATION_REQUESTED" -> "stock.reservation.requested";
 
 			// 재고 이벤트
 			case "STOCK_RESERVATION_CANCELLED" -> "stock.reservation.cancelled";

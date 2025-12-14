@@ -42,7 +42,7 @@ public class OrderItem extends BaseEntity {
 	private UUID timeDealStockId;
 
 	@Column(nullable = false)
-	private Integer quantity;
+	private Long quantity;
 
 	@Column(nullable = false, precision = 12, scale = 2)
 	private BigDecimal unitPrice; // 상품 원가
@@ -68,7 +68,7 @@ public class OrderItem extends BaseEntity {
 
 	public static OrderItem create(
 		UUID timeDealStockId,
-		Integer quantity,
+		Long quantity,
 		BigDecimal unitPrice,
 		BigDecimal discountPrice,
 		ProductSnapshot productSnapshot
