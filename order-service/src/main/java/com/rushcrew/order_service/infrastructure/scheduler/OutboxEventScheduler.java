@@ -28,11 +28,16 @@ public class OutboxEventScheduler {
 
 	/**
 	 * 5초마다 PENDING 이벤트를 Kafka로 발행
+	 * 
+	 * 동시성 제어: FOR UPDATE SKIP LOCKED를 사용하여 여러 인스턴스가
+	 * 동시에 실행해도 같은 이벤트를 중복 처리하지 않도록 보장
 	 */
 	@Scheduled(fixedDelay = 5000)
+	@Transactional
 	public void publishPendingEvents() {
+		// 동시성 제어를 위해 FOR UPDATE SKIP LOCKED 사용
 		List<OutboxEventEntity> pendingEvents =
-			outboxRepository.findPendingEvents(Pageable.ofSize(100));
+			outboxRepository.findPendingEventsForUpdate(100);
 
 		if (pendingEvents.isEmpty()) {
 			return;

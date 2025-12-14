@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
 import com.rushcrew.order_service.application.command.dto.result.CreateOrderResult;
-import com.rushcrew.order_service.application.command.port.out.OrderCachePort;
 import com.rushcrew.order_service.application.command.usecase.CreateOrderUseCase;
 import com.rushcrew.order_service.application.saga.orchestrator.OrderCreationSagaOrchestrator;
 
@@ -17,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 public class CreateOrderService implements CreateOrderUseCase {
 
 	private final OrderCreationSagaOrchestrator sagaOrchestrator;
-	private final OrderCachePort orderCachePort;
 
 	@Override
 	public CreateOrderResult createOrder(CreateOrderCommand command) {

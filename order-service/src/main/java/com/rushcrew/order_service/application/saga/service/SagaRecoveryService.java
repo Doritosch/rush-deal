@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
 import com.rushcrew.order_service.application.saga.step.DeductPointStep;
 import com.rushcrew.order_service.domain.enums.SagaStatus;
@@ -46,9 +47,12 @@ public class SagaRecoveryService {
 			.userId(sagaInstance.getUserId())
 			.build();
 
+		// SagaData 복원
+		OrderCreationSagaData data = sagaInstance.restoreData();
+
 		for (SagaStep step : completedSteps) {
 			try {
-				compensateStep(step.getStepName(), context);
+				compensateStep(step.getStepName(), context, data);
 				step.markAsCompensated();
 			} catch (Exception e) {
 				log.error("보상 실패: sagaId={}, step={}",
@@ -61,11 +65,13 @@ public class SagaRecoveryService {
 		log.info("Saga 보상 완료: sagaId={}", sagaInstance.getSagaId());
 	}
 
-	private void compensateStep(String stepName, SagaContext context) {
+	private void compensateStep(String stepName, SagaContext context, OrderCreationSagaData data) {
 		switch (stepName) {
 
 			case "DEDUCT_POINT":
-				deductPointStep.compensate(context, null);
+				if (data != null) {
+					deductPointStep.compensate(context, data);
+				}
 				break;
 
 			case "REQUEST_STOCK_RESERVATION":

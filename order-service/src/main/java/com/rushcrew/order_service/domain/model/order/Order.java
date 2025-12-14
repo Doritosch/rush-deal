@@ -141,16 +141,6 @@ public class Order extends BaseEntity {
 		);
 	}
 
-	// 포인트 차감 실패 이력 기록
-	public void recordPointDeductionFailed(String reason) {
-		addHistory(
-			OrderEventType.POINT_DEDUCTION_FAILED,
-			this.status,
-			this.status,  // 상태는 PENDING 유지
-			reason
-		);
-	}
-
 	// 결제 전 주문 취소
 	public void cancelBeforePayment(String reason) {
 		this.status.validateCanCancelBeforePayment();
@@ -166,10 +156,18 @@ public class Order extends BaseEntity {
 		);
 	}
 
-	// 환불 (결제 완료 후)
+	/**
+	 * 환불 (결제 완료 후, 구매확정 전)
+	 * 
+	 * 환불은 PAID 상태에서만 가능
+	 * 구매확정(PURCHASE_CONFIRMED) 후에는 환불 불가능
+	 * 
+	 * @param reason 환불 사유
+	 * @throws IllegalStateException PAID 상태가 아닌 경우
+	 */
 	public void refund(String reason) {
-		this.status.validateCanRefund();
-		this.status.validateTransition(OrderStatus.REFUNDED);
+		this.status.validateCanRefund(); // PAID 상태만 허용
+		this.status.validateTransition(OrderStatus.REFUNDED); // PAID -> REFUNDED만 허용
 		OrderStatus previousStatus = this.status;
 		this.status = OrderStatus.REFUNDED;
 		this.refundedAt = Instant.now();
