@@ -24,7 +24,7 @@ public interface OrderJpaRepository extends JpaRepository<Order, UUID> {
           AND oi.product_snapshot ->> 'productId' = :productId
           AND o.status IN ('PAID', 'PURCHASE_CONFIRMED')
     """, nativeQuery = true)
-	Integer getTotalPurchasedQuantity(
+	Long getTotalPurchasedQuantity(
 		@Param("userId") Long userId,
 		@Param("productId") UUID productId);
 

@@ -62,7 +62,7 @@ public class OrderDetailResponse {
 		private UUID orderItemId;
 		private String productName;
 		private String optionName;
-		private Integer quantity;
+		private Long quantity;
 		private BigDecimal unitPrice;
 		private BigDecimal discountPrice;
 		private BigDecimal subtotal;

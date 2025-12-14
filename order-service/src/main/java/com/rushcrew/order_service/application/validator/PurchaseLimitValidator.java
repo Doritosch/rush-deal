@@ -26,14 +26,14 @@ public class PurchaseLimitValidator {
 		TimeDealInfo timeDeal
 	) {
 		// 요청 수량 합계
-		int requestQuantity = items.stream()
-			.mapToInt(CreateOrderCommand.OrderItemCommand::quantity).sum();
+		long requestQuantity = items.stream()
+			.mapToLong(CreateOrderCommand.OrderItemCommand::quantity).sum();
 
 		// 기존 구매 수량
-		Integer totalPurchased = orderCommandPort.getTotalPurchasedQuantity(userId, productId);
+		Long totalPurchased = orderCommandPort.getTotalPurchasedQuantity(userId, productId);
 
 		// 제한 수량 확인
-		Integer limitQuantity = timeDeal.limitQuantity();
+		Long limitQuantity = timeDeal.limitQuantity();
 
 		if (limitQuantity != null && (totalPurchased + requestQuantity) > limitQuantity) {
 			throw new BusinessException(OrderErrorCode.PURCHASE_LIMIT_EXCEEDED);

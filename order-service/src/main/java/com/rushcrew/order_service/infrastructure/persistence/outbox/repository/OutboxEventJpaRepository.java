@@ -35,11 +35,14 @@ public interface OutboxEventJpaRepository extends JpaRepository<OutboxEventEntit
 	 * @param limit 조회할 최대 이벤트 수
 	 * @return 처리 가능한 PENDING 이벤트 목록
 	 */
-	@Query(value = "SELECT * FROM p_outbox_event o " +
-		"WHERE o.status = 'PENDING' " +
-		"ORDER BY o.created_at ASC " +
-		"LIMIT :limit " +
-		"FOR UPDATE SKIP LOCKED", nativeQuery = true)
+	@Query(
+		value = "SELECT * FROM order_schema.p_outbox_event o " +
+			"WHERE o.status = 'PENDING' " +
+			"ORDER BY o.created_at ASC " +
+			"LIMIT :limit " +
+			"FOR UPDATE SKIP LOCKED",
+		nativeQuery = true
+	)
 	List<OutboxEventEntity> findPendingEventsForUpdate(@Param("limit") int limit);
 
 
