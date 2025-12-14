@@ -1,5 +1,6 @@
 package com.rushcrew.timedeal.infrastructure.repository;
 
+import com.rushcrew.timedeal.application.result.TimeDealForOrderResult;
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.domain.entity.TimeDeal;
 import com.rushcrew.timedeal.domain.entity.TimeDealProduct;
@@ -44,4 +45,16 @@ public class TimeDealRepositoryAdapter implements TimeDealRepository {
     public Optional<TimeDealProduct> findProductByProductId(UUID productId) {
         return timeDealJpaRepository.findProductByProductId(productId);
     }
+
+	@Override
+	public Optional<TimeDealForOrderResult> findForOrder(UUID timeDealId) {
+		return timeDealJpaRepository.findForOrderNative(timeDealId)
+			.map(v -> new TimeDealForOrderResult(
+				v.getTimeDealId(),
+				v.getTitle(),
+				v.getStatus(),
+				v.getDiscountPrice(),
+				v.getLimitQuantity()
+			));
+	}
 }

@@ -5,6 +5,7 @@ import com.rushcrew.timedeal.application.command.CreateTimeDealCommand;
 import com.rushcrew.timedeal.application.command.UpdateTimeDealCommand;
 import com.rushcrew.timedeal.application.model.ProductInfo;
 import com.rushcrew.timedeal.application.result.TimeDealDetailResult;
+import com.rushcrew.timedeal.application.result.TimeDealForOrderResult;
 import com.rushcrew.timedeal.application.result.TimeDealProductResult;
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.application.result.UpdateTimeDealResult;
@@ -97,4 +98,11 @@ public class TimeDealServiceImpl implements TimeDealService {
 
         return TimeDealDetailResult.of(timeDeal, timeDealProdutResultList);
     }
+
+	@Override
+	@Transactional(readOnly = true)
+	public TimeDealForOrderResult getTimeDealForOrder(UUID timeDealId) {
+		return timeDealRepository.findForOrder(timeDealId)
+			.orElseThrow(() -> new BusinessException(TimeDealErrorCode.NOT_FOUND_TIME_DEAL));
+	}
 }

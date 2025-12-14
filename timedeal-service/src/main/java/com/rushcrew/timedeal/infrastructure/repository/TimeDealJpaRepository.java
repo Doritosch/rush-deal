@@ -1,5 +1,7 @@
 package com.rushcrew.timedeal.infrastructure.repository;
 
+import com.rushcrew.timedeal.application.result.TimeDealForOrderResult;
+import com.rushcrew.timedeal.application.result.TimeDealForOrderView;
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.domain.entity.TimeDeal;
 import com.rushcrew.timedeal.domain.entity.TimeDealProduct;
@@ -58,4 +60,23 @@ public interface TimeDealJpaRepository extends JpaRepository<TimeDeal, UUID> {
     Optional<TimeDealProduct> findProductByProductId(
         @Param(value = "productId") UUID productId
     );
+
+	// TimeDeal 엔티티 영속성 컨텍스트에 안 올라감
+	// dirty checking X
+	// flush 영향 X
+	// 순수 SELECT
+	@Query(
+		value = """
+            SELECT
+                td.id               AS timeDealId,
+                td.title            AS title,
+                td.status           AS status,
+                td.discount_price   AS discountPrice,
+                td.limit_quantity   AS limitQuantity
+            FROM timedeal_schema.p_time_deal td
+            WHERE td.id = :timeDealId
+        """,
+		nativeQuery = true
+	)
+	Optional<TimeDealForOrderView> findForOrderNative(@Param("timeDealId") UUID timeDealId);
 }
