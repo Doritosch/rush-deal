@@ -1,5 +1,7 @@
 package com.rushcrew.queue.infrastructure.repository;
 
+import com.rushcrew.common.exception.BusinessException;
+import com.rushcrew.queue.common.QueueErrorCode;
 import com.rushcrew.queue.domain.entity.QueueToken;
 import com.rushcrew.queue.domain.repository.QueueRepository;
 import com.rushcrew.queue.domain.vo.TokenId;
@@ -57,7 +59,7 @@ public class RedisQueueRepository implements QueueRepository {
         if (secondsUntilClose < 0) {
             // 이미 종료된 이벤트면 진입 불가 처리
             log.warn("[QUEUE:ERROR] 이미 종료된 이벤트입니다. productId={}", token.getProductId());
-            return false;
+            throw new BusinessException(QueueErrorCode.NO_TIMEDEAL_PRODUCT);
         }
 
         // redis 사용자 인덱스 키 생성

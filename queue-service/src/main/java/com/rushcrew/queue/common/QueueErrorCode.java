@@ -21,6 +21,7 @@ public enum QueueErrorCode implements ErrorCode {
     PRODUCT_SOLD_OUT(HttpStatus.SERVICE_UNAVAILABLE, "PRODUCT_SOLD_OUT", "해당 상품이 품절되었습니다.")
 
 
+
     ;
 
 
