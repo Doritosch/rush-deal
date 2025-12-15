@@ -74,7 +74,7 @@ public class QueueEventConsumer {
     }
 
     @KafkaListener(topics = "product-sold-out", groupId = "queue-service-group")
-    public void handleSoldOutEvent(SoldOutEvent event) {
+    public void handleSoldOutEvent(SoldOutEvent event, Acknowledgment ack) {
         log.info("[QUEUE:Kafka:Consume] 상품 재고품절 이벤트 수신: - ProductId: {}", event.productId());
 
         QueuePolicy queuePolicy = queuePolicyRepository.findByProductId(event.productId())
@@ -82,6 +82,9 @@ public class QueueEventConsumer {
 
         // Redis에 품절 정보 기록
         redisQueueRepository.setSoldOut(event.productId(), queuePolicy.getTimePeriod().getEndTime());
+
+        // 수동 커밋 실행 - KafkaConsumerConfig에 AckMode.MANUAL_IMMEDIATE가 설정되어 있으므로 필수
+        ack.acknowledge();
 
         // (추후 선택사항) 현재 대기열에 있는 사람들에게 웹소켓 등으로 "품절되었습니다" 알림
     }
