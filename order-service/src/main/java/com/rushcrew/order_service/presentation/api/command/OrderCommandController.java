@@ -3,7 +3,9 @@ package com.rushcrew.order_service.presentation.api.command;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.rushcrew.order_service.global.security.model.UserDetailsImpl;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -62,12 +64,11 @@ public class OrderCommandController {
 	@PostMapping
 	@PreAuthorize("hasAnyRole('USER', 'MASTER', 'SELLER')")
 	public ApiResponse<CreateOrderResponse> createOrder(
-		@Valid @RequestBody CreateOrderRequest request,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
-	) {
+			@Valid @RequestBody CreateOrderRequest request,
+			@AuthenticationPrincipal UserDetailsImpl userDetails
+			) {
 		CreateOrderCommand command = CreateOrderCommand.builder()
-			.userId(userId)
+			.userId(userDetails.userId())
 			.timeDealId(UUID.fromString(request.timeDealId()))
 			.orderItems(request.orderItems().stream()
 				.map(item -> CreateOrderCommand.OrderItemCommand.builder()
@@ -91,12 +92,11 @@ public class OrderCommandController {
 	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<RequestPaymentResponse> requestPayment(
 		@PathVariable UUID orderId,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
+		@AuthenticationPrincipal UserDetailsImpl userDetails
 	) {
 		RequestPaymentCommand command = RequestPaymentCommand.builder()
 			.orderId(orderId)
-			.userId(userId)
+			.userId(userDetails.userId())
 			.build();
 
 		RequestPaymentResult result = requestPaymentUseCase.requestPayment(command);
@@ -111,12 +111,11 @@ public class OrderCommandController {
 	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<ConfirmPurchaseResponse> confirmPurchase(
 		@PathVariable UUID orderId,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
+		@AuthenticationPrincipal UserDetailsImpl userDetails
 	) {
 		ConfirmPurchaseCommand command = ConfirmPurchaseCommand.builder()
 			.orderId(orderId)
-			.userId(userId)
+			.userId(userDetails.userId())
 			.build();
 
 		ConfirmPurchaseResult result = confirmPurchaseUseCase.confirmPurchase(command);
@@ -132,12 +131,11 @@ public class OrderCommandController {
 	public ApiResponse<UpdateOrderResponse> updateOrder(
 		@PathVariable UUID orderId,
 		@Valid @RequestBody UpdateOrderRequest request,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
+		@AuthenticationPrincipal UserDetailsImpl userDetails
 	) {
 		UpdateOrderCommand command = UpdateOrderCommand.builder()
 			.orderId(orderId)
-			.userId(userId)
+			.userId(userDetails.userId())
 			.shippingInfo(request.shippingInfo() != null ? request.shippingInfo().toShippingInfo() : null)
 			.pointUsed(request.pointUsed())
 			.build();
@@ -154,12 +152,11 @@ public class OrderCommandController {
 	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<CancelOrderResponse> cancelOrder(
 		@PathVariable UUID orderId,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
+		@AuthenticationPrincipal UserDetailsImpl userDetails
 	) {
 		CancelOrderCommand command = CancelOrderCommand.builder()
 			.orderId(orderId)
-			.userId(userId)
+			.userId(userDetails.userId())
 			.build();
 
 		CancelOrderResult result = cancelOrderUseCase.cancelOrder(command);
@@ -174,15 +171,14 @@ public class OrderCommandController {
 	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<RefundOrderResponse> refundOrder(
 		@PathVariable UUID orderId,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role,
+		@AuthenticationPrincipal UserDetailsImpl userDetails,
 		@RequestBody(required = false) java.util.Map<String, String> requestBody
 	) {
 		String reason = requestBody != null ? requestBody.get("reason") : null;
 
 		RefundOrderCommand command = RefundOrderCommand.builder()
 			.orderId(orderId)
-			.userId(userId)
+			.userId(userDetails.userId())
 			.reason(reason)
 			.build();
 

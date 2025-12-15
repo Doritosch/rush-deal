@@ -1,10 +1,12 @@
 package com.rushcrew.order_service.presentation.api.batch;
 
+import com.rushcrew.order_service.global.security.model.UserDetailsImpl;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,12 +32,7 @@ public class BatchController {
 	 */
 	@PostMapping("/auto-confirm")
 	@PreAuthorize("hasRole('MASTER')")
-	public ApiResponse<String> runAutoConfirmBatch(
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
-	) {
-		RoleChecker.checkRole(role, "MASTER");
-
+	public ApiResponse<String> runAutoConfirmBatch() {
 		log.info("====== 트리거 매뉴얼: 자동 구매확정 배치 ======");
 
 		try {
