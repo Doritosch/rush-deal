@@ -1,4 +1,4 @@
-package com.rushcrew.order_service.infrastructure.messaging.event;
+package com.rushcrew.timedeal.infrastructure.kafka.dto;
 
 import java.time.Instant;
 
@@ -8,7 +8,6 @@ public record StockReservationFailedEvent(
 	String reason,
 	Instant occurredAt
 ) {
-
 	public static StockReservationFailedEvent of(
 		String sagaId,
 		String productId,

@@ -1,20 +1,16 @@
 package com.rushcrew.timedeal.infrastructure.kafka.dto;
 
-import jakarta.validation.constraints.NotNull;
-import java.util.UUID;
+import java.util.List;
 
 public record StockReserveEvent(
-    @NotNull
-    UUID orderId,
-
-    @NotNull
-    UUID stockId,
-
-    @NotNull
-    Long quantity,
-
-    @NotNull
-    Long userId
+	String sagaId,
+	Long userId,
+	String timeDealId,
+	String productId,
+	List<OrderItem> orderItems
 ) {
-
+	public record OrderItem(
+		String timeDealStockId,
+		Long quantity  // int가 아니라 Integer (JSON 파싱을 위해)
+	) {}
 }
