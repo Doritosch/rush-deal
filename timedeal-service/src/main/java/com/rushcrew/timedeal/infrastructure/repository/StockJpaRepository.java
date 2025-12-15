@@ -1,6 +1,7 @@
 package com.rushcrew.timedeal.infrastructure.repository;
 
 import com.rushcrew.timedeal.application.result.StockResult;
+import com.rushcrew.timedeal.domain.entity.StockLog;
 import com.rushcrew.timedeal.domain.entity.TimeDealStock;
 import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
 import java.util.Optional;
@@ -68,5 +69,18 @@ public interface StockJpaRepository extends JpaRepository<TimeDealStock, UUID> {
         """)
     StockResult findStockResultById(
         @Param("stockId") UUID stockId
+    );
+
+    @Query("""
+                SELECT sl
+                FROM StockLog sl
+                WHERE sl.timeDealStock.id = :stockId
+                  AND sl.orderId.orderId = :orderId
+                ORDER BY sl.createdAt DESC
+                FETCH FIRST 1 ROW ONLY
+        """)
+    Optional<StockLog> findLastByStockIdAndOrderId(
+        @Param("stockId") UUID stockId,
+        @Param("orderId") UUID orderId
     );
 }
