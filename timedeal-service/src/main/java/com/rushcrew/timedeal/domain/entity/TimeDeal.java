@@ -99,6 +99,10 @@ public class TimeDeal extends BaseEntity {
         return timeDeal;
     }
 
+    public void updateStatus(TimeDealStatus timeDealStatus) {
+        this.status = timeDealStatus;
+    }
+
     public void update(UpdateTimeDealParams params) {
         updateTimeDealInfo(params.title(), params.description());
         this.price = params.discountPrice() != null ? Price.of(params.discountPrice()) : this.price;
@@ -112,6 +116,17 @@ public class TimeDeal extends BaseEntity {
             throw new BusinessException(TimeDealErrorCode.ALREADY_ENDED);
         }
         this.status = TimeDealStatus.ENDED;
+    }
+
+    public void updateStatusByPeriod(Instant now) {
+        Instant start = this.period.getStartAt();
+        Instant end = this.period.getEndAt();
+
+        if (now.isAfter(end)) { // 종료 후
+            this.status = TimeDealStatus.ENDED;
+        } else if (!now.isBefore(start) && !now.isAfter(end)) { // 진행중
+            this.status = TimeDealStatus.IN_PROGRESS;
+        }
     }
 
     private void addTimeDealProduct(UUID productId, UUID optionId) {
@@ -134,6 +149,10 @@ public class TimeDeal extends BaseEntity {
     private void updatePeriod(Instant newStartAt, Instant newEndAt) {
         if (newStartAt == null && newEndAt == null) {
             return;
+        }
+
+        if (!this.status.equals(TimeDealStatus.SCHEDULED)) {
+            throw new BusinessException(TimeDealErrorCode.TIME_DEAL_UPDATE_NOT_ALLOWED);
         }
 
         Instant updatedStartAt = newStartAt != null ? newStartAt : this.getPeriod().getStartAt();

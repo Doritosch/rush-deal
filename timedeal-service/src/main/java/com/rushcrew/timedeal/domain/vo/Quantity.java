@@ -17,13 +17,21 @@ public class Quantity {
     private Long quantity;
 
     private Quantity(Long quantity) {
-        if (quantity <= 0) {
+        if (quantity == 0) {
             throw new BusinessException(TimeDealErrorCode.INVALID_QUANTITY_RANGE);
         }
         this.quantity = quantity;
     }
 
     public static Quantity of(Long quantity) {
+        return new Quantity(quantity);
+    }
+
+    public static Quantity nonZero(Long quantity) {
+        return new Quantity(quantity);
+    }
+
+    public static Quantity positive(Long quantity) {
         return new Quantity(quantity);
     }
 }
