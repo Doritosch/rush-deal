@@ -1,5 +1,6 @@
 package com.rushcrew.order_service.application.command.dto.command;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,6 +23,7 @@ public record CreateOrderCommand(
 	@Builder
 	public record OrderItemCommand(
 		UUID timeDealStockId,
-		Long quantity
+		Long quantity,
+		BigDecimal price
 	) {}
 }

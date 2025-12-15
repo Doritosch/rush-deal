@@ -31,7 +31,7 @@ public class CreateOrderStep {
 
 		CreateOrderCommand command = data.getCommand();
 
-		// 1. OrderItem 생성 (ProductSnapshot 제거)
+		// 1. OrderItem 생성
 		var orderItems = command.orderItems().stream()
 			.map(itemCommand -> OrderItem.create(
 				itemCommand.timeDealStockId(),

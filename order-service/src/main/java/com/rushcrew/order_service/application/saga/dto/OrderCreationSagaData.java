@@ -3,6 +3,7 @@ package com.rushcrew.order_service.application.saga.dto;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
 import com.rushcrew.order_service.domain.vo.ProductSnapshot;
 
@@ -13,6 +14,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)	// 알 수 없는 필드는 무시하고 필요한 필드만 역직렬화
 public class OrderCreationSagaData {
 
 	/**

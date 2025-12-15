@@ -82,13 +82,16 @@ public class ValidateStockStep {
 			return SagaStepResult.success();
 
 		} catch (BusinessException e) {
-			log.error("[Saga-{}] ValidateStock 비즈니스 실패: {}",
-				context.getSagaId(), e.getMessage());
-			return SagaStepResult.failure(e.getMessage());
+			String errorMsg = e.getMessage() != null ? e.getMessage() : "비즈니스 검증 실패";
+			log.error("[Saga-{}] ValidateStock 비즈니스 실패 - ExceptionType: {}, Message: {}",
+				context.getSagaId(), e.getClass().getSimpleName(), errorMsg, e);
+			return SagaStepResult.failure(errorMsg);
 
 		} catch (Exception e) {
-			log.error("[Saga-{}] ValidateStock 예외 발생", context.getSagaId(), e);
-			return SagaStepResult.failure("재고 검증 실패");
+			String errorMsg = "재고 검증 중 오류 발생: " + e.getClass().getSimpleName();
+			log.error("[Saga-{}] ValidateStock 예외 발생 - {}",
+				context.getSagaId(), errorMsg, e);
+			return SagaStepResult.failure(errorMsg);
 		}
 	}
 }
