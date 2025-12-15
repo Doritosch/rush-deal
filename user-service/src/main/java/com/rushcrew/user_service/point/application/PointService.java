@@ -41,6 +41,7 @@ public class PointService {
     private static final int CONFIRM_PERIOD_DAYS = 7;
 
     // 주문 생성 시 예비 적립 포인트 이력 생성
+    @Transactional
     public void createPendingPoint(CreatePendingPointCommand command) {
         executeWithLock(command.userId(), () -> {
             PointHistory history = pointDomainService.createPendingEarnHistory(
@@ -53,6 +54,7 @@ public class PointService {
     }
 
     // 주문 시 사용 포인트 대기 이력 생성
+    @Transactional
     public void usePoints(UsePointCommand command) {
         executeWithLock(command.userId(), () -> {
             PointHistory history = pointDomainService.createPendingUseHistory(
@@ -65,6 +67,7 @@ public class PointService {
     }
 
     // 주문 취소 시 해당 주문의 모든 대기 포인트 이력 취소 처리
+    @Transactional
     public void cancelOrder(CancelOrderCommand command) {
         executeWithLock(command.userId(), () -> {
             List<PointHistory> cancelHistories =
