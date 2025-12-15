@@ -99,6 +99,20 @@ public class StockLog extends BaseEntity {
             .build();
     }
 
+    public static StockLog restore(
+        TimeDealStock stock, OrderId orderId, Quantity quantity, EventType eventType,
+        String description
+    ) {
+        return StockLog.builder()
+            .timeDealStock(stock)
+            .orderId(orderId)
+            .eventType(eventType)
+            .description(description)
+            .quantity(quantity)
+            .build();
+      
+    }
+  
     public void validateOrderQuantity(Quantity quantity) {
         if (!Objects.equals(this.getQuantity().getQuantity(), quantity.getQuantity())) {
             throw new BusinessException(TimeDealErrorCode.INVALID_ORDER_INFO);
