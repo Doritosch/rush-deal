@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import kotlin.Unit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -31,6 +32,7 @@ public class PaymentController {
      * @return paymentId (우리 시스템의 Payment ID), portOnePaymentId (PortOne에서 사용할 ID)
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('CONSUMER', 'SELLER', 'MASTER')")
     public ResponseEntity<PaymentPrepareResponse> preparePayment(
             @Valid @RequestBody PaymentRequest request
     ) {
@@ -59,6 +61,7 @@ public class PaymentController {
     }
 
     @PostMapping("/{paymentId}/cancel")
+    @PreAuthorize("hasAnyRole('CONSUMER', 'SELLER', 'MASTER')")
     public Mono<PaymentResponse> cancelPayment(
             @PathVariable("paymentId") UUID paymentId,
             @Valid @RequestBody CancelPaymentRequest request
@@ -69,13 +72,15 @@ public class PaymentController {
     }
 
     @GetMapping("/{paymentId}")
-    public ResponseEntity<PaymentResponse> getPaymentByPaymentId(@PathVariable("paymnentId") UUID paymentId) {
+    @PreAuthorize("hasAnyRole('CONSUMER', 'SELLER', 'MASTER')")
+    public ResponseEntity<PaymentResponse> getPaymentByPaymentId(@PathVariable("paymentId") UUID paymentId) {
         PaymentResult result = paymentService.findPaymentByPaymentId(paymentId);
 
         return ResponseEntity.ok(PaymentResponse.from(result));
     }
 
     @GetMapping("/order/{orderId}")
+    @PreAuthorize("hasAnyRole('CONSUMER', 'SELLER', 'MASTER')")
     public ResponseEntity<PaymentResponse> getPaymentByOrderId(@PathVariable("orderId") UUID orderId) {
         PaymentResult result = paymentService.findPaymentByOrderId(orderId);
 
