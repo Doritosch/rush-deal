@@ -71,7 +71,7 @@ public class RedisQueueRepository implements QueueRepository {
         Boolean isNewUser = redisTemplate.opsForValue().setIfAbsent(
             userIndexKey,
             newTokenValue,
-            Duration.ofMinutes(secondsUntilClose) // TTL 설정: 타임딜 종료 시간에 맞춰 자동 만료
+            Duration.ofSeconds(secondsUntilClose) // TTL 설정: 타임딜 종료 시간에 맞춰 자동 만료
         );
 
         // 유저별 대기열 키(USER_INDEX_KEY)가 이미 존재하는 경우 -> 진짜 유효한지 검증
@@ -268,10 +268,14 @@ public class RedisQueueRepository implements QueueRepository {
      * @param productId
      */
     @Override
-    public void setSoldOut(UUID productId) {
+    public void setSoldOut(UUID productId, LocalDateTime dealEndTime) {
         String productStatusKey = getProductStatusKey(productId);
-        // 영구 저장이 아니라 타임딜 종료 시간까지만 유지되면 되므로 적절한 TTL 설정 권장
-        redisTemplate.opsForValue().set(productStatusKey, "SOLDOUT", Duration.ofHours(1));
+
+        // TTL 계산 : (이벤트 종료 시간 - 현재 시간)
+        long secondsUntilClose = Duration.between(LocalDateTime.now(), dealEndTime).getSeconds();
+
+        // TTL 설정: 타임딜 종료 시간에 맞춰 자동 만료
+        redisTemplate.opsForValue().set(productStatusKey, "SOLDOUT", Duration.ofSeconds(secondsUntilClose));
         log.info("[QUEUE:SOLDOUT] 상품({}) 품절 상태로 변경", productId);
     }
 

@@ -1,9 +1,13 @@
 package com.rushcrew.queue.infrastructure.kafka.consumer;
 
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.queue.application.port.in.QueuePort;
 import com.rushcrew.queue.application.port.in.SoldOutEvent;
 import com.rushcrew.queue.application.port.in.TokenRemoveEvent;
 import com.rushcrew.queue.application.service.QueueService;
+import com.rushcrew.queue.common.QueueErrorCode;
+import com.rushcrew.queue.domain.entity.QueuePolicy;
+import com.rushcrew.queue.domain.repository.QueuePolicyRepository;
 import com.rushcrew.queue.infrastructure.repository.RedisQueueRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -16,10 +20,13 @@ public class QueueEventConsumer {
 
     private final QueuePort queueService;
     private final RedisQueueRepository redisQueueRepository;
+    private final QueuePolicyRepository queuePolicyRepository;
 
-    public QueueEventConsumer(QueueService queueService, RedisQueueRepository redisQueueRepository) {
+    public QueueEventConsumer(QueueService queueService, RedisQueueRepository redisQueueRepository,
+        QueuePolicyRepository queuePolicyRepository) {
         this.queueService = queueService;
         this.redisQueueRepository = redisQueueRepository;
+        this.queuePolicyRepository = queuePolicyRepository;
     }
 
     /**
@@ -70,8 +77,11 @@ public class QueueEventConsumer {
     public void handleSoldOutEvent(SoldOutEvent event) {
         log.info("[QUEUE:Kafka:Consume] 상품 재고품절 이벤트 수신: - ProductId: {}", event.productId());
 
+        QueuePolicy queuePolicy = queuePolicyRepository.findByProductId(event.productId())
+            .orElseThrow(() -> new BusinessException(QueueErrorCode.NO_TIMEDEAL_PRODUCT));
+
         // Redis에 품절 정보 기록
-        redisQueueRepository.setSoldOut(event.productId());
+        redisQueueRepository.setSoldOut(event.productId(), queuePolicy.getTimePeriod().getEndTime());
 
         // (추후 선택사항) 현재 대기열에 있는 사람들에게 웹소켓 등으로 "품절되었습니다" 알림
     }

@@ -96,7 +96,7 @@ public interface QueueRepository {
      * 상품 품절 처리 (Kafka 수신 시 호출)
      * @param productId
      */
-    void setSoldOut(UUID productId);
+    void setSoldOut(UUID productId, LocalDateTime dealEndTime);
 
     /**
      * 품절 여부 확인 (대기열 진입 시 호출)
