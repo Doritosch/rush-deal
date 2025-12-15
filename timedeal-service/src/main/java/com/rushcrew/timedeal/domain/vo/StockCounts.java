@@ -35,6 +35,38 @@ public class StockCounts {
         return new StockCounts(available, 0L, 0L);
     }
 
+    public StockCounts reserve(Quantity quantity) {
+        return StockCounts.of(
+            this.available - quantity.getQuantity(),
+            this.reserved + quantity.getQuantity(),
+            this.getSold()
+        );
+    }
+
+    public StockCounts confirm(Quantity quantity) {
+        return StockCounts.of(
+            this.getAvailable(),
+            this.reserved - quantity.getQuantity(),
+            this.sold + quantity.getQuantity()
+        );
+    }
+
+    public StockCounts restoreFromReserved(Quantity quantity) {
+        return StockCounts.of(
+            this.available + quantity.getQuantity(),
+            this.reserved - quantity.getQuantity(),
+            this.getSold()
+        );
+    }
+
+    public StockCounts restoreFromSold(Quantity quantity) {
+        return StockCounts.of(
+            this.available + quantity.getQuantity(),
+            this.getReserved(),
+            this.sold - quantity.getQuantity()
+        );
+    }
+
     private void validateNotNull(Long available, Long reserved, Long sold) {
         if (available == null || reserved == null || sold == null) {
             throw new BusinessException(TimeDealErrorCode.REQUIRED_STOCK_COUNT);

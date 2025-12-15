@@ -5,9 +5,12 @@ import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.timedeal.application.command.CreateStockCommand;
 import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
 import com.rushcrew.timedeal.domain.vo.EventType;
+import com.rushcrew.timedeal.domain.vo.OrderId;
 import com.rushcrew.timedeal.domain.vo.ProductItemIds;
+import com.rushcrew.timedeal.domain.vo.Quantity;
 import com.rushcrew.timedeal.domain.vo.StockCounts;
 import com.rushcrew.timedeal.domain.vo.TimeDealProductStatus;
+import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -25,6 +28,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -136,5 +140,57 @@ public class TimeDealStock extends BaseEntity {
             "재고 삭제 전 남은 재고 처리 (" + beforeAvailable + " -> 0)"
         );
         this.stockLogs.add(log);
+    }
+
+    public void reserve(Quantity quantity, OrderId orderId) {
+        if (this.stockCounts.getAvailable() < quantity.getQuantity()) {
+            throw new BusinessException(TimeDealErrorCode.OUT_OF_STOCK);
+        }
+
+        this.stockCounts = this.stockCounts.reserve(quantity);
+
+        if (this.stockCounts.getAvailable() == 0) {
+            this.timeDealProduct.getTimeDeal().updateStatus(TimeDealStatus.SOLD_OUT);
+            this.status = TimeDealStockStatus.RESERVED;
+            this.timeDealProduct.updateStatus(TimeDealProductStatus.OUT_OF_STOCK);
+        }
+
+        StockLog log = StockLog.reserve(
+            this, orderId, quantity
+        );
+        this.stockLogs.add(log);
+    }
+
+    public void confirm(OrderId orderId, Quantity quantity) {
+        this.stockCounts = this.stockCounts.confirm(quantity);
+
+        if (this.stockCounts.getAvailable() == 0 && this.stockCounts.getReserved() == 0) {
+            this.status = TimeDealStockStatus.SOLD;
+        }
+
+        StockLog log = StockLog.confirm(this, orderId, quantity);
+        this.stockLogs.add(log);
+    }
+
+    public void restoreFromReserved(OrderId orderId, Quantity quantity, String reason) {
+        this.stockCounts = this.stockCounts.restoreFromReserved(quantity);
+        updateStatus();
+
+        StockLog log = StockLog.restore(this, orderId, quantity, EventType.RESERVE_CANCEL, reason);
+        this.stockLogs.add(log);
+    }
+
+    public void restoreFromSold(OrderId orderId, Quantity quantity, String reason) {
+        this.stockCounts = this.stockCounts.restoreFromSold(quantity);
+        updateStatus();
+
+        StockLog log = StockLog.restore(this, orderId, quantity, EventType.PAYMENT_CANCEL, reason);
+        this.stockLogs.add(log);
+    }
+
+    private void updateStatus() {
+        this.status = TimeDealStockStatus.AVAILABLE;
+        this.timeDealProduct.updateStatus(TimeDealProductStatus.IN_STOCK);
+        this.timeDealProduct.getTimeDeal().updateStatusByPeriod(Instant.now());
     }
 }

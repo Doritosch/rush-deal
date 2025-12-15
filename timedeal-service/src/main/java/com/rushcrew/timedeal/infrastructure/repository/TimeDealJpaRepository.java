@@ -55,5 +55,7 @@ public interface TimeDealJpaRepository extends JpaRepository<TimeDeal, UUID> {
                   WHERE tdp.deletedAt IS NULL
                     AND tdp.id = :productId
         """)
-    Optional<TimeDealProduct> findProductByProductId(UUID productId);
+    Optional<TimeDealProduct> findProductByProductId(
+        @Param(value = "productId") UUID productId
+    );
 }

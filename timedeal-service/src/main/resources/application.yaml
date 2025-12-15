@@ -23,6 +23,8 @@ spring:
   sql:
     init:
       mode: always
+  kafka:
+    bootstrap-servers: ${BOOTSTRAP_SERVERS}
 
 server:
   port: 8030

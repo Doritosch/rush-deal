@@ -30,4 +30,16 @@ public class RedisStockCache implements StockCache {
     public void evict(UUID stockId) {
         redisTemplate.delete("tds:" + stockId);
     }
+
+    @Override
+    public void reserve(UUID stockId, Long quantity) {
+        String key = "tds:" + stockId;
+        redisTemplate.opsForValue().decrement(key, quantity);
+    }
+
+    @Override
+    public void restore(UUID stockId, Long quantity) {
+        String key = "tds:" + stockId;
+        redisTemplate.opsForValue().increment(key, quantity);
+    }
 }
