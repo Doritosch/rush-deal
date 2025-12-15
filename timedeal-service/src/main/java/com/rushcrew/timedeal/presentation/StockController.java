@@ -1,15 +1,21 @@
 package com.rushcrew.timedeal.presentation;
 
 import com.rushcrew.timedeal.application.command.CreateStockCommand;
+import com.rushcrew.timedeal.application.command.RestoreStockCommand;
+import com.rushcrew.timedeal.application.command.ReserveStockCommand;
 import com.rushcrew.timedeal.application.command.UpdateStockCountCommand;
 import com.rushcrew.timedeal.application.result.CreateStockResult;
+import com.rushcrew.timedeal.application.result.ReserveStockResult;
 import com.rushcrew.timedeal.application.result.StockResult;
 import com.rushcrew.timedeal.application.result.UpdateStockCountResult;
 import com.rushcrew.timedeal.application.service.StockService;
 import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
 import com.rushcrew.timedeal.presentation.dto.request.CreateStockRequest;
+import com.rushcrew.timedeal.presentation.dto.request.RestoreStockRequest;
+import com.rushcrew.timedeal.presentation.dto.request.ReserveStockRequest;
 import com.rushcrew.timedeal.presentation.dto.request.UpdateStockCountRequest;
 import com.rushcrew.timedeal.presentation.dto.response.CreateStockResponse;
+import com.rushcrew.timedeal.presentation.dto.response.ReserveStockResponse;
 import com.rushcrew.timedeal.presentation.dto.response.StockResponse;
 import com.rushcrew.timedeal.presentation.dto.response.UpdateStockCountResponse;
 import jakarta.validation.Valid;
@@ -82,5 +88,23 @@ public class StockController {
     ) {
         stockService.deleteStock(stockId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/restore")
+    public ResponseEntity<Void> restoreStock(
+        @RequestBody @Valid RestoreStockRequest request
+    ) {
+        RestoreStockCommand command = request.toCommand();
+        stockService.restoreStock(command);
+        return ResponseEntity.noContent().build();
+    }
+      
+    @PostMapping("/reserve")
+    public ResponseEntity<ReserveStockResponse> reserveStock(
+        @RequestBody @Valid ReserveStockRequest request
+    ) {
+        ReserveStockCommand command = request.toCommand();
+        ReserveStockResult result = stockService.reserveStock(command);
+        return ResponseEntity.ok(ReserveStockResponse.from(result));
     }
 }
