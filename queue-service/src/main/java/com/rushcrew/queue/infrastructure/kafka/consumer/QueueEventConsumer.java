@@ -81,7 +81,7 @@ public class QueueEventConsumer {
             .orElseThrow(() -> new BusinessException(QueueErrorCode.NO_TIMEDEAL_PRODUCT));
 
         // Redis에 품절 정보 기록
-        redisQueueRepository.setSoldOut(event.productId(), queuePolicy.getTimePeriod().getEndTime());
+        redisQueueRepository.setSoldOut(event.productId(), event.status(), queuePolicy.getTimePeriod().getEndTime());
 
         // 수동 커밋 실행 - KafkaConsumerConfig에 AckMode.MANUAL_IMMEDIATE가 설정되어 있으므로 필수
         ack.acknowledge();

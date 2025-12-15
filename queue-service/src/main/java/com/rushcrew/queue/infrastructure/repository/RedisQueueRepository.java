@@ -268,7 +268,7 @@ public class RedisQueueRepository implements QueueRepository {
      * @param productId
      */
     @Override
-    public void setSoldOut(UUID productId, LocalDateTime dealEndTime) {
+    public void setSoldOut(UUID productId, String status, LocalDateTime dealEndTime) {
         String productStatusKey = getProductStatusKey(productId);
 
         // TTL 계산 : (이벤트 종료 시간 - 현재 시간)
@@ -280,7 +280,7 @@ public class RedisQueueRepository implements QueueRepository {
         }
 
         // TTL 설정: 타임딜 종료 시간에 맞춰 자동 만료
-        redisTemplate.opsForValue().set(productStatusKey, "SOLDOUT", Duration.ofSeconds(secondsUntilClose));
+        redisTemplate.opsForValue().set(productStatusKey, status, Duration.ofSeconds(secondsUntilClose));
         log.info("[QUEUE:SOLDOUT] 상품({}) 품절 상태로 변경", productId);
     }
 
