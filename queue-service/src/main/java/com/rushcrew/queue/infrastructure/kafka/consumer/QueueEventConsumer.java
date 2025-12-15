@@ -85,6 +85,7 @@ public class QueueEventConsumer {
 
         // 수동 커밋 실행 - KafkaConsumerConfig에 AckMode.MANUAL_IMMEDIATE가 설정되어 있으므로 필수
         ack.acknowledge();
+        log.info("[QUEUE:Kafka:Success] 상품 재고 품절 레디스 등록 및 Offset 커밋 - ProductId: {}", event.productId());
 
         // (추후 선택사항) 현재 대기열에 있는 사람들에게 웹소켓 등으로 "품절되었습니다" 알림
     }

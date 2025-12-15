@@ -1,5 +1,6 @@
 package com.rushcrew.queue.application.port.in;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -10,7 +11,8 @@ import java.util.UUID;
  */
 public record SoldOutEvent(
     UUID productId,
-    String status
+    String status,
+    LocalDateTime soldOutAt
 ) {
 
 }

@@ -274,6 +274,11 @@ public class RedisQueueRepository implements QueueRepository {
         // TTL 계산 : (이벤트 종료 시간 - 현재 시간)
         long secondsUntilClose = Duration.between(LocalDateTime.now(), dealEndTime).getSeconds();
 
+        // 이미 시간이 지난 경우 (음수가 나오면 에러 나거나 바로 만료 처리)
+        if (secondsUntilClose < 0) {
+            secondsUntilClose = 0;
+        }
+
         // TTL 설정: 타임딜 종료 시간에 맞춰 자동 만료
         redisTemplate.opsForValue().set(productStatusKey, "SOLDOUT", Duration.ofSeconds(secondsUntilClose));
         log.info("[QUEUE:SOLDOUT] 상품({}) 품절 상태로 변경", productId);
