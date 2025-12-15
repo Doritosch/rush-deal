@@ -42,6 +42,11 @@ public class QueueService implements QueuePort {
     @Override
     @Transactional(readOnly = true)
     public QueueRedisResponse enterQueue(EnterQueueCommand command) {
+        // 재고 품절 여부 확인 (Redis 조회)
+        if (queueRepository.isSoldOut(command.productId())) {
+            throw new BusinessException(QueueErrorCode.PRODUCT_SOLD_OUT);
+        }
+
         // 대기열 정책 확인 (RDB 조회 - 상품 존재 여부 및 시간 확인)
         QueuePolicy policy = queuePolicyRepository.findByProductId(command.productId())
             .orElseThrow(() -> new BusinessException(QueueErrorCode.NO_TIMEDEAL_PRODUCT));
