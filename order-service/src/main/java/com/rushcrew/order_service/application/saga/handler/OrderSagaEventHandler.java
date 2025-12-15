@@ -31,6 +31,8 @@ public class OrderSagaEventHandler {
 		SagaInstance saga = sagaInstancePort.findBySagaId(event.sagaId());
 
 		if (saga.isCompleted() || saga.isFailed()) {
+			log.warn("[Saga-{}] 이미 완료 또는 실패한 Saga입니다. 현재 상태: {}",
+				event.sagaId(), saga.getStatus());
 			return;
 		}
 
@@ -40,15 +42,17 @@ public class OrderSagaEventHandler {
 
 		try {
 			// Step 3: 주문 생성 (포인트 X)
-			createOrderStep.execute(context, data);
+			createOrderStep.execute(context, data, event);
 			saga.addStep(SagaStepName.CREATE_ORDER, SagaStatus.COMPLETED);
 
 			saga.complete();
 			sagaInstancePort.save(saga);
 
 			metricsPort.recordSagaSuccess();
+			log.info("[Saga-{}] 주문 생성 완료", event.sagaId());
 
 		} catch (Exception e) {
+			log.error("[Saga-{}] 주문 생성 실패: {}", event.sagaId(), e.getMessage(), e);
 			saga.fail(e.getMessage());
 			sagaInstancePort.save(saga);
 			metricsPort.recordSagaFailure();
@@ -61,9 +65,11 @@ public class OrderSagaEventHandler {
 		SagaInstance saga = sagaInstancePort.findBySagaId(event.sagaId());
 
 		if (saga.isCompleted() || saga.isFailed()) {
+			log.warn("[Saga-{}] 이미 완료 또는 실패한 Saga입니다. 현재 상태: {}", event.sagaId(), saga.getStatus());
 			return;
 		}
 
+		log.error("[Saga-{}] 재고 예약 실패: {}", event.sagaId(), event.reason());
 		saga.fail(event.reason());
 		sagaInstancePort.save(saga);
 		metricsPort.recordSagaFailure();

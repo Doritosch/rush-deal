@@ -23,12 +23,13 @@ public class AutoConfirmScheduler {
 
 
 
-	// 매 시간 정각 실행
-	// @Scheduled(cron = "0 0 * * * ?")
+
 	// 10초마다 실행
 	// @Scheduled(cron = "0/10 * * * * ?")
 	// 1분마다 실행
-	@Scheduled(cron = "0 * * * * ?")
+	// @Scheduled(cron = "0 * * * * ?")
+	// 매 시간 정각 실행
+	@Scheduled(cron = "0 0 * * * ?")
 	protected void executeAutoConfirmBatch() {
 		log.info("====== 자동 구매확정 배치 작업 시작 ======");
 		try {

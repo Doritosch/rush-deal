@@ -291,23 +291,25 @@ public class Order extends BaseEntity {
 		Map<String, Object> payload = new HashMap<>();
 		payload.put("orderId", this.orderId);
 		payload.put("userId", this.userId);
-		payload.put("amount", Map.of(
-			"totalAmount", this.amount.getTotalAmount(),
-			"finalAmount", this.amount.getFinalAmount(),
-			"pointUsed", this.amount.getPointUsed()
-		));
+
+		payload.put("totalAmount", this.amount.getTotalAmount());      // 주문 아이템 전체 합
+		payload.put("pointUsed", this.amount.getPointUsed());          // 사용한 포인트
+		payload.put("finalAmount", this.amount.getFinalAmount());      // 실제 결제 금액 (total - point)
+
 		payload.put("status", this.status.name());
+		payload.put("orderedAt", this.orderedAt);
+
 		payload.put("items", this.orderItems.stream()
-			.map(item -> Map.of(
-				"timeDealStockId", item.getTimeDealStockId(),
-				"quantity", item.getQuantity(),
-				"unitPrice", item.getUnitPrice(),
-				"discountPrice", item.getDiscountPrice()
-			))
+			.map(item -> {
+				Map<String, Object> itemMap = new HashMap<>();
+				itemMap.put("timeDealStockId", item.getTimeDealStockId());
+				itemMap.put("quantity", item.getQuantity());
+				itemMap.put("unitPrice", item.getUnitPrice());
+				itemMap.put("discountPrice", item.getDiscountPrice());
+				return itemMap;
+			})
 			.toList()
 		);
 		return payload;
 	}
-
-
 }

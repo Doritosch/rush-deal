@@ -1,5 +1,6 @@
 package com.rushcrew.order_service.infrastructure.messaging.event;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -25,6 +26,7 @@ public record StockReservedEvent(
 
 	public record ReservedStockItem(
 		String timeDealStockId,
-		Long quantity
+		Long quantity,
+		BigDecimal discountedPrice
 	) {}
 }

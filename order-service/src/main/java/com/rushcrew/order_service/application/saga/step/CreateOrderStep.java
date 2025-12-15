@@ -1,6 +1,6 @@
 package com.rushcrew.order_service.application.saga.step;
 
-import java.math.BigDecimal;
+import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
@@ -13,7 +13,9 @@ import com.rushcrew.order_service.domain.model.order.Order;
 import com.rushcrew.order_service.domain.model.order.OrderItem;
 import com.rushcrew.order_service.domain.model.order.OrderReservation;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rushcrew.order_service.infrastructure.messaging.event.StockReservedEvent;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,19 +28,18 @@ public class CreateOrderStep {
 	private final OutboxPort outboxPort;
 	private final ObjectMapper objectMapper;
 
-	public void execute(SagaContext context, OrderCreationSagaData data) {
+	@Transactional
+	public void execute(SagaContext context, OrderCreationSagaData data, StockReservedEvent event) {
 		log.info("[Saga-{}] CreateOrderStep 시작", context.getSagaId());
 
 		CreateOrderCommand command = data.getCommand();
 
-		// 1. OrderItem 생성
-		var orderItems = command.orderItems().stream()
-			.map(itemCommand -> OrderItem.create(
-				itemCommand.timeDealStockId(),
-				itemCommand.quantity(),
-				BigDecimal.ZERO, // unitPrice, 실제 가격 로직 필요
-				BigDecimal.ZERO, // discountPrice
-				null             // ProductSnapshot 없음
+		// 1. OrderItem 생성 stock.reserved 수신한 StockReservedEvent 사용
+		var orderItems = event.reservedItems().stream()
+			.map(reservedItem -> OrderItem.create(
+				UUID.fromString(reservedItem.timeDealStockId()),
+				reservedItem.quantity(),
+				reservedItem.discountedPrice()
 			))
 			.toList();
 
@@ -51,11 +52,11 @@ public class CreateOrderStep {
 		);
 
 		// 3. 재고 예약 정보 추가
-		command.orderItems().forEach(itemCommand ->
+		event.reservedItems().forEach(reservedItem ->
 			order.addReservation(
 				OrderReservation.create(
-					itemCommand.timeDealStockId(),
-					itemCommand.quantity()
+					UUID.fromString(reservedItem.timeDealStockId()),
+					reservedItem.quantity()
 				)
 			)
 		);
