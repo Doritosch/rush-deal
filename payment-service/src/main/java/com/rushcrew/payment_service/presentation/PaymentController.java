@@ -32,7 +32,7 @@ public class PaymentController {
      * @return paymentId (우리 시스템의 Payment ID), portOnePaymentId (PortOne에서 사용할 ID)
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('CONSUMER', 'SELLER', 'MASTER')")
+    @PreAuthorize("hasAnyRole('USER', 'SELLER', 'MASTER')")
     public ResponseEntity<PaymentPrepareResponse> preparePayment(
             @Valid @RequestBody PaymentRequest request
     ) {
@@ -61,7 +61,7 @@ public class PaymentController {
     }
 
     @PostMapping("/{paymentId}/cancel")
-    @PreAuthorize("hasAnyRole('CONSUMER', 'SELLER', 'MASTER')")
+    @PreAuthorize("hasAnyRole('USER', 'SELLER', 'MASTER')")
     public Mono<PaymentResponse> cancelPayment(
             @PathVariable("paymentId") UUID paymentId,
             @Valid @RequestBody CancelPaymentRequest request
@@ -72,7 +72,7 @@ public class PaymentController {
     }
 
     @GetMapping("/{paymentId}")
-    @PreAuthorize("hasAnyRole('CONSUMER', 'SELLER', 'MASTER')")
+    @PreAuthorize("hasAnyRole('USER', 'SELLER', 'MASTER')")
     public ResponseEntity<PaymentResponse> getPaymentByPaymentId(@PathVariable("paymentId") UUID paymentId) {
         PaymentResult result = paymentService.findPaymentByPaymentId(paymentId);
 
@@ -80,7 +80,7 @@ public class PaymentController {
     }
 
     @GetMapping("/order/{orderId}")
-    @PreAuthorize("hasAnyRole('CONSUMER', 'SELLER', 'MASTER')")
+    @PreAuthorize("hasAnyRole('USER', 'SELLER', 'MASTER')")
     public ResponseEntity<PaymentResponse> getPaymentByOrderId(@PathVariable("orderId") UUID orderId) {
         PaymentResult result = paymentService.findPaymentByOrderId(orderId);
 
