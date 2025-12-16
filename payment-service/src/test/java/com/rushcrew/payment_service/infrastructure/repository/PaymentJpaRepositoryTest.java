@@ -28,7 +28,7 @@ class PaymentJpaRepositoryTest {
     @DisplayName("결제 저장 테스트")
     void savePayment() {
         UUID orderId = UUID.randomUUID();
-        BigDecimal amount = new BigDecimal("10000.00");
+        Long amount = 10000L;
         String portOnePaymentId = UUID.randomUUID().toString();
 
         Payment payment = Payment.create(orderId, amount, portOnePaymentId);

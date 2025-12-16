@@ -27,7 +27,7 @@ class PaymentEventProducerTest {
         PaymentCompletedEvent event = PaymentCompletedEvent.of(
                 paymentId,
                 orderId,
-                BigDecimal.valueOf(50000),
+                500000L,
                 "KRW"
         );
 

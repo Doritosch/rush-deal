@@ -7,7 +7,7 @@ import java.util.UUID;
 public record PaymentCompletedEvent(
         UUID paymentId,
         UUID orderId,
-        BigDecimal totalAmount,
+        Long totalAmount,
         String currency,
         LocalDateTime completedAt,
         String eventType
@@ -15,7 +15,7 @@ public record PaymentCompletedEvent(
     public static PaymentCompletedEvent of(
             UUID paymentId,
             UUID orderId,
-            BigDecimal totalAmount,
+            Long totalAmount,
             String currency
     ) {
         return new PaymentCompletedEvent(
