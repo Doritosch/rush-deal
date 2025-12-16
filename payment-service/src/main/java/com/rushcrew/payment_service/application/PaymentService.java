@@ -59,99 +59,29 @@ public class PaymentService {
             throw new BusinessException(PaymentErrorCode.ORDER_NOT_FOUND);
         }
 
+        String portOnePaymentId = UUID.randomUUID().toString();
+
         Payment payment = Payment.create(
                 command.orderId(),
-                command.totalAmount()
+                command.totalAmount(),
+                portOnePaymentId
         );
 
         Payment savedPayment = paymentRepository.save(payment);
-
-        String portOnePaymentId = UUID.randomUUID().toString();
 
         return PaymentPrepareResult.of(portOnePaymentId, savedPayment);
     }
 
     @Transactional
-    public Mono<PaymentResponse> completePayment(UUID paymentId, String portOnePaymentId) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new BusinessException(PaymentErrorCode.INVALID_PAYMENT));
-
-        return Mono.fromFuture(portone.getPayment(portOnePaymentId))
-                .flatMap(actualPayment -> {
-                    switch (actualPayment) {
-                        case PaidPayment paidPayment:
-                            try {
-                                payment.verifyPaymentOrThrow(paidPayment.getAmount().getPaid(), paidPayment.getCurrency().getValue());
-                            } catch (IllegalArgumentException e) {
-                                return Mono.error(new BusinessException(PaymentErrorCode.FAILED_VERIFYING_PAYMENT));
-                            }
-
-
-                            payment.completePayment();
-                            paymentRepository.save(payment);
-
-                            if (paidPayment.getMethod() instanceof PaymentMethodCard paymentMethodCard) {
-                                PaymentTransaction transaction = PaymentTransaction.create(
-                                        payment,
-                                        paidPayment.getId(),
-                                        paidPayment.getTransactionId(),
-                                        paidPayment.getStoreId(),
-                                        paidPayment.getCurrency().getValue(),
-                                        paidPayment.getRequestedAt(),
-                                        paidPayment.getUpdatedAt(),
-                                        paidPayment.getStatusChangedAt()
-                                );
-
-                                Card card = new Card(
-                                        paymentMethodCard.getCard().getPublisher(),
-                                        paymentMethodCard.getCard().getIssuer(),
-                                        paymentMethodCard.getCard().getBrand().toString(),
-                                        paymentMethodCard.getCard().getType().toString(),
-                                        paymentMethodCard.getCard().getOwnerType().toString(),
-                                        paymentMethodCard.getCard().getBin(),
-                                        paymentMethodCard.getCard().getName(),
-                                        paymentMethodCard.getCard().getNumber()
-                                );
-                                transaction.addCard(card);
-
-                                Amount amount = new Amount(
-                                        paidPayment.getAmount().getTotal(),
-                                        paidPayment.getAmount().getTaxFree(),
-                                        paidPayment.getAmount().getVat(),
-                                        paidPayment.getAmount().getSupply(),
-                                        paidPayment.getAmount().getDiscount(),
-                                        paidPayment.getAmount().getPaid()
-                                );
-                                transaction.addAmount(amount);
-
-                                paymentTransactionRepository.save(transaction);
-                            }
-
-                            // Kafka 이벤트 발행
-                            PaymentCompletedEvent event = PaymentCompletedEvent.of(
-                                    payment.getPaymentId(),
-                                    payment.getOrderId(),
-                                    payment.getAmount(),
-                                    paidPayment.getCurrency().getValue()
-                            );
-                            paymentEventProducer.publishPaymentCompleted(event);
-
-                            return Mono.just(PaymentResponse.from(PaymentResult.from(payment)));
-                        default:
-                            return Mono.error(new BusinessException(PaymentErrorCode.NOT_COMPLETED_PAYMENT));
-                    }
-                });
+    public Mono<PaymentResult> completePayment(String portOnePaymentId) {
+        return syncPayment(portOnePaymentId);
     }
     @Transactional
     public Mono<PaymentResult> cancelPayment(UUID paymentId, String cancelReason) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new BusinessException(PaymentErrorCode.INVALID_PAYMENT));
 
-        PaymentTransaction paymentTransaction = paymentTransactionRepository
-                .findFirstByPaymentOrderByRequestedAtDesc(payment)
-                .orElseThrow(() -> new BusinessException(PaymentErrorCode.NOT_FOUND_PAYMENT_TRANSACTION));
-
-        String portonePaymentId = paymentTransaction.getPortonePaymentId();
+        String portonePaymentId = payment.getPortonePaymentId();
 
         return Mono.fromFuture(portone.cancelPayment(
                 portonePaymentId,
@@ -199,14 +129,71 @@ public class PaymentService {
     }
 
     @Transactional
-    public Mono<Unit> syncPayment(String portOnePaymentId) {
+    public Mono<PaymentResult> syncPayment(String portOnePaymentId) {
+        Payment payment = paymentRepository.findByPortonePaymentId(portOnePaymentId)
+                .orElseThrow(() -> new BusinessException(PaymentErrorCode.INVALID_PAYMENT));
+
         return Mono.fromFuture(portone.getPayment(portOnePaymentId))
                 .flatMap(actualPayment -> {
                     switch (actualPayment) {
                         case PaidPayment paidPayment:
-                            return Mono.error(new BusinessException(PaymentErrorCode.NOT_FOUND_PORTONE_ID));
+                            try {
+                                payment.verifyPaymentOrThrow(paidPayment.getAmount().getPaid(), paidPayment.getCurrency().getValue());
+                            } catch (IllegalArgumentException e) {
+                                return Mono.error(new BusinessException(PaymentErrorCode.FAILED_VERIFYING_PAYMENT));
+                            }
+
+                            payment.completePayment();
+                            paymentRepository.save(payment);
+
+                            if (paidPayment.getMethod() instanceof PaymentMethodCard paymentMethodCard) {
+                                PaymentTransaction transaction = PaymentTransaction.create(
+                                        payment,
+                                        paidPayment.getId(),
+                                        paidPayment.getTransactionId(),
+                                        paidPayment.getStoreId(),
+                                        paidPayment.getRequestedAt(),
+                                        paidPayment.getUpdatedAt(),
+                                        paidPayment.getStatusChangedAt()
+                                );
+
+                                Card card = new Card(
+                                        paymentMethodCard.getCard().getPublisher(),
+                                        paymentMethodCard.getCard().getIssuer(),
+                                        paymentMethodCard.getCard().getBrand().toString(),
+                                        paymentMethodCard.getCard().getType().toString(),
+                                        paymentMethodCard.getCard().getOwnerType().toString(),
+                                        paymentMethodCard.getCard().getBin(),
+                                        paymentMethodCard.getCard().getName(),
+                                        paymentMethodCard.getCard().getNumber()
+                                );
+                                transaction.addCard(card);
+
+                                Amount amount = new Amount(
+                                        paidPayment.getAmount().getTotal(),
+                                        paidPayment.getAmount().getTaxFree(),
+                                        paidPayment.getAmount().getVat(),
+                                        paidPayment.getAmount().getSupply(),
+                                        paidPayment.getAmount().getDiscount(),
+                                        paidPayment.getAmount().getPaid()
+                                );
+                                transaction.addAmount(amount);
+
+                                paymentTransactionRepository.save(transaction);
+                            }
+
+                            // Kafka 이벤트 발행
+                            PaymentCompletedEvent event = PaymentCompletedEvent.of(
+                                    payment.getPaymentId(),
+                                    payment.getOrderId(),
+                                    payment.getAmount(),
+                                    paidPayment.getCurrency().getValue()
+                            );
+                            paymentEventProducer.publishPaymentCompleted(event);
+
+                            return Mono.just(PaymentResult.from(payment));
                         default:
-                            return Mono.just(Unit.INSTANCE);
+                            return Mono.error(new BusinessException(PaymentErrorCode.NOT_COMPLETED_PAYMENT));
                     }
                 });
     }

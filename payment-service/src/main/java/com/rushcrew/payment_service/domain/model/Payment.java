@@ -25,15 +25,19 @@ public class Payment extends BaseEntity {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    @Column(name = "portone_payment_id")
+    private String portonePaymentId;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
-    public static Payment create(UUID orderId, BigDecimal amount) {
+    public static Payment create(UUID orderId, BigDecimal amount, String portonePaymentId) {
         Payment payment = new Payment();
 
         payment.orderId = orderId;
         payment.amount = amount;
+        payment.portonePaymentId = portonePaymentId;
         payment.status = PaymentStatus.PENDING;
 
         return payment;
