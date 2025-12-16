@@ -2,7 +2,6 @@ package com.rushcrew.payment_service.application;
 
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.payment_service.application.command.PaymentCommand;
-import com.rushcrew.payment_service.application.command.RefundCommand;
 import com.rushcrew.payment_service.application.result.PaymentPrepareResult;
 import com.rushcrew.payment_service.application.result.PaymentResult;
 import com.rushcrew.payment_service.domain.exception.PaymentErrorCode;
@@ -12,7 +11,8 @@ import com.rushcrew.payment_service.domain.repository.PaymentRepository;
 import com.rushcrew.payment_service.domain.repository.PaymentTransactionRepository;
 import com.rushcrew.payment_service.domain.vo.Amount;
 import com.rushcrew.payment_service.domain.vo.Card;
-import com.rushcrew.payment_service.infrastructure.client.OrderFeignClient;
+import com.rushcrew.payment_service.infrastructure.client.OrderClient;
+import com.rushcrew.payment_service.infrastructure.client.dto.OrderResponse;
 import com.rushcrew.payment_service.infrastructure.event.PaymentCompletedEvent;
 import com.rushcrew.payment_service.infrastructure.event.PaymentEventProducer;
 import com.rushcrew.payment_service.presentation.dto.response.PaymentResponse;
@@ -43,26 +43,22 @@ public class PaymentService {
     private final WebhookVerifier portoneWebhook;
 
     private final PaymentEventProducer paymentEventProducer;
-    private final OrderFeignClient orderFeignClient;
+    private final OrderClient orderClient;
 
     @Transactional
     public PaymentPrepareResult preparePayment(PaymentCommand command) {
-        // 1. Order 서비스에서 주문 정보 조회
-//        OrderResponse orderResponse;
-//        try {
-//            orderResponse = orderFeignClient.getOrder(command.orderId());
-//        } catch (FeignException.NotFound e) {
-//            throw new BusinessException(PaymentErrorCode.ORDER_NOT_FOUND);
-//        } catch (FeignException e) {
-//            throw new BusinessException(PaymentErrorCode.ORDER_NOT_FOUND);
-//        }
-//
-//        // 2. 결제 금액과 주문 금액 검증
-//        if (!orderResponse.totalAmount().equals(command.totalAmount())) {
-//            throw new BusinessException(PaymentErrorCode.AMOUNT_MISMATCH);
-//        }
+        try {
+            OrderResponse orderResponse = orderClient.getOrder(command.orderId());
 
-        // 3. Payment 생성
+            if (!orderResponse.totalAmount().equals(command.totalAmount())) {
+                throw new BusinessException(PaymentErrorCode.AMOUNT_MISMATCH);
+            }
+        } catch (FeignException.NotFound e) {
+            throw new BusinessException(PaymentErrorCode.ORDER_NOT_FOUND);
+        } catch (FeignException e) {
+            throw new BusinessException(PaymentErrorCode.ORDER_NOT_FOUND);
+        }
+
         Payment payment = Payment.create(
                 command.orderId(),
                 command.totalAmount()
