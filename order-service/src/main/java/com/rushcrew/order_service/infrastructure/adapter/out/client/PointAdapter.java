@@ -28,7 +28,7 @@ public class PointAdapter implements PointPort {
 		UsePointRequest request = UsePointRequest.builder()
 			.userId(userId)
 			.orderId(tempOrderId)
-			.pointUsed(pointUsed)
+			.amount(pointUsed)
 			.sagaId(sagaId.toString())
 			.build();
 		try {

@@ -6,6 +6,6 @@ import lombok.Builder;
 public record UsePointRequest(
 	Long userId,
 	String orderId,
-	Long pointUsed,
+	Long amount,
 	String sagaId
 ) {}
