@@ -62,13 +62,17 @@ public class OrderCommandController {
 	public ApiResponse<CreateOrderResponse> createOrder(
 		@Valid @RequestBody CreateOrderRequest request,
 		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
+		@RequestHeader(value = "X-User-Role", required = false) String role,
+		@RequestHeader("X-Queue-Token") String queueToken
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER", "SELLER");
 
 		CreateOrderCommand command = CreateOrderCommand.builder()
 			.userId(userId)
 			.timeDealId(UUID.fromString(request.timeDealId()))
+			.productId(UUID.fromString(request.productId()))
+			.queueToken(queueToken)
+			.role(role)
 			.orderItems(request.orderItems().stream()
 				.map(item -> CreateOrderCommand.OrderItemCommand.builder()
 					.timeDealStockId(UUID.fromString(item.timeDealStockId()))

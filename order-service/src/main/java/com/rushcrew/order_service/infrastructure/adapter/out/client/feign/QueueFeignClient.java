@@ -2,15 +2,25 @@ package com.rushcrew.order_service.infrastructure.adapter.out.client.feign;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
-// TODO: 송경님 API 생성 요청 -> 통합 테스트 시 불필요하면 제거
+import com.rushcrew.common.dto.ApiResponse;
 
 @FeignClient(name = "queue-service")
 public interface QueueFeignClient {
-	@GetMapping("/api/v1/queue/validate")
-	boolean validateToken(
-		@RequestParam("timeDealId") String timeDealId,
-		@RequestParam("userId") Long userId
+
+	@GetMapping("/api/v1/internal/queues/tokens/verify")
+	ApiResponse<Boolean> validateToken(
+		@RequestParam("productId") String productId,
+		@RequestHeader("X-Queue-Token") String queueToken,
+		@RequestHeader("X-User-Id") Long userId,
+		@RequestHeader("X-User-Role") String role
 	);
+
+	// @GetMapping("/api/v1/queue/validate")
+	// boolean validateToken(
+	// 	@RequestParam("timeDealId") String timeDealId,
+	// 	@RequestParam("userId") Long userId
+	// );
 }
