@@ -9,6 +9,7 @@ import com.rushcrew.order_service.application.port.out.SagaInstancePort;
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
 import com.rushcrew.order_service.application.saga.step.RequestStockReservationStep;
+import com.rushcrew.order_service.application.saga.step.UsePointStep;
 import com.rushcrew.order_service.application.saga.step.ValidateStockStep;
 import com.rushcrew.order_service.domain.enums.SagaStatus;
 import com.rushcrew.order_service.domain.enums.SagaStepName;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OrderCreationSagaOrchestrator {
 
 	private final ValidateStockStep validateStockStep;
+	private final UsePointStep usePointStep;
 	private final RequestStockReservationStep requestStockReservationStep;
 	private final SagaInstancePort sagaInstancePort;
 
@@ -44,27 +46,52 @@ public class OrderCreationSagaOrchestrator {
 			.command(command)
 			.build();
 
-		// Step 1: ValidateStock
-		SagaStepResult validateResult = validateStockStep.execute(context, data);
-		if (validateResult.isFailure()) {
-			saga.fail(validateResult.getErrorMessage());
+		try {
+			// Step 1: ValidateStock
+			SagaStepResult validateResult = validateStockStep.execute(context, data);
+			if (validateResult.isFailure()) {
+				saga.fail(validateResult.getErrorMessage());
+				sagaInstancePort.save(saga);
+				throw new IllegalArgumentException(validateResult.getErrorMessage());
+			}
+			saga.addStep(SagaStepName.VALIDATE_STOCK, SagaStatus.COMPLETED);
+
+			// Step 2: UsePoint
+			SagaStepResult pointResult = usePointStep.execute(context, data);
+			if (pointResult.isFailure()) {
+				saga.fail(pointResult.getErrorMessage());
+				sagaInstancePort.save(saga);
+				throw new IllegalArgumentException(pointResult.getErrorMessage());
+			}
+			saga.addStep(SagaStepName.USE_POINT, SagaStatus.COMPLETED);
+
+			// Step 3: RequestStockReservation
+			requestStockReservationStep.execute(context, data);
+			saga.addStep(SagaStepName.REQUEST_STOCK_RESERVATION, SagaStatus.WAITING);
+
+			// Step 완료 후 SagaData 저장
+			saga.saveData(data);
+
+			// Saga 저장
 			sagaInstancePort.save(saga);
-			throw new IllegalArgumentException(validateResult.getErrorMessage());
+
+			log.info("[Saga-{}] ORDER_CREATION Saga 시작", saga.getSagaId());
+
+			return saga.getSagaId();
+		} catch (Exception e) {
+			log.error("[Saga-{}] Saga 시작 실패, 보상 트랜잭션 실행", saga.getSagaId(), e);
+
+			// 보상 트랜잭션: 포인트 복구
+			if (saga.hasCompletedStep(SagaStepName.USE_POINT)) {
+				try {
+					usePointStep.compensate(context, data);
+				} catch (Exception compensateError) {
+					log.error("[Saga-{}] 포인트 보상 실패", saga.getSagaId(), compensateError);
+					// 보상 실패는 별도 처리 필요 (Dead Letter Queue 등)
+				}
+			}
+			throw e;
 		}
-		saga.addStep(SagaStepName.VALIDATE_STOCK, SagaStatus.COMPLETED);
 
-		// Step 2: RequestStockReservation
-		requestStockReservationStep.execute(context, data);
-		saga.addStep(SagaStepName.REQUEST_STOCK_RESERVATION, SagaStatus.WAITING);
-
-		// Step 완료 후 SagaData 저장
-		saga.saveData(data);
-
-		// Saga 저장
-		sagaInstancePort.save(saga);
-
-		log.info("[Saga-{}] ORDER_CREATION Saga 시작", saga.getSagaId());
-
-		return saga.getSagaId();
 	}
 }
