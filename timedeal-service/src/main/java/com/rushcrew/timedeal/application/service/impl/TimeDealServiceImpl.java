@@ -4,6 +4,9 @@ import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.timedeal.application.command.CreateTimeDealCommand;
 import com.rushcrew.timedeal.application.command.UpdateTimeDealCommand;
 import com.rushcrew.timedeal.application.model.ProductInfo;
+import com.rushcrew.timedeal.application.result.TimeDealDetailResult;
+import com.rushcrew.timedeal.application.result.TimeDealProductResult;
+import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.application.result.UpdateTimeDealResult;
 import com.rushcrew.timedeal.application.service.TimeDealService;
 import com.rushcrew.timedeal.domain.entity.TimeDeal;
@@ -12,8 +15,12 @@ import com.rushcrew.timedeal.domain.model.CreateTimeDealParams;
 import com.rushcrew.timedeal.domain.model.UpdateTimeDealParams;
 import com.rushcrew.timedeal.domain.port.ProductClient;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
+import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,5 +77,24 @@ public class TimeDealServiceImpl implements TimeDealService {
         TimeDeal timeDeal = timeDealRepository.findById(timeDealId)
             .orElseThrow(() -> new BusinessException(TimeDealErrorCode.NOT_FOUND_TIME_DEAL));
         timeDeal.forceEnd();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TimeDealResult> getTimeDeals(TimeDealStatus status, Pageable pageable) {
+        return timeDealRepository.findNotEndedByStatus(status, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TimeDealDetailResult getTimeDealDetail(UUID timeDealId) {
+        TimeDeal timeDeal = timeDealRepository.findByIdAndStatusNot(timeDealId,
+                TimeDealStatus.ENDED)
+            .orElseThrow(() -> new BusinessException(TimeDealErrorCode.NOT_FOUND_TIME_DEAL));
+
+        List<TimeDealProductResult> timeDealProdutResultList =
+            timeDeal.getTimeDealProducts().stream().map(TimeDealProductResult::from).toList();
+
+        return TimeDealDetailResult.of(timeDeal, timeDealProdutResultList);
     }
 }

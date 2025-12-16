@@ -14,7 +14,7 @@ services:
     volumes:
       - rushdeal_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rushdeal -d rushdeal_db"]
+      test: [ "CMD-SHELL", "pg_isready -U rushdeal -d rushdeal_db" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,6 +42,20 @@ services:
       - "6381:6379"
     volumes:
       - rushdeal_order_redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  rushdeal_timedeal_redis:
+    image: redis:7-alpine
+    container_name: rushdeal_timedeal_redis
+    restart: unless-stopped
+    ports:
+      - "6382:6379"
+    volumes:
+      - rushdeal_timedeal_redis_data:/data
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
@@ -91,3 +105,4 @@ volumes:
   rushdeal_pg_data:
   rushdeal_queue_redis_data:
   rushdeal_order_redis_data:
+  rushdeal_timedeal_redis_data:
