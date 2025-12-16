@@ -4,6 +4,7 @@ import com.rushcrew.common.entity.BaseEntity;
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
 import com.rushcrew.timedeal.domain.model.CreateTimeDealParams;
+import com.rushcrew.timedeal.domain.model.UpdateTimeDealParams;
 import com.rushcrew.timedeal.domain.vo.LimitQuantity;
 import com.rushcrew.timedeal.domain.vo.Period;
 import com.rushcrew.timedeal.domain.vo.Price;
@@ -23,6 +24,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -97,6 +99,18 @@ public class TimeDeal extends BaseEntity {
         return timeDeal;
     }
 
+    public void updateStatus(TimeDealStatus timeDealStatus) {
+        this.status = timeDealStatus;
+    }
+
+    public void update(UpdateTimeDealParams params) {
+        updateTimeDealInfo(params.title(), params.description());
+        this.price = params.discountPrice() != null ? Price.of(params.discountPrice()) : this.price;
+        this.limitQuantity = params.limitQuantity() != null
+            ? LimitQuantity.of(params.limitQuantity()) : this.limitQuantity;
+        updatePeriod(params.startAt(), params.endAt());
+    }
+
     public void forceEnd() {
         if (this.status == TimeDealStatus.ENDED) {
             throw new BusinessException(TimeDealErrorCode.ALREADY_ENDED);
@@ -104,10 +118,50 @@ public class TimeDeal extends BaseEntity {
         this.status = TimeDealStatus.ENDED;
     }
 
+    public void updateStatusByPeriod(Instant now) {
+        Instant start = this.period.getStartAt();
+        Instant end = this.period.getEndAt();
+
+        if (now.isAfter(end)) { // 종료 후
+            this.status = TimeDealStatus.ENDED;
+        } else if (!now.isBefore(start) && !now.isAfter(end)) { // 진행중
+            this.status = TimeDealStatus.IN_PROGRESS;
+        }
+    }
+
     private void addTimeDealProduct(UUID productId, UUID optionId) {
         this.timeDealProducts.add(TimeDealProduct.create(
             this, ProductItemIds.of(productId, optionId)
         ));
+    }
+
+    private void updateTimeDealInfo(String newTitle, String newDescription) {
+        if (newTitle == null && newDescription == null) {
+            return;
+        }
+
+        String updatedTitle = newTitle != null ? newTitle : this.timeDealInfo.getTitle();
+        String updatedDescription =
+            newDescription != null ? newDescription : this.timeDealInfo.getDescription();
+        this.timeDealInfo = TimeDealInfo.of(updatedTitle, updatedDescription);
+    }
+
+    private void updatePeriod(Instant newStartAt, Instant newEndAt) {
+        if (newStartAt == null && newEndAt == null) {
+            return;
+        }
+
+        if (!this.status.equals(TimeDealStatus.SCHEDULED)) {
+            throw new BusinessException(TimeDealErrorCode.TIME_DEAL_UPDATE_NOT_ALLOWED);
+        }
+
+        Instant updatedStartAt = newStartAt != null ? newStartAt : this.getPeriod().getStartAt();
+        Instant updatedEndAt = newEndAt != null ? newEndAt : this.getPeriod().getEndAt();
+
+        if (!period.isValidPeriod(updatedStartAt, updatedEndAt)) {
+            throw new BusinessException(TimeDealErrorCode.INVALID_PERIOD);
+        }
+        this.period = Period.of(updatedStartAt, updatedEndAt);
     }
 }
 
