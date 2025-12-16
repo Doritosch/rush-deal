@@ -27,6 +27,9 @@ dependencies {
 	implementation 'io.github.openfeign.querydsl:querydsl-jpa:7.0'
 	annotationProcessor 'io.github.openfeign.querydsl:querydsl-apt:7.0:jpa'
 
+	// kafka
+	implementation 'org.springframework.kafka:spring-kafka'
+
 	// security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	testImplementation 'org.springframework.security:spring-security-test'
