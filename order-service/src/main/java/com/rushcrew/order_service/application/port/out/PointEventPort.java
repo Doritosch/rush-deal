@@ -9,7 +9,4 @@ public interface PointEventPort {
 
 	/* 포인트 환불 요청 이벤트 발행 */
 	void publishPointRefundRequested(Long aLong, UUID orderId, Long aLong1, String reason);
-
-	/* 포인트 차감 요청 이벤트 발행 */
-	void publishPointDeductRequested(Long aLong, UUID orderId, Long aLong1, String 주문_결제용);
 }

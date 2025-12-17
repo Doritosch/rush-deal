@@ -1,7 +1,6 @@
 package com.rushcrew.order_service.infrastructure.adapter.out.messaging;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -81,35 +80,6 @@ public class PointEventPublisher implements PointEventPort {
 		} catch (Exception e) {
 			log.error("포인트 환불 요청 이벤트 발행 실패: orderId={}", orderId, e);
 			throw new RuntimeException("포인트 환불 요청 이벤트 발행 실패", e);
-		}
-	}
-
-	@Override
-	public void publishPointDeductRequested(Long userId, UUID orderId, Long pointAmount, String reason) {
-		try {
-			log.info("포인트 차감 요청 이벤트 발행: userId={}, orderId={}, pointAmount={}", userId, orderId, pointAmount);
-
-			Map<String, Object> event = new HashMap<>();
-			event.put("userId", userId);
-			event.put("orderId", orderId.toString());
-			event.put("pointAmount", pointAmount);
-			// event.put("reason", reason);
-
-			String payload = objectMapper.writeValueAsString(event);
-
-			OutboxEventEntity outbox = OutboxEventEntity.create(
-				"ORDER",         // aggregateType
-				orderId,                     // aggregateId
-				"POINT_DEDUCT_REQUESTED",     // eventType
-				payload                      // json
-			);
-
-			outboxRepository.save(outbox);
-			log.info("포인트 차감 요청 이벤트 Outbox 저장 완료: orderId={}", orderId);
-
-		} catch (Exception e) {
-			log.error("포인트 차감 요청 이벤트 발행 실패: orderId={}", orderId, e);
-			throw new RuntimeException("포인트 차감 요청 이벤트 발행 실패", e);
 		}
 	}
 }
