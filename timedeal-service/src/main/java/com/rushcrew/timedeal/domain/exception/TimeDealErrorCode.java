@@ -33,6 +33,7 @@ public enum TimeDealErrorCode implements ErrorCode {
     NOT_FOUND_LOG(HttpStatus.NOT_FOUND, "TD-021", "존재하지 않는 재고 로그입니다."),
     INVALID_ORDER_INFO(HttpStatus.BAD_REQUEST, "TD-022", "주문 정보와 일치하지 않습니다."),
     INVALID_ORDER_STATE(HttpStatus.BAD_REQUEST, "TD-023", "복구 불가능한 주문 상태입니다."),
+    START_TIME_TOO_CLOSE(HttpStatus.BAD_REQUEST, "TD-024", "시작 시간은 현재 시간으로부터 최소 5초 이후여야 합니다."),
 
     ;
 
