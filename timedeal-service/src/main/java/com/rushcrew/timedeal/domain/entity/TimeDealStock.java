@@ -28,7 +28,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -191,6 +190,5 @@ public class TimeDealStock extends BaseEntity {
     private void updateStatus() {
         this.status = TimeDealStockStatus.AVAILABLE;
         this.timeDealProduct.updateStatus(TimeDealProductStatus.IN_STOCK);
-        this.timeDealProduct.getTimeDeal().updateStatusByPeriod(Instant.now());
     }
 }
