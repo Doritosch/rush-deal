@@ -39,7 +39,7 @@ public class TimeDealController {
 
     @PostMapping
     public ResponseEntity<UUID> createTimeDeal(
-        @Valid @RequestBody CreateTimeDealRequest request
+        @RequestBody @Valid CreateTimeDealRequest request
     ) {
         CreateTimeDealCommand command = request.toCommand();
         UUID timeDealId = timeDealService.createTimeDeal(command);
@@ -48,7 +48,7 @@ public class TimeDealController {
 
     @PatchMapping("/{timeDealId}")
     public ResponseEntity<UpdateTimeDealResponse> updateTimeDeal(
-        @Valid UpdateTimeDealRequest request,
+        @RequestBody @Valid UpdateTimeDealRequest request,
         @PathVariable UUID timeDealId
     ) {
         UpdateTimeDealCommand command = request.toCommand();
