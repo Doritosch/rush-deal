@@ -35,8 +35,26 @@ public interface OrderJpaRepository extends JpaRepository<Order, UUID> {
 
 
 	/* 캐시 워밍용 --> 서버 시작 시 캐시에 최근 주문을 적재 */
-	@Query("SELECT o FROM Order o " +
-		"WHERE o.orderedAt >= :since " +
-		"ORDER BY o.orderedAt DESC")
+	/**
+	 * 최근 주문 엔티티 조회
+	 */
+	@Query("""
+        SELECT o 
+        FROM Order o 
+        LEFT JOIN FETCH o.orderItems 
+        WHERE o.orderedAt >= :since 
+        ORDER BY o.orderedAt DESC
+        """)
 	List<Order> findRecentOrders(@Param("since") Instant since);
+
+	/**
+	 * 최근 주문 ID만 조회 (캐시 워밍용)
+	 */
+	@Query("""
+        SELECT o.orderId 
+        FROM Order o 
+        WHERE o.orderedAt >= :since 
+        ORDER BY o.orderedAt DESC
+        """)
+	List<UUID> findRecentOrderIds(@Param("since") Instant since);
 }

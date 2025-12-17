@@ -4,12 +4,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
-import com.rushcrew.common.entity.BaseEntity;
+import com.rushcrew.order_service.domain.common.BaseEntity;
 import com.rushcrew.order_service.domain.enums.OrderEventType;
 import com.rushcrew.order_service.domain.enums.OrderStatus;
 import com.rushcrew.order_service.domain.vo.OrderAmount;
