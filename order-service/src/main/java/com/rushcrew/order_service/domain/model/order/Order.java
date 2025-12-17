@@ -79,6 +79,7 @@ public class Order extends BaseEntity {
 	@Builder.Default
 	private List<OrderHistory> histories = new ArrayList<>();
 
+	private UUID sagaId;
 
 
 	// ============================================
@@ -86,6 +87,7 @@ public class Order extends BaseEntity {
 	// ============================================
 
 	public static Order create(
+		UUID orderId,
 		Long userId,
 		List<OrderItem> orderItems,
 		Long pointUsed,
@@ -98,7 +100,7 @@ public class Order extends BaseEntity {
 		OrderAmount amount = OrderAmount.create(totalAmount, pointUsed);
 
 		Order order = Order.builder()
-			.orderId(UUID.randomUUID())
+			.orderId(orderId)	// OrderId 생성 책임을 Saga(애플리케이션 계층)로 (도메인은 이미 결정된 주문을 생성만 하도록)
 			.userId(userId)
 			.amount(amount)
 			.status(OrderStatus.PENDING)
@@ -241,6 +243,12 @@ public class Order extends BaseEntity {
 		return this.userId.equals(userId);
 	}
 
+	public void assignSagaId(UUID sagaId) {
+		if (this.sagaId != null) {
+			throw new IllegalStateException("SagaId already assigned");
+		}
+		this.sagaId = sagaId;
+	}
 
 	// ============================================
 	//       주문 상태 검증 (행위 가능 여부 판단)
@@ -285,31 +293,5 @@ public class Order extends BaseEntity {
 
 	public BigDecimal getFinalAmount() {
 		return amount.getFinalAmount();
-	}
-
-	public Map<String, Object> toEventPayload() {
-		Map<String, Object> payload = new HashMap<>();
-		payload.put("orderId", this.orderId);
-		payload.put("userId", this.userId);
-
-		payload.put("totalAmount", this.amount.getTotalAmount());      // 주문 아이템 전체 합
-		payload.put("pointUsed", this.amount.getPointUsed());          // 사용한 포인트
-		payload.put("finalAmount", this.amount.getFinalAmount());      // 실제 결제 금액 (total - point)
-
-		payload.put("status", this.status.name());
-		payload.put("orderedAt", this.orderedAt);
-
-		payload.put("items", this.orderItems.stream()
-			.map(item -> {
-				Map<String, Object> itemMap = new HashMap<>();
-				itemMap.put("timeDealStockId", item.getTimeDealStockId());
-				itemMap.put("quantity", item.getQuantity());
-				itemMap.put("unitPrice", item.getUnitPrice());
-				itemMap.put("discountPrice", item.getDiscountPrice());
-				return itemMap;
-			})
-			.toList()
-		);
-		return payload;
 	}
 }

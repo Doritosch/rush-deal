@@ -42,9 +42,15 @@ public class OrderCreationSagaOrchestrator {
 			.userId(command.userId())
 			.build();
 
+		// 3. 주문 ID 미리 생성
+		UUID preGeneratedOrderId = UUID.randomUUID();
+
 		OrderCreationSagaData data = OrderCreationSagaData.builder()
 			.command(command)
+			.orderId(preGeneratedOrderId) // 미리 생성된 주문 ID 설정
 			.build();
+
+		log.info("[Saga-{}] 주문 ID 사전 생성: orderId={}", saga.getSagaId(), preGeneratedOrderId);
 
 		try {
 			// Step 1: ValidateStock

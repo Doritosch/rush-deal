@@ -31,18 +31,15 @@ public class UsePointStep {
 
 			Long userId = context.getUserId();
 			UUID sagaId = context.getSagaId();
+			UUID orderId = data.getOrderId();
 
-			// 임시 OrderId 생성 (실제 주문은 아직 생성 전)
-			String tempOrderId = UUID.randomUUID().toString();
-			data.setTempOrderId(tempOrderId);
+			log.info("[Saga-{}] 포인트 사용 요청: userId={}, pointUsed={}, orderId={}",
+				sagaId, userId, pointUsed, orderId);
 
-			log.info("[Saga-{}] 포인트 사용 요청: userId={}, pointUsed={}, tempOrderId={}",
-				sagaId, userId, pointUsed, tempOrderId);
+			pointPort.usePoint(userId, orderId.toString(), pointUsed, sagaId);
 
-			pointPort.usePoint(userId, tempOrderId, pointUsed, sagaId);
-
-			log.info("[Saga-{}] 포인트 사용 완료: tempOrderId={}, pointUsed={}",
-				sagaId, tempOrderId, pointUsed);
+			log.info("[Saga-{}] 포인트 사용 완료: orderId={}, pointUsed={}",
+				sagaId, orderId, pointUsed);
 
 			return SagaStepResult.success();
 
@@ -67,14 +64,14 @@ public class UsePointStep {
 				return;
 			}
 
-			String tempOrderId = data.getTempOrderId();
+			UUID orderId = data.getOrderId();
 			Long userId = context.getUserId();
 			UUID sagaId = context.getSagaId();
 
 			log.info("[Saga-{}] 포인트 보상 트랜잭션 시작: orderId={}, pointUsed={}",
-				sagaId, tempOrderId, pointUsed);
+				sagaId, orderId, pointUsed);
 
-			pointPort.cancelPointUse(userId, tempOrderId, sagaId);
+			pointPort.cancelPointUse(userId, orderId.toString(), sagaId);
 
 			log.info("[Saga-{}] 포인트 보상 트랜잭션 완료", sagaId);
 

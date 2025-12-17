@@ -24,7 +24,13 @@ public class PointEventPublisher implements PointEventPort {
 	private final ObjectMapper objectMapper;
 
 	@Override
-	public void publishPointEarnRequested(Long userId, UUID orderId, BigDecimal finalAmount, String reason) {
+	public void publishPointEarnRequested(
+		Long userId,
+		UUID orderId,
+		BigDecimal finalAmount,
+		UUID sagaId,
+		String reason
+	) {
 		try {
 			log.info("포인트 적립 요청 이벤트 발행: userId={}, orderId={}, finalAmount={}", userId, orderId, finalAmount);
 
@@ -32,6 +38,7 @@ public class PointEventPublisher implements PointEventPort {
 			event.put("userId", userId);
 			event.put("orderId", orderId.toString());
 			event.put("finalAmount", finalAmount);
+			event.put("sagaId", sagaId);
 			// event.put("reason", reason);
 			// event.put("timestamp", timestamp.toString());
 
