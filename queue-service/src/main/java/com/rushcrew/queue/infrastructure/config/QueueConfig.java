@@ -14,7 +14,7 @@ public class QueueConfig {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         // 기본적으로 10개의 스레드를 항상 유지
         executor.setCorePoolSize(10);
-        // 바쁠 때 최대 20개까지 확장
+        // 바쁠 때 최대 20개까지 확장 (기본 10개 스레드도 점유되었고, 대기열 용량도 꽉 찼을 경우)
         executor.setMaxPoolSize(20);
         // 대기열 용량 (작업이 밀리면 500개까지 쌓아둠)
         executor.setQueueCapacity(500);
