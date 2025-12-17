@@ -3,6 +3,7 @@ package com.rushcrew.timedeal.application.service.impl;
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.timedeal.application.command.CreateTimeDealCommand;
 import com.rushcrew.timedeal.application.command.UpdateTimeDealCommand;
+import com.rushcrew.timedeal.application.event.TimeDealScheduledEvent;
 import com.rushcrew.timedeal.application.model.ProductInfo;
 import com.rushcrew.timedeal.application.result.TimeDealDetailResult;
 import com.rushcrew.timedeal.application.result.TimeDealProductResult;
@@ -14,11 +15,15 @@ import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
 import com.rushcrew.timedeal.domain.model.CreateTimeDealParams;
 import com.rushcrew.timedeal.domain.model.UpdateTimeDealParams;
 import com.rushcrew.timedeal.domain.port.ProductClient;
+import com.rushcrew.timedeal.domain.port.TimeDealQueueKey;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,10 +31,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TimeDealServiceImpl implements TimeDealService {
 
     private final TimeDealRepository timeDealRepository;
     private final ProductClient productClient;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -49,6 +56,13 @@ public class TimeDealServiceImpl implements TimeDealService {
         TimeDeal newTimeDeal = TimeDeal.create(params);
         timeDealRepository.save(newTimeDeal);
 
+        Instant startAt = command.period().getStartAt();
+        Instant endAt = command.period().getEndAt();
+        eventPublisher.publishEvent(
+            new TimeDealScheduledEvent(newTimeDeal.getId(), startAt, TimeDealQueueKey.START));
+        eventPublisher.publishEvent(
+            new TimeDealScheduledEvent(newTimeDeal.getId(), endAt, TimeDealQueueKey.END));
+
         return newTimeDeal.getId();
     }
 
@@ -66,6 +80,19 @@ public class TimeDealServiceImpl implements TimeDealService {
         );
         timeDeal.update(params);
 
+        if (command.startAt() != null) {
+            eventPublisher.publishEvent(
+                new TimeDealScheduledEvent(
+                    timeDeal.getId(), command.startAt(), TimeDealQueueKey.START)
+            );
+        }
+        if (command.endAt() != null) {
+            eventPublisher.publishEvent(
+                new TimeDealScheduledEvent(
+                    timeDeal.getId(), command.endAt(), TimeDealQueueKey.END)
+            );
+        }
+
         return UpdateTimeDealResult.from(timeDeal);
     }
 
@@ -80,13 +107,11 @@ public class TimeDealServiceImpl implements TimeDealService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Page<TimeDealResult> getTimeDeals(TimeDealStatus status, Pageable pageable) {
         return timeDealRepository.findNotEndedByStatus(status, pageable);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public TimeDealDetailResult getTimeDealDetail(UUID timeDealId) {
         TimeDeal timeDeal = timeDealRepository.findByIdAndStatusNot(timeDealId,
                 TimeDealStatus.ENDED)
@@ -96,5 +121,51 @@ public class TimeDealServiceImpl implements TimeDealService {
             timeDeal.getTimeDealProducts().stream().map(TimeDealProductResult::from).toList();
 
         return TimeDealDetailResult.of(timeDeal, timeDealProdutResultList);
+    }
+
+    @Override
+    @Transactional
+    public List<String> startTimeDeals(List<String> timeDealIds) {
+        return executeStatusUpdate(timeDealIds, TimeDealStatus.IN_PROGRESS);
+    }
+
+    @Override
+    @Transactional
+    public List<String> endTimeDeals(List<String> timeDealIds) {
+        return executeStatusUpdate(timeDealIds, TimeDealStatus.ENDED);
+    }
+
+    private List<String> executeStatusUpdate(
+        List<String> timeDealIds,
+        TimeDealStatus newStatus
+    ) {
+
+        List<UUID> idList = timeDealIds.stream().map(UUID::fromString).toList();
+        List<TimeDeal> timeDealList = timeDealRepository.findAllById(idList);
+
+        List<String> updatedIds = new ArrayList<>();
+
+        for (TimeDeal timeDeal : timeDealList) {
+            TimeDealStatus previousStatus = timeDeal.getStatus();
+
+            switch (newStatus) {
+                case IN_PROGRESS -> {
+                    if (previousStatus == TimeDealStatus.SCHEDULED) {
+                        timeDeal.updateStatus(newStatus);
+                        updatedIds.add(timeDeal.getId().toString());
+                    }
+                }
+                case ENDED -> {
+                    if (previousStatus == TimeDealStatus.IN_PROGRESS
+                        || previousStatus == TimeDealStatus.SOLD_OUT
+                    ) {
+                        timeDeal.updateStatus(newStatus);
+                        updatedIds.add(timeDeal.getId().toString());
+                    }
+                }
+            }
+        }
+
+        return updatedIds;
     }
 }

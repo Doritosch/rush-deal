@@ -5,6 +5,7 @@ import com.rushcrew.timedeal.domain.entity.TimeDeal;
 import com.rushcrew.timedeal.domain.entity.TimeDealProduct;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -43,5 +44,10 @@ public class TimeDealRepositoryAdapter implements TimeDealRepository {
     @Override
     public Optional<TimeDealProduct> findProductByProductId(UUID productId) {
         return timeDealJpaRepository.findProductByProductId(productId);
+    }
+
+    @Override
+    public List<TimeDeal> findAllById(List<UUID> idList) {
+        return timeDealJpaRepository.findAllById(idList);
     }
 }
