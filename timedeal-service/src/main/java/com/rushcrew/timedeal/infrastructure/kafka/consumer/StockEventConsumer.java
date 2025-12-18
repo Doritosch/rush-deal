@@ -122,7 +122,7 @@ public class StockEventConsumer {
 	}
 
 	// 주문 취소 -> 재고 복구
-	@KafkaListener(topics = "order.cancelled")
+	@KafkaListener(topics = "stock.reservation.cancelled")
 	public void restore(String message) {
 		try {
 			log.info("재고 복구 메시지 수신: {}", message);
