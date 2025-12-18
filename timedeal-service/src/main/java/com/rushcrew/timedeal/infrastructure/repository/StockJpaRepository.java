@@ -30,6 +30,7 @@ public interface StockJpaRepository extends JpaRepository<TimeDealStock, UUID> {
                   SELECT new com.rushcrew.timedeal.application.result.StockResult(
                                   tds.id,
                                   tdp.id,
+                                  tdp.timeDeal.timeDealInfo.sellerId,
                                   tds.stockCounts.available,
                                   tds.stockCounts.reserved,
                                   tds.stockCounts.sold,
@@ -56,6 +57,7 @@ public interface StockJpaRepository extends JpaRepository<TimeDealStock, UUID> {
                   SELECT new com.rushcrew.timedeal.application.result.StockResult(
                                   tds.id,
                                   tdp.id,
+                                  tdp.timeDeal.timeDealInfo.sellerId,
                                   tds.stockCounts.available,
                                   tds.stockCounts.reserved,
                                   tds.stockCounts.sold,

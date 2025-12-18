@@ -7,6 +7,7 @@ import java.util.UUID;
 public record StockResult(
     UUID stockId,
     UUID productId,
+    Long sellerId,
     Long availableStock,
     Long reservedStock,
     Long soldStock,
