@@ -16,6 +16,7 @@ import com.rushcrew.timedeal.application.event.StockRestoredEvent;
 import com.rushcrew.timedeal.application.result.ConfirmStockResult;
 import com.rushcrew.timedeal.application.result.CreateStockResult;
 import com.rushcrew.timedeal.application.result.ReserveStockResult;
+import com.rushcrew.timedeal.application.result.StockLogResult;
 import com.rushcrew.timedeal.application.result.StockResult;
 import com.rushcrew.timedeal.application.result.UpdateStockCountResult;
 import com.rushcrew.timedeal.application.service.StockService;
@@ -157,6 +158,11 @@ public class StockServiceImpl implements StockService {
         eventPublisher.publishEvent(
             new StockRestoredEvent(command.stockId(), command.quantity().getQuantity())
         );
+    }
+
+    @Override
+    public Page<StockLogResult> getStockLogs(UUID stockId, String eventType, Pageable pageable) {
+        return stockRepository.findLogByIdAndFilter(stockId, eventType, pageable);
     }
 
     // ------------------------------------------------------------------------------------
