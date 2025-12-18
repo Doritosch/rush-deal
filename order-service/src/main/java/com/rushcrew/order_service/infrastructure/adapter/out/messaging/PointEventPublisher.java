@@ -61,14 +61,15 @@ public class PointEventPublisher implements PointEventPort {
 	}
 
 	@Override
-	public void publishPointRefundRequested(Long userId, UUID orderId, Long pointUsed, String reason) {
+	public void publishPointRefundRequested(Long userId, UUID orderId, UUID sagaId, Long pointUsed, String reason) {
 		try {
 			log.info("포인트 환불 요청 이벤트 발행: userId={}, orderId={}, pointUsed={}", userId, orderId, pointUsed);
 
 			Map<String, Object> event = new HashMap<>();
 			event.put("userId", userId);
 			event.put("orderId", orderId.toString());
-			event.put("pointUsed", pointUsed);
+			event.put("sagaId", sagaId);
+			// event.put("pointUsed", pointUsed);
 			// event.put("reason", reason);
 			// event.put("timestamp", timestamp.toString());
 
