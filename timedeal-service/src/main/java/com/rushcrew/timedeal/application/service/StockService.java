@@ -21,12 +21,12 @@ public interface StockService {
 
     UpdateStockCountResult changeStockCount(UUID stockId, UpdateStockCountCommand command);
 
-    void deleteStock(UUID stockId);
+    void deleteStock(UUID stockId, Long userId);
 
     Page<StockResult> getStocks(
         String keyword, UUID productId, TimeDealStockStatus status, Pageable pageable);
 
-    StockResult getStock(UUID stockId);
+    StockResult getStock(Long userId, String role, UUID stockId);
 
     ReserveStockResult reserveStock(ReserveStockCommand command);
 
