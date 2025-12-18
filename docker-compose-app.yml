@@ -6,7 +6,7 @@ services:
     container_name: rushdeal_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_DB: ${DB_URL}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
@@ -15,7 +15,7 @@ services:
       - rushdeal_pg_data:/var/lib/postgresql/data
       - ./scripts/init-schemas.sql:/docker-entrypoint-initdb.d/init-schemas.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_URL}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -173,7 +173,7 @@ services:
 
       # Redis
       REDIS_HOST: ${AUTH_REDIS_HOST}
-      REDIS_PORT: ${AUTH_REDIS_PORT:-6378}
+      REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
 
       # JWT
@@ -209,7 +209,7 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: ${USER_REDIS_HOST}
-      REDIS_PORT: ${USER_REDIS_PORT:-6379}
+      REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       EUREKA_ENABLED: ${EUREKA_ENABLED:-false}
       EUREKA_URL: ${EUREKA_URL}
@@ -238,7 +238,7 @@ services:
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
-      KAFKA_BROKERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      KAFKA_BROKERS: ${KAFKA_BROKERS}
       EUREKA_ENABLED: ${EUREKA_ENABLED:-false}
       EUREKA_URL: ${EUREKA_URL}
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
@@ -330,8 +330,8 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: ${QUEUE_REDIS_HOST}
-      REDIS_PORT: ${QUEUE_REDIS_PORT:-6379}
-      KAFKA_BROKERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      REDIS_PORT: 6379
+      KAFKA_BROKERS: ${KAFKA_BROKERS}
       EUREKA_ENABLED: ${EUREKA_ENABLED:-false}
       EUREKA_URL: ${EUREKA_URL}
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
@@ -363,8 +363,8 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: ${TIMEDEAL_REDIS_HOST}
-      REDIS_PORT: ${TIMEDEAL_REDIS_PORT:-6379}
-      KAFKA_BROKERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      REDIS_PORT: 6379
+      KAFKA_BROKERS: ${KAFKA_BROKERS}
       EUREKA_ENABLED: ${EUREKA_ENABLED:-false}
       EUREKA_URL: ${EUREKA_URL}
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}

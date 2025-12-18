@@ -190,7 +190,7 @@ public class StockServiceImpl implements StockService {
         UUID orderId = command.orderId().getOrderId();
         TimeDealStock stock = getStockOrThrow(command.stockId());
         StockLog log = getLastLogOrThrow(command.stockId(), orderId);
-        validateOrderQuantity(log, command.quantity());
+        log.validateOrderQuantity(command.quantity());
 
         if (log.getEventType() == EventType.RESERVE) {
             stock.restoreFromReserved(OrderId.of(orderId), command.quantity(), command.reason());
