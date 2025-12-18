@@ -77,6 +77,19 @@ services:
       timeout: 3s
       retries: 5
 
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: rushdeal_redisinsight
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    depends_on:
+      - rushdeal_queue_redis
+      - rushdeal_order_redis
+      - rushdeal_timedeal_redis
+      - rushdeal_user_redis
+
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: rushdeal_zookeeper
