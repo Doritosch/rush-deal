@@ -40,6 +40,12 @@ out/
 env.properties
 *.env
 .env.local
+.env
+.env.*.local
+
+# 시크릿 디렉토리
+secrets/
+!secrets/.gitkeep
 
 ### Q Classes
 **/generated/

@@ -15,8 +15,8 @@ spring:
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost} # Docker 환경이라면 컨테이너 이름 또는 IP
-      port: ${REDIS_PORT:6381}
+      host: ${QUEUE_REDIS_HOST:localhost} # Docker 환경이라면 컨테이너 이름 또는 IP
+      port: ${QUEUE_REDIS_PORT:6380}
 
   datasource:
     url: ${DB_URL}
@@ -56,5 +56,5 @@ eureka:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
 
 server:
-  port: ${SERVER_PORT:8040}
+  port: ${QUEUE_SERVER_PORT:8040}
 

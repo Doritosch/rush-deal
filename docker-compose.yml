@@ -88,6 +88,7 @@ services:
     depends_on:
       - zookeeper
 
+
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: rushdeal_kafka_ui
@@ -101,8 +102,44 @@ services:
     depends_on:
       - kafka
 
+  # [MSA 서비스] 스프링 부트 앱 설정
+  auth-service:
+    container_name: rushdeal-auth-service
+    build:
+      context: .
+      dockerfile: Dockerfile.template
+      args:
+        SERVICE_NAME: auth-service
+    ports:
+      - "8000:8000"
+    environment:
+        - SERVER_PORT=8000
+        - DB_URL=jdbc:postgresql://rushdeal_postgres:5432/rushdeal_db
+        - REDIS_HOST=rushdeal_queue_redis # 공용 Redis가 없다면 적절한 곳 연결
+        - KAFKA_BROKERS=kafka:29092
+    depends_on:
+      rushdeal_postgres:
+        condition: service_healthy
+      kafka:
+          condition: service_healthy
+
+  user-service:
+    container_name: rushdeal-user-service
+    build:
+      context: .
+      dockerfile: Dockerfile.template
+      args:
+        SERVICE_NAME: user-service
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+
+
+
+
 volumes:
   rushdeal_pg_data:
   rushdeal_queue_redis_data:
   rushdeal_order_redis_data:
   rushdeal_timedeal_redis_data:
+

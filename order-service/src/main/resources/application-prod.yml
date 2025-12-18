@@ -73,7 +73,7 @@ spring:
 #      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 server:
-  port: ${SERVER_PORT:8050}
+  port: ${ORDER_SERVER_PORT:8050}
 
 eureka:
   client:

@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8060}
+  port: ${USER_SERVER_PORT:8060}
 
 spring:
   application:
@@ -22,8 +22,8 @@ spring:
         order_updates: true
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      host: ${USER_REDIS_HOST:localhost}
+      port: ${USER_REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
 eureka:
   client:

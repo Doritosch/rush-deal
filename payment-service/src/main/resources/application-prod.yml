@@ -19,7 +19,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 server:
-  port: ${SERVER_PORT:8010}
+  port: ${PAYMENT_SERVER_PORT:8010}
 
 eureka:
   client:
