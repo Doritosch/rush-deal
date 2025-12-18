@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: product-service
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:none} # 운영에선 none 권장됨
+    show-sql: ${SHOW_SQL:false} # 운영에선 로그 너무 많이 찍히니 false로 끄기 위해
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: product_schema
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE:never} # 기본은 안 함. 로컬에서만 환경변수로 always 주입. 매번 초기화 스크립트 실행하는 문제 발생 (data.sql, schema.sql)
+
+server:
+  port: 8020
+
+eureka:
+  client:
+    enabled: ${EUREKA_ENABLED:false}  # AWS에서는 false
+    service-url:
+      defaultZone: ${EUREKA_URL}

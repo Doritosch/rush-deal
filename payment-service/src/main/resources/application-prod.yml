@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:none} # 운영에선 none 권장됨
+    show-sql: ${SHOW_SQL:false} # 운영에선 로그 너무 많이 찍히니 false로 끄기 위해
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: payment_schema
+        hbm2ddl:
+          create_namespaces: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8010
+
+eureka:
+  client:
+    enabled: ${EUREKA_ENABLED:false}  # AWS에서는 false
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+
+portone:
+  secret:
+    api: ${PORTONE_API_SECRET}
+    store-id: ${PORTONE_STORE_ID}
+    channel-key: ${PORTONE_CHANNEL_KEY}
+    webhook: ${PORTONE_WEBHOOK}

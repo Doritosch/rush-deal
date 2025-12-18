@@ -1,0 +1,101 @@
+spring:
+  application:
+    name: order-service
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.quartz.QuartzAutoConfiguration
+
+  batch:
+    jdbc:
+      initialize-schema: never   # SQL 스크립트로 처리
+      table-prefix: order_schema.BATCH_   # 스키마 명시
+    job:
+      enabled: false
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: ${QUARTZ_INIT_SCHEMA:never}  # 환경변수로 제어   # Quartz 자동 초기화 사용
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: OrderScheduler
+            instanceId: AUTO
+
+          dataSource:
+            main:
+              driver: org.postgresql.Driver
+              URL: ${DB_URL}
+              user: ${DB_USERNAME}
+              password: ${DB_PASSWORD}
+
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            tablePrefix: quartz_schema.QRTZ_
+            isClustered: true
+            useProperties: false
+
+          threadPool:
+            threadCount: ${QUARTZ_THREAD_COUNT:10}
+
+  jpa:
+    hibernate:
+      ddl-auto:${JPA_DDL_AUTO:none} # 운영에선 none이나 validate로 바꾸기 위해 변수 처리
+    show-sql:  ${SHOW_SQL:false} # 운영에선 로그 너무 많이 찍히니 false로 끄기 위해
+    properties:
+      hibernate:
+        format_sql: false
+        default_schema: order_schema
+
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE:never} # 기본은 안 함. 로컬에서만 환경변수로 always 주입. 매번 초기화 스크립트 실행하는 문제 발생 (data.sql, schema.sql)
+      encoding: UTF-8
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}
+    consumer:
+      group-id: order-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+server:
+  port: ${SERVER_PORT:8050}
+
+eureka:
+  client:
+    enabled: ${EUREKA_ENABLED:false}  # AWS에서는 false
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,scheduledtasks
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${SPRING_PROFILES_ACTIVE:prod}
+
+  prometheus:
+    metrics:
+      export:
+        enabled: true
