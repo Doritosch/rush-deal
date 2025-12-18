@@ -25,7 +25,7 @@ spring:
     bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}
 
 server:
-  port: 8030
+  port: ${SERVER_PORT:8030}
 
 eureka:
   client:

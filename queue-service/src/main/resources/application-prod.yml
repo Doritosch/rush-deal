@@ -56,5 +56,5 @@ eureka:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
 
 server:
-  port: ${SERVER_PORT:8011}
+  port: ${SERVER_PORT:8040}
 
