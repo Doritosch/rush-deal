@@ -48,6 +48,7 @@ public class OrderCreationSagaOrchestrator {
 		OrderCreationSagaData data = OrderCreationSagaData.builder()
 			.command(command)
 			.orderId(preGeneratedOrderId) // 미리 생성된 주문 ID 설정
+			.queueToken(command.queueToken())
 			.build();
 
 		log.info("[Saga-{}] 주문 ID 사전 생성: orderId={}", saga.getSagaId(), preGeneratedOrderId);

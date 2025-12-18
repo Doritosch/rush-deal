@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.rushcrew.order_service.application.port.out.MetricsPort;
+import com.rushcrew.order_service.application.port.out.QueueEventPort;
 import com.rushcrew.order_service.application.port.out.SagaInstancePort;
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
@@ -27,6 +28,7 @@ public class OrderSagaEventHandler {
 	private final UsePointStep usePointStep;
 	private final CreateOrderStep createOrderStep;
 	private final MetricsPort metricsPort;
+	private final QueueEventPort queueEventPort;
 
 	@Transactional
 	public void handleStockReserved(StockReservedEvent event) {
@@ -49,6 +51,9 @@ public class OrderSagaEventHandler {
 
 			saga.complete();
 			sagaInstancePort.save(saga);
+
+			// 주문 생성 완료 후 토큰 만료 이벤트 발행
+			publishTokenRemoveEvent(data);
 
 			metricsPort.recordSagaSuccess();
 			log.info("[Saga-{}] 주문 생성 완료", event.sagaId());
@@ -118,6 +123,25 @@ public class OrderSagaEventHandler {
 
 			// 보상 실패는 별도 모니터링/알림 필요
 			throw new RuntimeException("보상 트랜잭션 실패", compensateError);
+		}
+	}
+
+	/* 토큰 만료 이벤트 발행 */
+	private void publishTokenRemoveEvent(OrderCreationSagaData data) {
+		try {
+			if (data.getQueueToken() != null) {
+				queueEventPort.publishTokenRemoveEvent(
+					data.getCommand().userId(),
+					data.getCommand().productId(),
+					data.getQueueToken()
+				);
+				log.info("[Saga] 토큰 만료 이벤트 Outbox 저장 완료 - UserId: {}",
+					data.getCommand().userId());
+			} else {
+				log.warn("[Saga] 토큰 정보가 없어 이벤트 발행 생략");
+			}
+		} catch (Exception e) {
+			log.error("[Saga] 토큰 만료 이벤트 Outbox 저장 실패 (주문은 성공)", e);
 		}
 	}
 }
