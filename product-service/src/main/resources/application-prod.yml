@@ -20,7 +20,7 @@ spring:
       mode: ${SQL_INIT_MODE:never} # 기본은 안 함. 로컬에서만 환경변수로 always 주입. 매번 초기화 스크립트 실행하는 문제 발생 (data.sql, schema.sql)
 
 server:
-  port: 8020
+  port: ${SERVER_PORT:8020}
 
 eureka:
   client:

@@ -16,7 +16,7 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST:localhost} # Docker 환경이라면 컨테이너 이름 또는 IP
-      port: ${REDIS_PORT:6380}
+      port: ${REDIS_PORT:6381}
 
   datasource:
     url: ${DB_URL}
@@ -27,29 +27,33 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:update} # 운영에선 none이나 validate로 바꾸기 위해 변수 처리
+      ddl-auto: ${JPA_DDL_AUTO:none} # 운영에선 none이나 validate로 바꾸기 위해 변수 처리
     properties:
       hibernate:
         default_schema: queue_schema
-        format_sql: true
-        use_sql_comments: true
-    show-sql: ${SHOW_SQL:true} # 운영에선 로그 너무 많이 찍히니 false로 끄기 위해
+        format_sql: false
+        use_sql_comments: false
+    show-sql: ${SHOW_SQL:false} # 운영에선 로그 너무 많이 찍히니 false로 끄기 위해
 
 logging:
   level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql: TRACE
+    root: INFO
+    com.rushcrew: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type: WARN
+    org.springframework.web: INFO
+    org.springframework.kafka: INFO
+    org.springframework.data.redis: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
 eureka:
   client:
+    enabled: ${EUREKA_ENABLED:false}  # AWS에서는 false
     register-with-eureka: true
     fetch-registry: true
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
-  instance:
-    hostname: localhost
-    prefer-ip-address: true
-    appname: queue-service
 
 server:
   port: ${SERVER_PORT:8011}
