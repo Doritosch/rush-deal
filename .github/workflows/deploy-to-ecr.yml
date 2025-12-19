@@ -45,12 +45,6 @@ jobs:
           - queue-service
           - timedeal-service
 
-    # 수동 실행 시 특정 서비스만 빌드
-    if: |
-      github.event_name == 'push' || 
-      github.event.inputs.service == 'all' || 
-      github.event.inputs.service == matrix.service
-
     steps:
       # 1. 소스 코드 가져오기
       - name: Checkout code
