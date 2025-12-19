@@ -2,7 +2,7 @@ name: Deploy to Amazon ECR (Develop)
 
 on:
   push:
-    branches: [ "develop", "feature/queue/191" ] # develop 브랜치에 푸시(머지)될 때만 실행
+    branches: [ "develop" ] # develop 브랜치에 푸시(머지)될 때만 실행
 
   workflow_dispatch: # 수동 실행 버튼 추가
     inputs:
@@ -43,7 +43,7 @@ jobs:
           - payment-service
           - product-service
           - queue-service
-          - timedeal-service
+          - timedeal-service D
 
     steps:
       # 1. 소스 코드 가져오기
