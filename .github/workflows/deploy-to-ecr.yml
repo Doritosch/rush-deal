@@ -43,7 +43,7 @@ jobs:
           - payment-service
           - product-service
           - queue-service
-          - timedeal-service D
+          - timedeal-service
 
     steps:
       # 1. 소스 코드 가져오기
