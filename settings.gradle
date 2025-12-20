@@ -1,13 +1,22 @@
 rootProject.name = 'rush-deal'
 
-include 'gateway', 'user', 'discovery', 'payment', 'order', 'product', 'timedeal', 'auth', 'queue'
+//include 'gateway', 'user', 'discovery', 'payment', 'order', 'product', 'timedeal', 'auth', 'queue'
+include 'api-gateway'
+include 'user-service'
+include 'discovery-service'
+include 'payment-service'
+include 'order-service'
+include 'product-service'
+include 'timedeal-service'
+include 'queue-service'
+include 'auth-service'
 
-project(':gateway').projectDir = file('api-gateway')
-project(':user').projectDir = file('user-service')
-project(':discovery').projectDir = file('discovery-service')
-project(':payment').projectDir = file('payment-service')
-project(':order').projectDir = file('order-service')
-project(':product').projectDir = file('product-service')
-project(':timedeal').projectDir = file('timedeal-service')
-project(':auth').projectDir = file('auth-service')
-project(':queue').projectDir = file('queue-service')
+project(':api-gateway').projectDir = file('api-gateway')
+project(':user-service').projectDir = file('user-service')
+project(':discovery-service').projectDir = file('discovery-service')
+project(':payment-service').projectDir = file('payment-service')
+project(':order-service').projectDir = file('order-service')
+project(':product-service').projectDir = file('product-service')
+project(':timedeal-service').projectDir = file('timedeal-service')
+project(':queue-service').projectDir = file('queue-service')
+project(':auth-service').projectDir = file('auth-service')

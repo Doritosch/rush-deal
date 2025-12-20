@@ -53,6 +53,14 @@ subprojects {
         compileOnly 'org.projectlombok:lombok'
         annotationProcessor 'org.projectlombok:lombok'
 
+        implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+        implementation 'io.github.openfeign:feign-micrometer'
+        implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+
+        // prometheus
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
         // 테스트 시에도 Lombok 사용 가능하도록
         testCompileOnly 'org.projectlombok:lombok'
         testAnnotationProcessor 'org.projectlombok:lombok'

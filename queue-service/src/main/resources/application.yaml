@@ -4,13 +4,13 @@ spring:
 
   data:
     redis:
-      host: localhost # Docker 환경이라면 컨테이너 이름 또는 IP
-      port: 6380
+      host: ${QUEUE_REDIS_HOST}
+      port: ${QUEUE_REDIS_PORT}
 
   datasource:
-    url: jdbc:postgresql://localhost:15432/rushdeal_db
-    username: rushdeal
-    password: rushdeal
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -31,14 +31,22 @@ logging:
 
 eureka:
   client:
-    register-with-eureka: true
-    fetch-registry: true
     service-url:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    hostname: localhost
-    prefer-ip-address: true
-    appname: queue-service
+      defaultZone: ${EUREKA_URL}
 
-server:
-  port: 8011
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      access: unrestricted
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+  tracing:
+    sampling:
+      probability: 1.0
