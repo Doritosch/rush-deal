@@ -164,7 +164,7 @@ public class RedisQueueRepository implements QueueRepository {
     public boolean isActivatedToken(UUID productId, TokenId tokenId) {
         // ZSet에서 Score(만료시간) 조회
         String activeKey = getActiveKey(productId);
-        Double expireTime = redisTemplate.opsForZSet().score(activeKey, tokenId.getValue());
+        Double expireTime = redisTemplate.opsForZSet().score(activeKey, tokenId.getValue().toString());
 
         // 활성열에 없음
         if (expireTime == null) return false;

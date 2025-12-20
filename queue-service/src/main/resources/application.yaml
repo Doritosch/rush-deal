@@ -2,6 +2,16 @@ spring:
   application:
     name: queue-service
 
+  kafka:
+    bootstrap-servers: localhost:9092  # 로컬 개발 환경 기준 (Docker 내부 통신 시 kafka:29092)
+    consumer:
+      group-id: queue-service-group   # 컨슈머 그룹 ID (중요)
+      auto-offset-reset: latest       # 가장 최신 메시지부터 읽음
+      spring.json.trusted.packages: "*" # 모든 패키지의 객체를 신뢰하고 역직렬화 허용
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # JSON으로 받을거면 JsonDeserializer 사용 가능하지만, String으로 받아 직접 파싱하는게 디버깅에 유리함
+
   data:
     redis:
       host: ${QUEUE_REDIS_HOST}
