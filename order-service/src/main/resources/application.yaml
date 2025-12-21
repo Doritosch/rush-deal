@@ -4,8 +4,8 @@ spring:
 
   batch:
     jdbc:
-      initialize-schema: never   # SQL 스크립트로 처리
-      table-prefix: order_schema.BATCH_   # 스키마 명시
+      initialize-schema: never
+      table-prefix: order_schema.BATCH_
     job:
       enabled: false
 
@@ -38,9 +38,24 @@ spring:
       group-id: order-service
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+    # 재시도 설정 추가
+    listener:
+      ack-mode: record # 메시지 단위로 commit
+
+    # 에러 핸들링 설정
+    retry:
+      max-attempts: 3 # 최대 3번 재시도
+      backoff:
+        initial-interval: 1000 # 첫 재시도: 1초 후
+        multiplier: 2.0 # 재시도 간격: 1초 → 2초 → 4초
+        max-interval: 10000 # 최대 10초
 
 server:
   port: 8050

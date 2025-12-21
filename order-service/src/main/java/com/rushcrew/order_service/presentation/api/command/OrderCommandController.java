@@ -37,7 +37,6 @@ import com.rushcrew.order_service.application.command.usecase.UpdateOrderUseCase
 import com.rushcrew.order_service.application.command.mapper.ConfirmPurchaseCommandMapper;
 import com.rushcrew.order_service.application.command.mapper.ConfirmPurchaseResultMapper;
 import com.rushcrew.order_service.application.command.mapper.CreateOrderCommandMapper;
-import com.rushcrew.order_service.application.command.mapper.CreateOrderResultMapper;
 import com.rushcrew.order_service.application.command.mapper.RequestPaymentCommandMapper;
 import com.rushcrew.order_service.application.command.mapper.RequestPaymentResultMapper;
 import com.rushcrew.order_service.application.command.mapper.UpdateOrderCommandMapper;
@@ -47,7 +46,6 @@ import com.rushcrew.order_service.presentation.dto.request.CreateOrderRequest;
 import com.rushcrew.order_service.presentation.dto.request.UpdateOrderRequest;
 import com.rushcrew.order_service.presentation.dto.response.CancelOrderResponse;
 import com.rushcrew.order_service.presentation.dto.response.ConfirmPurchaseResponse;
-import com.rushcrew.order_service.presentation.dto.response.CreateOrderResponse;
 import com.rushcrew.order_service.presentation.dto.response.RefundOrderResponse;
 import com.rushcrew.order_service.presentation.dto.response.RequestPaymentResponse;
 import com.rushcrew.order_service.presentation.dto.response.UpdateOrderResponse;
@@ -62,7 +60,6 @@ public class OrderCommandController {
 
 	private final CreateOrderUseCase createOrderUseCase;
 	private final CreateOrderCommandMapper createOrderCommandMapper;
-	private final CreateOrderResultMapper createOrderResultMapper;
 	private final RequestPaymentUseCase requestPaymentUseCase;
 	private final RequestPaymentCommandMapper requestPaymentCommandMapper;
 	private final RequestPaymentResultMapper requestPaymentResultMapper;
@@ -80,20 +77,23 @@ public class OrderCommandController {
 	private final RefundOrderResultMapper refundOrderResultMapper;
 
 	/**
-	 * 주문 생성 API
+	 * 주문 생성 API (Saga 접수)
 	 */
 	@PostMapping
-	public ApiResponse<CreateOrderResponse> createOrder(
+	public ApiResponse<CreateOrderResult> createOrder(
 		@Valid @RequestBody CreateOrderRequest request,
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader(value = "X-User-Role", required = false) String role,
 		@RequestHeader("X-Queue-Token") String queueToken
 	) {
+		// 권한 체크
 		RoleChecker.checkRole(role, "USER", "MASTER", "SELLER");
+		// DTO -> Command 변환
 		CreateOrderCommand command = createOrderCommandMapper.toCommand(request, userId, role, queueToken);
+		// Saga 접수
 		CreateOrderResult result = createOrderUseCase.createOrder(command);
-		CreateOrderResponse response = createOrderResultMapper.toResponse(result);
-		return ApiResponse.success(response);
+		// 반환 (PROCESSING 상태 + sagaId)
+		return ApiResponse.success(result);
 	}
 
 	/**

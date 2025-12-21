@@ -1,6 +1,5 @@
 package com.rushcrew.order_service.application.command.service;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,8 +58,7 @@ public class ConfirmPurchaseService implements ConfirmPurchaseUseCase {
 			savedOrder.getUserId(),
 			savedOrder.getOrderId(),
 			savedOrder.getFinalAmount(),
-			"구매확정",
-			Instant.now()
+			"구매확정"
 		);
 
 		// ORDER_PURCHASE_CONFIRMED 이벤트를 outbox에 저장

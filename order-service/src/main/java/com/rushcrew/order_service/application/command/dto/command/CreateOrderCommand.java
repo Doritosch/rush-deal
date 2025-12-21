@@ -23,6 +23,7 @@ public record CreateOrderCommand(
 	@Builder
 	public record OrderItemCommand(
 		UUID timeDealStockId,
-		Integer quantity
+		Long quantity,
+		BigDecimal price
 	) {}
 }

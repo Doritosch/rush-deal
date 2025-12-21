@@ -1,6 +1,5 @@
 package com.rushcrew.order_service.application.command.service;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +36,21 @@ public class RefundOrderService implements RefundOrderUseCase {
 	private final OutboxPort outboxPort;
 	private final ObjectMapper objectMapper;
 
+	/**
+	 * 주문 환불 처리
+	 * 
+	 * 환불은 PAID 상태에서만 가능하다
+	 * 구매확정(PURCHASE_CONFIRMED) 후에는 환불 불가능
+	 * 
+	 * 처리 순서:
+	 * 1. 주문 검증 (존재 여부, 소유자 확인)
+	 * 2. 환불 가능 상태 검증 (PAID 상태만 가능)
+	 * 3. 결제 취소 (Payment Service)
+	 * 4. 주문 상태 변경 (PAID → REFUNDED)
+	 * 5. 포인트 환불 이벤트 발행
+	 * 6. 재고 복구 이벤트 발행
+	 * 7. 주문 환불 이벤트 발행
+	 */
 	@Override
 	@Transactional
 	public RefundOrderResult refundOrder(RefundOrderCommand command) {
@@ -49,6 +63,7 @@ public class RefundOrderService implements RefundOrderUseCase {
 			throw new BusinessException(OrderErrorCode.ORDER_ACCESS_DENIED);
 		}
 
+		// 환불 가능 상태 검증: PAID 상태만 가능 (구매확정 후 환불 불가)
 		if (!order.canRefund()) {
 			throw new BusinessException(OrderErrorCode.ORDER_CANNOT_REFUND);
 		}
@@ -82,8 +97,7 @@ public class RefundOrderService implements RefundOrderUseCase {
 					savedOrder.getUserId(),
 					savedOrder.getOrderId(),
 					savedOrder.getPointUsed(),
-					"주문 환불에 의한 포인트 환불",
-					Instant.now()
+					"주문 환불에 의한 포인트 환불"
 				);
 			} catch (Exception e) {
 				log.error("포인트 이벤트 발행 실패", e);

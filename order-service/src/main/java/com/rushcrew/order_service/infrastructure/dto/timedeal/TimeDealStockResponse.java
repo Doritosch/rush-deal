@@ -1,17 +1,19 @@
 package com.rushcrew.order_service.infrastructure.dto.timedeal;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 @Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class StockReservationRequest {
+public class TimeDealStockResponse {
+
 	@NonNull private String timeDealStockId;
-	@NonNull private Integer quantity;
-	@NonNull private Long userId;
+	@NonNull private String productId;
+	@NonNull private Long availableStock;
+	@NonNull private Long reservedStock;
+	@NonNull private Long soldStock;
+	@NonNull private String status;
 }

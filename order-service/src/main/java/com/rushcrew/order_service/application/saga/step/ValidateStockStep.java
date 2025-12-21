@@ -28,55 +28,70 @@ public class ValidateStockStep {
 	private final OrderItemValidator orderItemValidator;
 	private final PurchaseLimitValidator purchaseLimitValidator;
 
-	/**
-	 * Forward Transaction: 재고 검증
-	 * - 대기열 토큰 검증
-	 * - 타임딜 정보 조회 및 검증
-	 * - 중복 상품 검증
-	 * - 구매 수량 제한 검증
-	 */
 	public SagaStepResult execute(SagaContext context, OrderCreationSagaData data) {
-		try {
-			log.info("[Saga-{}] ValidateStock 실행 시작", context.getSagaId());
+		log.info("[Saga-{}] ValidateStock 시작", context.getSagaId());
 
+		try {
 			CreateOrderCommand command = data.getCommand();
 
-			// 1. 대기열 토큰 검증
-			queueTokenValidator.validate(command.productId(), command.userId(), command.queueToken(), command.role());
-			log.info("[Saga-{}] 대기열 토큰 검증 완료", context.getSagaId());	// 주문 - 큐 서비스 통신 확인용
-			log.debug("[Saga-{}] 대기열 토큰 검증 완료", context.getSagaId());
+			// 1. 큐 토큰 검증
+			log.info("[Saga-{}][1] 큐 토큰 검증 시작 (userId={}, productId={})",
+				context.getSagaId(), command.userId(), command.productId());
 
-			// 2. 타임딜 정보 조회 및 검증
+			queueTokenValidator.validate(
+				command.productId(),
+				command.userId(),
+				command.queueToken(),
+				command.role()
+			);
+
+			log.info("[Saga-{}][1] 큐 토큰 검증 완료", context.getSagaId());
+
+			// 2. 타임딜 조회 및 검증
+			log.info("[Saga-{}][2] 타임딜 조회 시작 (timeDealId={})",
+				context.getSagaId(), command.timeDealId());
+
 			TimeDealInfo timeDeal = timeDealStockPort.getTimeDeal(command.timeDealId());
+
+			log.info("[Saga-{}][2] 타임딜 검증 시작", context.getSagaId());
 			timeDealValidator.validate(timeDeal);
-			log.debug("[Saga-{}] 타임딜 검증 완료: {}", context.getSagaId(), timeDeal.title());
+			log.info("[Saga-{}][2] 타임딜 검증 완료", context.getSagaId());
 
-			// 3. 중복 상품 검증
+			// 3. 주문 아이템 검증
+			log.info("[Saga-{}][3] 주문 아이템 검증 시작 (itemCount={})",
+				context.getSagaId(), command.orderItems().size());
+
 			orderItemValidator.validate(command.orderItems());
-			log.debug("[Saga-{}] 주문 아이템 검증 완료", context.getSagaId());
 
-			// 4. 구매 수량 제한 검증
+			log.info("[Saga-{}][3] 주문 아이템 검증 완료", context.getSagaId());
+
+			// 4. 구매 제한 검증
+			log.info("[Saga-{}][4] 구매 제한 검증 시작 (userId={}, productId={})",
+				context.getSagaId(), command.userId(), command.productId());
+
 			purchaseLimitValidator.validate(
 				command.userId(),
 				command.productId(),
 				command.orderItems(),
 				timeDeal
 			);
-			log.debug("[Saga-{}] 구매 제한 검증 완료", context.getSagaId());
 
-			// SagaData에 TimeDealInfo 저장 (다음 Step에서 사용)
-			context.setData("timeDeal", timeDeal);
+			log.info("[Saga-{}][4] 구매 제한 검증 완료", context.getSagaId());
 
-			log.info("[Saga-{}] ValidateStock 실행 완료", context.getSagaId());
+			log.info("[Saga-{}] ValidateStock 전체 검증 완료", context.getSagaId());
 			return SagaStepResult.success();
 
 		} catch (BusinessException e) {
-			log.error("[Saga-{}] ValidateStock 실행 실패: {}", context.getSagaId(), e.getMessage());
-			return SagaStepResult.failure(e.getMessage());
+			String errorMsg = e.getMessage() != null ? e.getMessage() : "비즈니스 검증 실패";
+			log.error("[Saga-{}] ValidateStock 비즈니스 실패 - ExceptionType: {}, Message: {}",
+				context.getSagaId(), e.getClass().getSimpleName(), errorMsg, e);
+			return SagaStepResult.failure(errorMsg);
+
 		} catch (Exception e) {
-			log.error("[Saga-{}] ValidateStock 실행 중 예외 발생", context.getSagaId(), e);
-			return SagaStepResult.failure("재고 검증 실패: " + e.getMessage());
+			String errorMsg = "재고 검증 중 오류 발생: " + e.getClass().getSimpleName();
+			log.error("[Saga-{}] ValidateStock 예외 발생 - {}",
+				context.getSagaId(), errorMsg, e);
+			return SagaStepResult.failure(errorMsg);
 		}
 	}
-	// 보상 트랜잭션 불필요 (조회/검증만 수행)
 }
