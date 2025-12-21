@@ -1,6 +1,8 @@
 package com.rushcrew.timedeal.domain.entity;
 
 import com.rushcrew.common.entity.BaseEntity;
+import com.rushcrew.common.exception.BusinessException;
+import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
 import com.rushcrew.timedeal.domain.vo.EventType;
 import com.rushcrew.timedeal.domain.vo.OrderId;
 import com.rushcrew.timedeal.domain.vo.Quantity;
@@ -17,6 +19,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -66,7 +69,7 @@ public class StockLog extends BaseEntity {
     public static StockLog addLog(
         TimeDealStock timeDealStock, EventType eventType, Long quantity, String description
     ) {
-        return com.rushcrew.timedeal.domain.entity.StockLog.builder()
+        return StockLog.builder()
             .timeDealStock(timeDealStock)
             .eventType(eventType)
             .quantity(Quantity.of(quantity))
@@ -107,5 +110,12 @@ public class StockLog extends BaseEntity {
             .description(description)
             .quantity(quantity)
             .build();
+      
+    }
+  
+    public void validateOrderQuantity(Quantity quantity) {
+        if (!Objects.equals(this.getQuantity().getQuantity(), quantity.getQuantity())) {
+            throw new BusinessException(TimeDealErrorCode.INVALID_ORDER_INFO);
+        }
     }
 }
