@@ -20,6 +20,7 @@ public class CreateOrderCommandMapper {
 		return CreateOrderCommand.builder()
 			.userId(userId)
 			.timeDealId(UUID.fromString(request.timeDealId()))
+			.productId(UUID.fromString(request.productId()))
 			.queueToken(queueToken)
 			.role(role)
 			.orderItems(
