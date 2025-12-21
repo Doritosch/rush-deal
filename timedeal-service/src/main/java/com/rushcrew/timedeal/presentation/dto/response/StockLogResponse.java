@@ -1,14 +1,13 @@
 package com.rushcrew.timedeal.presentation.dto.response;
 
 import com.rushcrew.timedeal.application.result.StockLogResult;
-import com.rushcrew.timedeal.domain.vo.EventType;
 import java.util.UUID;
 
 public record StockLogResponse(
     UUID stockLogId,
     UUID timeDealStockId,
     UUID orderId,
-    EventType eventType,
+    String eventType,
     Long quantity,
     String description
 ) {
@@ -18,7 +17,7 @@ public record StockLogResponse(
             stockLogResult.stockLogId(),
             stockLogResult.timeDealStockId(),
             stockLogResult.orderId(),
-            stockLogResult.eventType(),
+            stockLogResult.eventType().name(),
             stockLogResult.quantity(),
             stockLogResult.description()
         );
