@@ -446,6 +446,13 @@ services:
     image: prom/prometheus:latest
     container_name: rushdeal_prometheus
     restart: unless-stopped
+    deploy: # 리소스 제한 추가
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
     ports:
       - "9090:9090"
     volumes:
@@ -454,10 +461,11 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.time=5d'
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=5d'  # 5일 후 자동 삭제
     networks:
       - rushdeal-network
     healthcheck:
@@ -470,6 +478,13 @@ services:
     image: grafana/grafana:latest
     container_name: rushdeal_grafana
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
     ports:
       - "3000:3000"
     volumes:
@@ -496,6 +511,13 @@ services:
     image: openzipkin/zipkin:latest
     container_name: rushdeal_zipkin
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 256M
     ports:
       - "9411:9411"
     environment:
