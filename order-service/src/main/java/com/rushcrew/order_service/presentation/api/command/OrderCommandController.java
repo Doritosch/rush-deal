@@ -1,7 +1,6 @@
 package com.rushcrew.order_service.presentation.api.command;
 
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,6 +8,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.rushcrew.common.dto.ApiResponse;
@@ -24,12 +24,24 @@ import com.rushcrew.order_service.application.command.dto.result.CreateOrderResu
 import com.rushcrew.order_service.application.command.dto.result.RefundOrderResult;
 import com.rushcrew.order_service.application.command.dto.result.RequestPaymentResult;
 import com.rushcrew.order_service.application.command.dto.result.UpdateOrderResult;
+import com.rushcrew.order_service.application.command.mapper.CancelOrderCommandMapper;
+import com.rushcrew.order_service.application.command.mapper.CancelOrderResultMapper;
+import com.rushcrew.order_service.application.command.mapper.RefundOrderCommandMapper;
+import com.rushcrew.order_service.application.command.mapper.RefundOrderResultMapper;
 import com.rushcrew.order_service.application.command.usecase.CancelOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.ConfirmPurchaseUseCase;
 import com.rushcrew.order_service.application.command.usecase.CreateOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.RefundOrderUseCase;
 import com.rushcrew.order_service.application.command.usecase.RequestPaymentUseCase;
 import com.rushcrew.order_service.application.command.usecase.UpdateOrderUseCase;
+import com.rushcrew.order_service.application.command.mapper.ConfirmPurchaseCommandMapper;
+import com.rushcrew.order_service.application.command.mapper.ConfirmPurchaseResultMapper;
+import com.rushcrew.order_service.application.command.mapper.CreateOrderCommandMapper;
+import com.rushcrew.order_service.application.command.mapper.CreateOrderResultMapper;
+import com.rushcrew.order_service.application.command.mapper.RequestPaymentCommandMapper;
+import com.rushcrew.order_service.application.command.mapper.RequestPaymentResultMapper;
+import com.rushcrew.order_service.application.command.mapper.UpdateOrderCommandMapper;
+import com.rushcrew.order_service.application.command.mapper.UpdateOrderResultMapper;
 import com.rushcrew.order_service.global.util.RoleChecker;
 import com.rushcrew.order_service.presentation.dto.request.CreateOrderRequest;
 import com.rushcrew.order_service.presentation.dto.request.UpdateOrderRequest;
@@ -49,11 +61,23 @@ import lombok.RequiredArgsConstructor;
 public class OrderCommandController {
 
 	private final CreateOrderUseCase createOrderUseCase;
+	private final CreateOrderCommandMapper createOrderCommandMapper;
+	private final CreateOrderResultMapper createOrderResultMapper;
 	private final RequestPaymentUseCase requestPaymentUseCase;
+	private final RequestPaymentCommandMapper requestPaymentCommandMapper;
+	private final RequestPaymentResultMapper requestPaymentResultMapper;
 	private final ConfirmPurchaseUseCase confirmPurchaseUseCase;
+	private final ConfirmPurchaseCommandMapper confirmPurchaseCommandMapper;
+	private final ConfirmPurchaseResultMapper confirmPurchaseResultMapper;
 	private final UpdateOrderUseCase updateOrderUseCase;
+	private final UpdateOrderCommandMapper updateOrderCommandMapper;
+	private final UpdateOrderResultMapper updateOrderResultMapper;
 	private final CancelOrderUseCase cancelOrderUseCase;
+	private final CancelOrderCommandMapper cancelOrderCommandMapper;
+	private final CancelOrderResultMapper cancelOrderResultMapper;
 	private final RefundOrderUseCase refundOrderUseCase;
+	private final RefundOrderCommandMapper refundOrderCommandMapper;
+	private final RefundOrderResultMapper refundOrderResultMapper;
 
 	/**
 	 * 주문 생성 API
@@ -66,26 +90,10 @@ public class OrderCommandController {
 		@RequestHeader("X-Queue-Token") String queueToken
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER", "SELLER");
-
-		CreateOrderCommand command = CreateOrderCommand.builder()
-			.userId(userId)
-			.timeDealId(UUID.fromString(request.timeDealId()))
-			.productId(UUID.fromString(request.productId()))
-			.queueToken(queueToken)
-			.role(role)
-			.orderItems(request.orderItems().stream()
-				.map(item -> CreateOrderCommand.OrderItemCommand.builder()
-					.timeDealStockId(UUID.fromString(item.timeDealStockId()))
-					.quantity(item.quantity())
-					.build())
-				.collect(Collectors.toList()))
-			.pointUsed(request.pointUsed())
-			.shippingInfo(request.shippingInfo().toShippingInfo())
-			.build();
-
+		CreateOrderCommand command = createOrderCommandMapper.toCommand(request, userId, role, queueToken);
 		CreateOrderResult result = createOrderUseCase.createOrder(command);
-
-		return ApiResponse.success(CreateOrderResponse.from(result));
+		CreateOrderResponse response = createOrderResultMapper.toResponse(result);
+		return ApiResponse.success(response);
 	}
 
 	/**
@@ -98,15 +106,10 @@ public class OrderCommandController {
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER");
-
-		RequestPaymentCommand command = RequestPaymentCommand.builder()
-			.orderId(orderId)
-			.userId(userId)
-			.build();
-
+		RequestPaymentCommand command = requestPaymentCommandMapper.toCommand(orderId, userId);
 		RequestPaymentResult result = requestPaymentUseCase.requestPayment(command);
-
-		return ApiResponse.success(RequestPaymentResponse.from(result));
+		RequestPaymentResponse response = requestPaymentResultMapper.toResponse(result);
+		return ApiResponse.success(response);
 	}
 
 	/**
@@ -119,15 +122,10 @@ public class OrderCommandController {
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER");
-
-		ConfirmPurchaseCommand command = ConfirmPurchaseCommand.builder()
-			.orderId(orderId)
-			.userId(userId)
-			.build();
-
+		ConfirmPurchaseCommand command = confirmPurchaseCommandMapper.toCommand(orderId, userId);
 		ConfirmPurchaseResult result = confirmPurchaseUseCase.confirmPurchase(command);
-
-		return ApiResponse.success(ConfirmPurchaseResponse.from(result));
+		ConfirmPurchaseResponse response = confirmPurchaseResultMapper.toResponse(result);
+		return ApiResponse.success(response);
 	}
 
 	/**
@@ -141,17 +139,10 @@ public class OrderCommandController {
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER");
-
-		UpdateOrderCommand command = UpdateOrderCommand.builder()
-			.orderId(orderId)
-			.userId(userId)
-			.shippingInfo(request.shippingInfo() != null ? request.shippingInfo().toShippingInfo() : null)
-			.pointUsed(request.pointUsed())
-			.build();
-
+		UpdateOrderCommand command = updateOrderCommandMapper.toCommand(orderId, userId, request);
 		UpdateOrderResult result = updateOrderUseCase.updateOrder(command);
-
-		return ApiResponse.success(UpdateOrderResponse.from(result));
+		UpdateOrderResponse response = updateOrderResultMapper.toResponse(result);
+		return ApiResponse.success(response);
 	}
 
 	/**
@@ -164,15 +155,10 @@ public class OrderCommandController {
 		@RequestHeader(value = "X-User-Role", required = false) String role
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER");
-
-		CancelOrderCommand command = CancelOrderCommand.builder()
-			.orderId(orderId)
-			.userId(userId)
-			.build();
-
+		CancelOrderCommand command = cancelOrderCommandMapper.toCommand(orderId, userId);
 		CancelOrderResult result = cancelOrderUseCase.cancelOrder(command);
-
-		return ApiResponse.success(CancelOrderResponse.from(result));
+		CancelOrderResponse response = cancelOrderResultMapper.toResponse(result);
+		return ApiResponse.success(response);
 	}
 
 	/**
@@ -183,21 +169,13 @@ public class OrderCommandController {
 		@PathVariable UUID orderId,
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader(value = "X-User-Role", required = false) String role,
-		@RequestBody(required = false) java.util.Map<String, String> requestBody
+		@RequestParam(value = "reason", required = false) String reason
 	) {
 		RoleChecker.checkRole(role, "USER", "MASTER");
-
-		String reason = requestBody != null ? requestBody.get("reason") : null;
-
-		RefundOrderCommand command = RefundOrderCommand.builder()
-			.orderId(orderId)
-			.userId(userId)
-			.reason(reason)
-			.build();
-
+		RefundOrderCommand command = refundOrderCommandMapper.toCommand(orderId, userId, reason);
 		RefundOrderResult result = refundOrderUseCase.refundOrder(command);
-
-		return ApiResponse.success(RefundOrderResponse.from(result));
+		RefundOrderResponse response = refundOrderResultMapper.toResponse(result);
+		return ApiResponse.success(response);
 	}
 
 }

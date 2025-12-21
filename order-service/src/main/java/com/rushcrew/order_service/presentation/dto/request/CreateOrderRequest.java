@@ -3,8 +3,6 @@ package com.rushcrew.order_service.presentation.dto.request;
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.rushcrew.order_service.domain.vo.ShippingInfo;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -35,7 +33,6 @@ public record CreateOrderRequest(
 ) {
 
 	public record OrderItemRequest(
-
 		@NotBlank(message = "타임딜 재고 ID는 필수입니다")
 		String timeDealStockId,
 
@@ -68,16 +65,5 @@ public record CreateOrderRequest(
 
 		@Size(max = 100, message = "배송 메시지는 100자 이내여야 합니다")
 		String deliveryMessage
-	) {
-		public ShippingInfo toShippingInfo() {
-			return ShippingInfo.builder()
-				.recipientName(recipientName)
-				.recipientPhone(recipientPhone)
-				.zipCode(zipCode)
-				.addressBase(addressBase)
-				.addressDetail(addressDetail)
-				.deliveryMessage(deliveryMessage)
-				.build();
-		}
-	}
+	) {}
 }
