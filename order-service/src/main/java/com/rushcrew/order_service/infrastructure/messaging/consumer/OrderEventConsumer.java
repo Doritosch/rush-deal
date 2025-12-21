@@ -1,13 +1,15 @@
 package com.rushcrew.order_service.infrastructure.messaging.consumer;
 
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rushcrew.order_service.application.command.port.out.OrderCachePort;
 import com.rushcrew.order_service.application.query.port.out.OrderQueryPort;
@@ -45,21 +47,25 @@ public class OrderEventConsumer {
 	 * - 스케줄러 대비 최대 6시간 빠른 캐시 반영
 	 */
 	@KafkaListener(topics = "order.created", groupId = "order-cache-sync")
-	public void handleOrderCreatedEvent(String message) {
+	public void handleOrderCreatedEvent(
+		@Payload String message,
+		@Header(KafkaHeaders.RECEIVED_TOPIC) String topic
+	) {
 		long startTime = System.currentTimeMillis();
 		String orderIdStr = null;
+		String eventType = deriveEventTypeFromTopic(topic);
 
 		try {
 			OrderCreatedEvent event = objectMapper.readValue(message, OrderCreatedEvent.class);
 			final UUID orderId = event.orderId();
 			orderIdStr = orderId.toString();
 
-			log.info("[EventConsumer] ORDER_CREATED 이벤트 수신: orderId={}", orderId);
+			log.info("[EventConsumer] {} 이벤트 수신: orderId={}", eventType, orderId);
 
 			// 멱등성 체크
 			if (orderCachePort.existsInCache(orderId)) {
 				log.info("[EventConsumer] 이미 캐시에 존재 (멱등성): orderId={}", orderId);
-				customMetrics.recordCacheSyncSkipped("ORDER_CREATED");
+				customMetrics.recordCacheSyncSkipped(eventType);
 				return;
 			}
 
@@ -73,28 +79,26 @@ public class OrderEventConsumer {
 						log.info("[EventConsumer] 캐시 생성 완료: orderId={}, status={}, duration={}ms",
 							orderId, dto.getOrderStatus(), duration);
 
-						customMetrics.recordCacheSyncSuccess("ORDER_CREATED", duration);
+						customMetrics.recordCacheSyncSuccess(eventType, duration);
 					},
 					() -> {
 						// 트랜잭션 커밋 전이거나 DB 복제 지연
 						log.warn("[EventConsumer] DB 조회 실패 (트랜잭션 대기 중?): orderId={}", orderId);
-						customMetrics.recordCacheSyncFailure("ORDER_CREATED", "DB_NOT_FOUND");
+						customMetrics.recordCacheSyncFailure(eventType, "DB_NOT_FOUND");
 						throw new RuntimeException("Order not found in DB: " + orderId);
 					}
 				);
 
 		} catch (JsonProcessingException e) {
-			// orderId가 추출 안 됐을 수 있으므로 orderIdStr 사용
 			log.error("[EventConsumer] 이벤트 파싱 실패 (orderId={}): message={}",
 				orderIdStr != null ? orderIdStr : "unknown", message, e);
-			customMetrics.recordCacheSyncFailure("ORDER_CREATED", "PARSE_ERROR");
-			// 파싱 실패는 재시도 무의미하므로 예외 안 던짐
+			customMetrics.recordCacheSyncFailure(eventType, "PARSE_ERROR");
 
 		} catch (Exception e) {
 			log.error("[EventConsumer] 캐시 동기화 실패: orderId={}",
 				orderIdStr != null ? orderIdStr : "unknown", e);
-			customMetrics.recordCacheSyncFailure("ORDER_CREATED", "UNKNOWN_ERROR");
-			throw new RuntimeException(e); // 재시도 트리거
+			customMetrics.recordCacheSyncFailure(eventType, "UNKNOWN_ERROR");
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -119,19 +123,18 @@ public class OrderEventConsumer {
 		},
 		groupId = "order-cache-sync"
 	)
-	public void handleOrderStatusChangedEvent(String message) {
+	public void handleOrderStatusChangedEvent(
+		@Payload String message,
+		@Header(KafkaHeaders.RECEIVED_TOPIC) String topic
+	) {
 		long startTime = System.currentTimeMillis();
 		String orderIdStr = null;
-		String eventType = "UNKNOWN"; // catch용
+		String eventType = deriveEventTypeFromTopic(topic);
 
 		try {
-			Map<String, Object> payload = objectMapper.readValue(message, new TypeReference<>() {});
-			eventType = extractEventTypeFromPayload(payload);
-			// eventType 먼저 추출 (로깅용)
-			final String finalEventType = eventType; // 람다용
-			// orderId 추출
-			final UUID orderId = UUID.fromString(payload.get("orderId").toString());
-			orderIdStr = orderId.toString(); // 로깅용
+			JsonNode rootNode = objectMapper.readTree(message);
+			final UUID orderId = UUID.fromString(rootNode.get("orderId").asText());
+			orderIdStr = orderId.toString();
 
 			log.info("[EventConsumer] {} 이벤트 수신: orderId={}", eventType, orderId);
 
@@ -142,14 +145,14 @@ public class OrderEventConsumer {
 						long duration = System.currentTimeMillis() - startTime;
 
 						log.info("[EventConsumer] 캐시 갱신 완료: orderId={}, status={}, eventType={}, duration={}ms",
-							orderId, dto.getOrderStatus(), finalEventType, duration);
+							orderId, dto.getOrderStatus(), eventType, duration);
 
-						customMetrics.recordCacheSyncSuccess(finalEventType, duration);
+						customMetrics.recordCacheSyncSuccess(eventType, duration);
 					},
 					() -> {
 						log.warn("[EventConsumer] DB 조회 실패로 캐시 갱신 생략: orderId={}, eventType={}",
-							orderId, finalEventType);
-						customMetrics.recordCacheSyncFailure(finalEventType, "DB_NOT_FOUND");
+							orderId, eventType);
+						customMetrics.recordCacheSyncFailure(eventType, "DB_NOT_FOUND");
 					}
 				);
 
@@ -162,19 +165,23 @@ public class OrderEventConsumer {
 			log.error("[EventConsumer] 캐시 갱신 실패: orderId={}, eventType={}",
 				orderIdStr != null ? orderIdStr : "unknown", eventType, e);
 			customMetrics.recordCacheSyncFailure(eventType, "UNKNOWN_ERROR");
-			throw new RuntimeException(e); // 재시도 트리거
+			throw new RuntimeException(e);
 		}
 	}
 
 	/**
-	 * 페이로드에서 이벤트 타입 추출 (로깅/메트릭용)
+	 * Topic 이름으로부터 eventType 추정
+	 * - OutboxEventScheduler의 getTopicName() 매핑과 동일한 규칙
 	 */
-	private String extractEventTypeFromPayload(Map<String, Object> payload) {
-		try {
-			// Kafka 헤더나 페이로드에서 이벤트 타입 추출 시도
-			return payload.getOrDefault("eventType", "UNKNOWN").toString();
-		} catch (Exception e) {
-			return "UNKNOWN";
-		}
+	private String deriveEventTypeFromTopic(String topic) {
+		return switch (topic) {
+			case "order.created" -> "ORDER_CREATED";
+			case "order.paid" -> "ORDER_PAID";
+			case "order.purchase.confirmed" -> "ORDER_PURCHASE_CONFIRMED";
+			case "order.cancelled" -> "ORDER_CANCELLED";
+			case "order.refunded" -> "ORDER_REFUNDED";
+			case "order.updated" -> "ORDER_UPDATED";
+			default -> "UNKNOWN";
+		};
 	}
 }
