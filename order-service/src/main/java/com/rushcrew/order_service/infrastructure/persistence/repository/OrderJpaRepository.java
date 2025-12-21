@@ -21,12 +21,12 @@ public interface OrderJpaRepository extends JpaRepository<Order, UUID> {
         FROM order_schema.p_order_item oi
         JOIN order_schema.p_order o ON oi.order_id = o.order_id
         WHERE o.user_id = :userId
-          AND oi.product_snapshot ->> 'timeDealId' = :timeDealId
+          AND oi.product_snapshot ->> 'productId' = :productId
           AND o.status IN ('PAID', 'PURCHASE_CONFIRMED')
     """, nativeQuery = true)
 	Integer getTotalPurchasedQuantity(
 		@Param("userId") Long userId,
-		@Param("timeDealId") UUID timeDealId);
+		@Param("productId") UUID productId);
 
 	Page<Order> findByUserId(Long userId, Pageable pageable);
 

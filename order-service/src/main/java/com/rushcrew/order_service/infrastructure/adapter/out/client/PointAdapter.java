@@ -23,24 +23,22 @@ public class PointAdapter implements PointPort {
 	private final PointFeignClient feignClient;
 
 	@Override
-	public boolean deductPoint(@NonNull Long userId, @NonNull BigDecimal amount, @NonNull UUID sagaId,
-		@NonNull String reason) {
+	public boolean deductPoint(@NonNull Long userId, @NonNull Long pointUsed, @NonNull UUID sagaId) {
 
 		try {
-			log.info("포인트 차감 요청: userId={}, amount={}, sagaId={}", userId, amount, sagaId);
+			log.info("포인트 차감 요청: userId={}, pointUsed={}, sagaId={}", userId, pointUsed, sagaId);
 
 			PointDeductRequest request = PointDeductRequest.builder()
 				.userId(userId)
-				.amount(amount)
+				.pointUsed(pointUsed)
 				.sagaId(sagaId.toString())
-				.reason(reason)
 				.build();
 
 			PointDeductResponse response = feignClient.deductPoint(request);
 
 			if (response.isSuccess()) {
 				log.info("포인트 차감 성공: userId={}, amount={}, remainingPoint={}",
-					userId, amount, response.getRemainingPoint());
+					userId, pointUsed, response.getRemainingPoint());
 				return true;
 			} else {
 				log.warn("포인트 차감 실패: userId={}, message={}", userId, response.getMessage());
@@ -48,31 +46,29 @@ public class PointAdapter implements PointPort {
 			}
 
 		} catch (Exception e) {
-			log.error("포인트 차감 중 오류 발생: userId={}, amount={}", userId, amount, e);
+			log.error("포인트 차감 중 오류 발생: userId={}, amount={}", userId, pointUsed, e);
 			throw new RuntimeException("포인트 차감 실패", e);
 		}
 	}
 
 	@Override
-	public void refundPoint(@NonNull Long userId, @NonNull BigDecimal amount, @NonNull UUID sagaId,
-		@NonNull String reason) {
+	public void refundPoint(@NonNull Long userId, @NonNull Long pointAmount, @NonNull UUID sagaId) {
 
 		try {
-			log.info("포인트 환불 요청: userId={}, amount={}, sagaId={}", userId, amount, sagaId);
+			log.info("포인트 환불 요청: userId={}, amount={}, sagaId={}", userId, pointAmount, sagaId);
 
 			PointRefundRequest request = PointRefundRequest.builder()
 				.userId(userId)
-				.amount(amount)
+				.pointAmount(pointAmount)
 				.sagaId(sagaId.toString())
-				.reason(reason)
 				.build();
 
 			feignClient.refundPoint(request);
 
-			log.info("포인트 환불 성공: userId={}, amount={}", userId, amount);
+			log.info("포인트 환불 성공: userId={}, amount={}", userId, pointAmount);
 
 		} catch (Exception e) {
-			log.error("포인트 환불 중 오류 발생: userId={}, amount={}", userId, amount, e);
+			log.error("포인트 환불 중 오류 발생: userId={}, amount={}", userId, pointAmount, e);
 			// TODO: 환불 실패 시, 재시도 필요
 			throw new RuntimeException("포인트 환불 실패", e);
 		}

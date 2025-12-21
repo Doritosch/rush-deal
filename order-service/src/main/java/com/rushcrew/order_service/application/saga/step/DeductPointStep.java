@@ -30,10 +30,10 @@ public class DeductPointStep {
 			log.info("[Saga-{}] DeductPoint 실행 시작", context.getSagaId());
 
 			CreateOrderCommand command = data.getCommand();
-			BigDecimal pointUsed = command.pointUsed();
+			Long pointUsed = command.pointUsed();
 
 			// 포인트 사용량이 0이면 스킵
-			if (pointUsed == null || pointUsed.compareTo(BigDecimal.ZERO) == 0) {
+			if (pointUsed == null || pointUsed == 0L) {
 				log.info("[Saga-{}] 포인트 사용량이 0이므로 스킵", context.getSagaId());
 				return SagaStepResult.success();
 			}
@@ -43,12 +43,11 @@ public class DeductPointStep {
 				boolean deducted = pointPort.deductPoint(
 					command.userId(),
 					pointUsed,
-					context.getSagaId(), // 주문 ID 대신 Saga ID 사용
-					"주문 결제"
+					context.getSagaId() // 주문 ID 대신 Saga ID 사용
 				);
 
 				if (!deducted) {
-					log.error("[Saga-{}] 포인트 차감 실패: userId={}, amount={}",
+					log.error("[Saga-{}] 포인트 차감 실패: userId={}, pointUsed={}",
 						context.getSagaId(), command.userId(), pointUsed);
 					return SagaStepResult.failure("포인트 잔액이 부족합니다.");
 				}
@@ -57,7 +56,7 @@ public class DeductPointStep {
 				context.setData("pointDeducted", true);
 				context.setData("pointAmount", pointUsed);
 
-				log.info("[Saga-{}] DeductPoint 실행 완료: userId={}, amount={}",
+				log.info("[Saga-{}] DeductPoint 실행 완료: userId={}, pointUsed={}",
 					context.getSagaId(), command.userId(), pointUsed);
 
 				Map<String, Object> resultData = new HashMap<>();
@@ -90,15 +89,14 @@ public class DeductPointStep {
 				return;
 			}
 
-			BigDecimal pointAmount = (BigDecimal) context.getData("pointAmount");
+			Long pointAmount = (Long) context.getData("pointAmount");
 			Long userId = data.getCommand().userId();
 
 			// 포인트 환불 API 호출
 			pointPort.refundPoint(
 				userId,
 				pointAmount,
-				context.getSagaId(),
-				"주문 취소로 인한 포인트 환불"
+				context.getSagaId()
 			);
 
 			log.info("[Saga-{}] DeductPoint 보상 트랜잭션 완료: userId={}, amount={}",

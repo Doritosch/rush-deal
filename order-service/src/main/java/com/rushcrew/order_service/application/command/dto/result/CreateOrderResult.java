@@ -13,7 +13,7 @@ public record CreateOrderResult(
 	Long userId,
 	String orderStatus,
 	BigDecimal totalAmount,
-	BigDecimal pointUsed,
+	Long pointUsed,
 	BigDecimal finalAmount,
 	Instant orderedAt,
 	Instant reservationExpiresAt,	// 예약 만료 시간: 15분 후

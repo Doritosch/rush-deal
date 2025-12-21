@@ -12,8 +12,6 @@ import com.rushcrew.order_service.infrastructure.dto.timedeal.StockRestoreReques
 import com.rushcrew.order_service.infrastructure.dto.timedeal.TimeDealResponse;
 import com.rushcrew.order_service.infrastructure.dto.timedeal.TimeDealStockDetailResponse;
 
-// TODO: 민아님 API 확인 요청
-
 @FeignClient(name = "timedeal-service")
 public interface TimeDealStockFeignClient {
 

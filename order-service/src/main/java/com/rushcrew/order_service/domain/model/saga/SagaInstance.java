@@ -21,6 +21,9 @@ public class SagaInstance {
 	@Id
 	private UUID sagaId;
 
+	@Column(nullable = false)
+	private UUID orderId;	// 주문 ID 추가
+
 	@Column(nullable = false, length = 50)
 	private String sagaType;
 

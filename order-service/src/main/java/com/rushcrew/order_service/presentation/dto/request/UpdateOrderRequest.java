@@ -1,6 +1,5 @@
 package com.rushcrew.order_service.presentation.dto.request;
 
-import java.math.BigDecimal;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 
@@ -9,7 +8,7 @@ public record UpdateOrderRequest(
 	ShippingInfoRequest shippingInfo,  // null 가능
 
 	@Min(value = 0, message = "포인트 사용량은 0 이상이어야 합니다")
-	BigDecimal pointUsed
+	Long pointUsed
 ) {
 	public record ShippingInfoRequest(
 		String recipientName,

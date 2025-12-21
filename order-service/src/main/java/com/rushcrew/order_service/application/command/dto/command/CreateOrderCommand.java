@@ -16,7 +16,7 @@ public record CreateOrderCommand(
 	String queueToken,
 	String role,
 	List<OrderItemCommand> orderItems,
-	BigDecimal pointUsed,
+	Long pointUsed,
 	ShippingInfo shippingInfo
 ) {
 

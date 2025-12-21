@@ -1,6 +1,5 @@
 package com.rushcrew.order_service.presentation.dto.request;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -25,7 +24,7 @@ public record CreateOrderRequest(
 
 	@NotNull(message = "포인트 사용량은 필수입니다")
 	@Min(value = 0, message = "포인트 사용량은 0 이상이어야 합니다")
-	BigDecimal pointUsed,
+	Long pointUsed,
 
 	@NotNull(message = "배송 정보는 필수입니다")
 	@Valid

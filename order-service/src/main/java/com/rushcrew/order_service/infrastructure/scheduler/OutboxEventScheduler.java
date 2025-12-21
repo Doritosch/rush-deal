@@ -24,7 +24,6 @@ public class OutboxEventScheduler {
 
 	private final OutboxEventJpaRepository outboxRepository;
 	private final KafkaTemplate<String, String> kafkaTemplate;
-	// private final KafkaTemplate<String, Object> kafkaTemplate;
 	private final CustomMetrics customMetrics;
 
 	/**

@@ -50,7 +50,7 @@ public class Order extends BaseEntity {
 	private OrderStatus status;
 
 	@Embedded
-	private ShippingInfo shippingInfo; // 현재 배송 서비스가 없어서 Embeddable 사용 --> 추후 배송 서비스를 독립적으로 개발하게 되면, 그때 ShippingInfo 테이블 분리 + Order에서 deliveryId 참조로 리팩토링
+	private ShippingInfo shippingInfo;
 
 	@Column(nullable = false)
 	private Instant orderedAt;
@@ -86,7 +86,7 @@ public class Order extends BaseEntity {
 	public static Order create(
 		Long userId,
 		List<OrderItem> orderItems,
-		BigDecimal pointUsed,
+		Long pointUsed,
 		ShippingInfo shippingInfo
 	) {
 		BigDecimal totalAmount = orderItems.stream()
@@ -127,9 +127,9 @@ public class Order extends BaseEntity {
 	}
 
 	// 포인트 사용량 수정 (PENDING 상태에서만 가능 - 결제 전)
-	public void updatePointUsed(BigDecimal newPointUsed) {
+	public void updatePointUsed(Long newPointUsed) {
 		this.status.validateCanUpdatePointUsed();
-		BigDecimal oldPointUsed = this.amount.getPointUsed();
+		Long oldPointUsed = this.amount.getPointUsed();
 		this.amount = this.amount.updatePointUsed(newPointUsed);
 		addHistory(
 			OrderEventType.POINT_USAGE_UPDATED,
@@ -279,7 +279,7 @@ public class Order extends BaseEntity {
 		return amount.getTotalAmount();
 	}
 
-	public BigDecimal getPointUsed() {
+	public Long getPointUsed() {
 		return amount.getPointUsed();
 	}
 

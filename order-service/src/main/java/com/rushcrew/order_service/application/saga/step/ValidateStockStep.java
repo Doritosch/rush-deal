@@ -58,7 +58,7 @@ public class ValidateStockStep {
 			// 4. 구매 수량 제한 검증
 			purchaseLimitValidator.validate(
 				command.userId(),
-				command.timeDealId(),
+				command.productId(),
 				command.orderItems(),
 				timeDeal
 			);

@@ -93,7 +93,7 @@ class UpdateOrderServiceTest {
 		order = Order.create(
 			userId,
 			java.util.List.of(orderItem),
-			BigDecimal.valueOf(1000),
+			1000L,
 			originalShippingInfo
 		);
 	}
@@ -138,7 +138,7 @@ class UpdateOrderServiceTest {
 		when(orderCommandPort.findById(actualOrderId)).thenReturn(Optional.of(order));
 		when(orderCommandPort.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-		BigDecimal newPointUsed = BigDecimal.valueOf(2000);
+		Long newPointUsed = 2000L;
 		UpdateOrderCommand command = UpdateOrderCommand.builder()
 			.orderId(actualOrderId)
 			.userId(userId)
@@ -168,7 +168,7 @@ class UpdateOrderServiceTest {
 		when(orderCommandPort.findById(actualOrderId)).thenReturn(Optional.of(order));
 		when(orderCommandPort.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-		BigDecimal newPointUsed = BigDecimal.valueOf(2000);
+		Long newPointUsed = 2000L;
 		UpdateOrderCommand command = UpdateOrderCommand.builder()
 			.orderId(actualOrderId)
 			.userId(userId)
@@ -231,7 +231,7 @@ class UpdateOrderServiceTest {
 			.orderId(actualOrderId)
 			.userId(userId)
 			.shippingInfo(null)
-			.pointUsed(BigDecimal.valueOf(2000))
+			.pointUsed(2000L)
 			.build();
 
 		// when & then
