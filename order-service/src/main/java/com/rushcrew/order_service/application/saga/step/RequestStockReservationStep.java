@@ -8,6 +8,7 @@ import com.rushcrew.order_service.application.port.out.OutboxPort;
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
 import com.rushcrew.order_service.application.saga.dto.SagaStepResult;
+import com.rushcrew.order_service.infrastructure.messaging.event.OutboxEventType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,7 +48,7 @@ public class RequestStockReservationStep {
 			outboxPort.createAndSave(
 				"ORDER_SAGA",                           // aggregateType
 				context.getSagaId(),                    // aggregateId (sagaId)
-				"STOCK_RESERVATION_REQUESTED",          // eventType
+				OutboxEventType.STOCK_RESERVATION_REQUESTED,
 				objectMapper.writeValueAsString(payload) // payload
 			);
 
