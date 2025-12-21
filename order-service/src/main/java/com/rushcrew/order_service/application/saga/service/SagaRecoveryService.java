@@ -7,8 +7,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
+import com.rushcrew.order_service.application.saga.step.RequestStockReservationStep;
 import com.rushcrew.order_service.application.saga.step.UsePointStep;
 import com.rushcrew.order_service.domain.enums.SagaStatus;
+import com.rushcrew.order_service.domain.enums.SagaStepName;
 import com.rushcrew.order_service.domain.model.saga.SagaInstance;
 import com.rushcrew.order_service.domain.model.saga.SagaStep;
 
@@ -17,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Saga 보상 트랜잭션 서비스
- * - Timeout 등으로 실패한 Saga의 완료된 Step들을 역순으로 보상
  */
 @Slf4j
 @Service
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SagaRecoveryService {
 
 	private final UsePointStep usePointStep;
+	private final RequestStockReservationStep requestStockReservationStep;
 
 	@Transactional
 	public void compensateSaga(SagaInstance sagaInstance) {
@@ -68,7 +70,7 @@ public class SagaRecoveryService {
 
 		for (SagaStep step : completedSteps) {
 			try {
-				compensateStep(step.getStepName(), context, data);
+				compensateStep(step.getStepName(), context, data, sagaInstance);
 				step.markAsCompensated();
 				successCount++;
 				log.info("Step 보상 완료: sagaId={}, step={}",
@@ -93,22 +95,34 @@ public class SagaRecoveryService {
 	/**
 	 * Step별 보상 로직 실행
 	 */
-	private void compensateStep(String stepName, SagaContext context, OrderCreationSagaData data) {
+	private void compensateStep(
+		String stepName,
+		SagaContext context,
+		OrderCreationSagaData data,
+		SagaInstance sagaInstance
+	) {
 		log.info("Step 보상 실행: sagaId={}, step={}", context.getSagaId(), stepName);
 
 		switch (stepName) {
 			case "USE_POINT":
 				usePointStep.compensate(context, data);
+				sagaInstance.addStep(SagaStepName.USE_POINT_COMPENSATE, SagaStatus.COMPLETED);
 				break;
 
 			case "REQUEST_STOCK_RESERVATION":
-				// 재고는 타임딜 서비스가 복구
-				log.info("[Saga-{}] 재고 보상은 타임딜 서비스 책임, skip", context.getSagaId());
+				log.info("[Saga-{}] 재고 예약 취소 실행", context.getSagaId());
+				requestStockReservationStep.compensate(context, data);
+				sagaInstance.addStep(
+					SagaStepName.REQUEST_STOCK_RESERVATION_COMPENSATE,
+					SagaStatus.COMPLETED
+				);
 				break;
 
 			case "VALIDATE_STOCK":
+				log.info("[Saga-{}] 보상 불필요한 Step: VALIDATE_STOCK", context.getSagaId());
+				break;
+
 			case "CREATE_ORDER":
-				// 보상 불필요 (조회성 또는 이미 실패한 경우)
 				log.info("[Saga-{}] 보상 불필요한 Step: {}", context.getSagaId(), stepName);
 				break;
 
