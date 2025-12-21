@@ -184,12 +184,20 @@ services:
 
       # Auth Config
       AUTH_MAX_CONCURRENT_SESSIONS: ${AUTH_MAX_CONCURRENT_SESSIONS:-3}
+
+      # Monitoring
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ${ZIPKIN_URL:-http://zipkin:9411/api/v2/spans}
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_RATE:-1.0}
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: true
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
     ports:
       - "${AUTH_SERVER_PORT:-8000}:${AUTH_SERVER_PORT:-8000}"
     depends_on:
       rushdeal_postgres:
         condition: service_healthy
       rushdeal_auth_redis:
+        condition: service_healthy
+      zipkin:
         condition: service_healthy
     networks:
        - rushdeal-network
@@ -214,6 +222,12 @@ services:
       EUREKA_ENABLED: ${EUREKA_ENABLED:-false}
       EUREKA_URL: ${EUREKA_URL}
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+
+      # Monitoring
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ${ZIPKIN_URL:-http://zipkin:9411/api/v2/spans}
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_RATE:-1.0}
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: true
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
     ports:
       - "${USER_SERVER_PORT:-8060}:${USER_SERVER_PORT:-8060}"
     depends_on:
@@ -221,6 +235,8 @@ services:
          condition: service_healthy
       rushdeal_user_redis:
          condition: service_healthy
+      zipkin:
+        condition: service_healthy
     networks:
      - rushdeal-network
     restart: unless-stopped
@@ -246,6 +262,12 @@ services:
       SQL_INIT_MODE: ${SQL_INIT_MODE:-never}
       QUARTZ_INIT_SCHEMA: ${QUARTZ_INIT_SCHEMA:-never}
       QUARTZ_THREAD_COUNT: ${QUARTZ_THREAD_COUNT:-10}
+
+      # Monitoring
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ${ZIPKIN_URL:-http://zipkin:9411/api/v2/spans}
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_RATE:-1.0}
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: true
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
     ports:
       - "${ORDER_SERVER_PORT:-8050}:${ORDER_SERVER_PORT:-8050}"
     depends_on:
@@ -255,6 +277,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
+      zipkin:
+        condition: service_healthy
     networks:
       - rushdeal-network
     restart: unless-stopped
@@ -280,10 +304,18 @@ services:
       PORTONE_STORE_ID: ${PORTONE_STORE_ID}
       PORTONE_CHANNEL_KEY: ${PORTONE_CHANNEL_KEY}
       PORTONE_WEBHOOK: ${PORTONE_WEBHOOK}
+
+      # Monitoring
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ${ZIPKIN_URL:-http://zipkin:9411/api/v2/spans}
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_RATE:-1.0}
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: true
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
     ports:
       - "${PAYMENT_SERVER_PORT:-8010}:${PAYMENT_SERVER_PORT:-8010}"
     depends_on:
       rushdeal_postgres:
+        condition: service_healthy
+      zipkin:
         condition: service_healthy
     networks:
       - rushdeal-network
@@ -307,10 +339,18 @@ services:
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
       SHOW_SQL: ${SHOW_SQL:-false}
       SQL_INIT_MODE: ${SQL_INIT_MODE:-never}
+
+      # Monitoring
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ${ZIPKIN_URL:-http://zipkin:9411/api/v2/spans}
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_RATE:-1.0}
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: true
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
     ports:
       - "${PRODUCT_SERVER_PORT:-8020}:${PRODUCT_SERVER_PORT:-8020}"
     depends_on:
       rushdeal_postgres:
+        condition: service_healthy
+      zipkin:
         condition: service_healthy
     networks:
       - rushdeal-network
@@ -336,6 +376,12 @@ services:
       EUREKA_URL: ${EUREKA_URL}
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
       SHOW_SQL: ${SHOW_SQL:-false}
+
+      # Monitoring
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ${ZIPKIN_URL:-http://zipkin:9411/api/v2/spans}
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_RATE:-1.0}
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: true
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
     ports:
       - "${QUEUE_SERVER_PORT:-8040}:${QUEUE_SERVER_PORT:-8040}"
     depends_on:
@@ -345,6 +391,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
+      zipkin:
+        condition: service_healthy
     networks:
       - rushdeal-network
     restart: unless-stopped
@@ -370,6 +418,12 @@ services:
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
       SHOW_SQL: ${SHOW_SQL:-false}
       SQL_INIT_MODE: ${SQL_INIT_MODE:-never}
+
+      # Monitoring
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ${ZIPKIN_URL:-http://zipkin:9411/api/v2/spans}
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_RATE:-1.0}
+      MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: true
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
     ports:
       - "${TIMEDEAL_SERVER_PORT:-8030}:${TIMEDEAL_SERVER_PORT:-8030}"
     depends_on:
@@ -379,9 +433,82 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
+      zipkin:
+        condition: service_healthy
     networks:
       - rushdeal-network
     restart: unless-stopped
+
+  # =========================================
+  # [모니터링] Prometheus, Grafana, Zipkin
+  # =========================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: rushdeal_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - rushdeal-network
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: rushdeal_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_INSTALL_PLUGINS=redis-datasource
+    depends_on:
+      - prometheus
+    networks:
+      - rushdeal-network
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: rushdeal_zipkin
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
+      - JAVA_OPTS=-Xms512m -Xmx512m
+    networks:
+      - rushdeal-network
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9411/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 
 volumes:
   rushdeal_pg_data:
@@ -390,6 +517,8 @@ volumes:
   rushdeal_queue_redis_data:
   rushdeal_order_redis_data:
   rushdeal_timedeal_redis_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   rushdeal-network:
