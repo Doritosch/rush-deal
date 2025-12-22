@@ -1,7 +1,11 @@
 package com.rushcrew.order_service.presentation.api.command;
 
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import com.rushcrew.order_service.global.security.model.UserDetailsImpl;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -80,16 +84,13 @@ public class OrderCommandController {
 	 * 주문 생성 API (Saga 접수)
 	 */
 	@PostMapping
+	@PreAuthorize("hasAnyRole('USER', 'MASTER', 'SELLER')")
 	public ApiResponse<CreateOrderResult> createOrder(
-		@Valid @RequestBody CreateOrderRequest request,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role,
-		@RequestHeader("X-Queue-Token") String queueToken
-	) {
-		// 권한 체크
-		RoleChecker.checkRole(role, "USER", "MASTER", "SELLER");
-		// DTO -> Command 변환
-		CreateOrderCommand command = createOrderCommandMapper.toCommand(request, userId, role, queueToken);
+			@Valid @RequestBody CreateOrderRequest request,
+			@AuthenticationPrincipal UserDetailsImpl userDetails,
+			@RequestHeader("X-Queue-Token") String queueToken
+			) {
+		CreateOrderCommand command = createOrderCommandMapper.toCommand(request, userDetails.userId(), userDetails.role(), queueToken);
 		// Saga 접수
 		CreateOrderResult result = createOrderUseCase.createOrder(command);
 		// 반환 (PROCESSING 상태 + sagaId)
@@ -100,13 +101,13 @@ public class OrderCommandController {
 	 * 결제 요청 API
 	 */
 	@PostMapping("/{orderId}/payment")
+	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<RequestPaymentResponse> requestPayment(
 		@PathVariable UUID orderId,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
+		@AuthenticationPrincipal UserDetailsImpl userDetails
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER");
-		RequestPaymentCommand command = requestPaymentCommandMapper.toCommand(orderId, userId);
+		RequestPaymentCommand command = requestPaymentCommandMapper.toCommand(orderId, userDetails.userId());
+
 		RequestPaymentResult result = requestPaymentUseCase.requestPayment(command);
 		RequestPaymentResponse response = requestPaymentResultMapper.toResponse(result);
 		return ApiResponse.success(response);
@@ -116,13 +117,13 @@ public class OrderCommandController {
 	 * 구매확정 API
 	 */
 	@PostMapping("/{orderId}/confirm")
+	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<ConfirmPurchaseResponse> confirmPurchase(
 		@PathVariable UUID orderId,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
+		@AuthenticationPrincipal UserDetailsImpl userDetails
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER");
-		ConfirmPurchaseCommand command = confirmPurchaseCommandMapper.toCommand(orderId, userId);
+		ConfirmPurchaseCommand command = confirmPurchaseCommandMapper.toCommand(orderId, userDetails.userId());
+
 		ConfirmPurchaseResult result = confirmPurchaseUseCase.confirmPurchase(command);
 		ConfirmPurchaseResponse response = confirmPurchaseResultMapper.toResponse(result);
 		return ApiResponse.success(response);
@@ -132,14 +133,14 @@ public class OrderCommandController {
 	 * 주문 수정 API
 	 */
 	@PutMapping("/{orderId}")
+	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<UpdateOrderResponse> updateOrder(
 		@PathVariable UUID orderId,
 		@Valid @RequestBody UpdateOrderRequest request,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
+		@AuthenticationPrincipal UserDetailsImpl userDetails
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER");
-		UpdateOrderCommand command = updateOrderCommandMapper.toCommand(orderId, userId, request);
+		UpdateOrderCommand command = updateOrderCommandMapper.toCommand(orderId, userDetails.userId(), request);
+
 		UpdateOrderResult result = updateOrderUseCase.updateOrder(command);
 		UpdateOrderResponse response = updateOrderResultMapper.toResponse(result);
 		return ApiResponse.success(response);
@@ -149,13 +150,13 @@ public class OrderCommandController {
 	 * 주문 취소 API
 	 */
 	@PostMapping("/{orderId}/cancel")
+	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<CancelOrderResponse> cancelOrder(
 		@PathVariable UUID orderId,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
+		@AuthenticationPrincipal UserDetailsImpl userDetails
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER");
-		CancelOrderCommand command = cancelOrderCommandMapper.toCommand(orderId, userId);
+		CancelOrderCommand command = cancelOrderCommandMapper.toCommand(orderId, userDetails.userId());
+
 		CancelOrderResult result = cancelOrderUseCase.cancelOrder(command);
 		CancelOrderResponse response = cancelOrderResultMapper.toResponse(result);
 		return ApiResponse.success(response);
@@ -165,14 +166,16 @@ public class OrderCommandController {
 	 * 주문 환불 API
 	 */
 	@PostMapping("/{orderId}/refund")
+	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<RefundOrderResponse> refundOrder(
 		@PathVariable UUID orderId,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role,
-		@RequestParam(value = "reason", required = false) String reason
+		@AuthenticationPrincipal UserDetailsImpl userDetails,
+		@RequestBody(required = false) java.util.Map<String, String> requestBody
 	) {
-		RoleChecker.checkRole(role, "USER", "MASTER");
-		RefundOrderCommand command = refundOrderCommandMapper.toCommand(orderId, userId, reason);
+		String reason = requestBody != null ? requestBody.get("reason") : null;
+
+		RefundOrderCommand command = refundOrderCommandMapper.toCommand(orderId, userDetails.userId(), reason);
+
 		RefundOrderResult result = refundOrderUseCase.refundOrder(command);
 		RefundOrderResponse response = refundOrderResultMapper.toResponse(result);
 		return ApiResponse.success(response);
