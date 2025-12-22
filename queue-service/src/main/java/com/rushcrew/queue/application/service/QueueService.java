@@ -64,7 +64,7 @@ public class QueueService implements QueuePort {
      * 대기열 순번, 상태 조회 (polling)
      */
     @Override
-    public QueueRedisResponse getQueueRank(UUID productId, String token, Long userId, String role) {
+    public QueueRedisResponse getQueueRank(UUID productId, String token, Long userId) {
         // 토큰 유효성 검증: 본인 확인 (대기열 토큰 소유권 검증)
         boolean isOwner = queueRepository.verifyTokenOwner(productId, userId, token);
         if (!isOwner) {
