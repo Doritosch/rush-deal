@@ -63,12 +63,11 @@ public class PendingOrderTimeoutScheduler {
 		for (Order order : timedOutOrders) {
 			try {
 				// 자동 취소 (시스템 권한)
-				CancelOrderCommand command = CancelOrderCommand.builder()
-					.orderId(order.getOrderId())
-					.userId(order.getUserId())
-					.cancelReason("결제 미완료로 자동 취소 (15분 타임아웃)")
-					.isSystemCancel(true) // 시스템 자동 취소 플래그
-					.build();
+				CancelOrderCommand command = CancelOrderCommand.ofSystem(
+					order.getOrderId(),
+					order.getUserId(),
+					"결제 미완료로 자동 취소 (15분 타임아웃)"
+				);
 
 				cancelOrderUseCase.cancelOrder(command);
 				successCount++;

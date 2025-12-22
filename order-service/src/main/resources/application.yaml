@@ -40,7 +40,7 @@ spring:
 #      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       auto-offset-reset: earliest
 #      enable-auto-commit: true
-    producer:
+#    producer:
 #      key-serializer: org.apache.kafka.common.serialization.StringSerializer
 #      value-serializer: org.apache.kafka.common.serialization.StringSerializer
     # 재시도 설정 추가
