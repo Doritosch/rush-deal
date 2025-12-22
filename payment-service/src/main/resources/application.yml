@@ -32,9 +32,6 @@ spring:
       properties:
         spring.json.trusted.packages: "*"
 
-server:
-  port: 8010
-
 eureka:
   client:
     service-url:
@@ -46,3 +43,14 @@ portone:
     store-id: ${PORTONE_STORE_ID}
     channel-key: ${PORTONE_CHANNEL_KEY}
     webhook: ${PORTONE_WEBHOOK}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      access: unrestricted

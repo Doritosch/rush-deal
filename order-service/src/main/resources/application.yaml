@@ -33,7 +33,7 @@ spring:
         - classpath:sql/batch-schema.sql
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}
     consumer:
       group-id: order-service
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -57,16 +57,10 @@ spring:
         multiplier: 2.0 # 재시도 간격: 1초 → 2초 → 4초
         max-interval: 10000 # 최대 10초
 
-server:
-  port: 8050
-
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_URL}
-  instance:
-    hostname: localhost
-    prefer-ip-address: true
 
 management:
   endpoints:
