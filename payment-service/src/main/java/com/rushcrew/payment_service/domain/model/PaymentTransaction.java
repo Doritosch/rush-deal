@@ -19,9 +19,6 @@ public class PaymentTransaction {
     @Column(name = "payment_transaction_id", nullable = false)
     private UUID id;
 
-    @Column(name = "portone_payment_id")
-    private String portonePaymentId;
-
     @Column(name = "transaction_id")
     private String transactionId;
 
@@ -47,12 +44,11 @@ public class PaymentTransaction {
     @JoinColumn(name = "paymentId", nullable = false)
     private Payment payment;
 
-    public static PaymentTransaction create(Payment payment, String portonePaymentId, String transactionId,
+    public static PaymentTransaction create(Payment payment, String transactionId,
                                             String storeId, String currency, Instant requestedAt,
                                             Instant updatedAt, Instant statusChangedAt) {
         PaymentTransaction transaction = new PaymentTransaction();
 
-        transaction.portonePaymentId = portonePaymentId;
         transaction.transactionId = transactionId;
         transaction.storeId = storeId;
         transaction.currency = currency;
