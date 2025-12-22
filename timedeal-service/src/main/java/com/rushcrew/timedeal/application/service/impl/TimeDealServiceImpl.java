@@ -6,6 +6,7 @@ import com.rushcrew.timedeal.application.command.UpdateTimeDealCommand;
 import com.rushcrew.timedeal.application.event.TimeDealScheduledEvent;
 import com.rushcrew.timedeal.application.model.ProductInfo;
 import com.rushcrew.timedeal.application.result.TimeDealDetailResult;
+import com.rushcrew.timedeal.application.result.TimeDealForOrderResult;
 import com.rushcrew.timedeal.application.result.TimeDealProductResult;
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.application.result.UpdateTimeDealResult;

@@ -11,7 +11,12 @@ import com.rushcrew.payment_service.domain.repository.PaymentRepository;
 import com.rushcrew.payment_service.domain.repository.PaymentTransactionRepository;
 import com.rushcrew.payment_service.domain.vo.Amount;
 import com.rushcrew.payment_service.domain.vo.Card;
+import com.rushcrew.payment_service.infrastructure.client.OrderClient;
+import com.rushcrew.payment_service.infrastructure.client.dto.OrderResponse;
+import com.rushcrew.payment_service.infrastructure.event.PaymentCompletedEvent;
+import com.rushcrew.payment_service.infrastructure.event.PaymentEventProducer;
 import com.rushcrew.payment_service.presentation.dto.response.PaymentResponse;
+import feign.FeignException;
 import io.portone.sdk.server.payment.PaidPayment;
 import io.portone.sdk.server.payment.PaymentClient;
 import io.portone.sdk.server.payment.PaymentMethodCard;
@@ -24,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
@@ -38,25 +42,95 @@ public class PaymentService {
     private final PaymentClient portone;
     private final WebhookVerifier portoneWebhook;
 
+    private final PaymentEventProducer paymentEventProducer;
+    private final OrderClient orderClient;
+
     @Transactional
     public PaymentPrepareResult preparePayment(PaymentCommand command) {
-        // TODO: orderId로 상품 정보 조회하여 amount 검증
+        try {
+            OrderResponse orderResponse = orderClient.getOrder(command.orderId());
+
+            if (!orderResponse.totalAmount().equals(command.totalAmount())) {
+                throw new BusinessException(PaymentErrorCode.AMOUNT_MISMATCH);
+            }
+        } catch (FeignException.NotFound e) {
+            throw new BusinessException(PaymentErrorCode.ORDER_NOT_FOUND);
+        } catch (FeignException e) {
+            throw new BusinessException(PaymentErrorCode.ORDER_NOT_FOUND);
+        }
+
+        String portOnePaymentId = UUID.randomUUID().toString();
 
         Payment payment = Payment.create(
                 command.orderId(),
-                command.totalAmount()
+                command.totalAmount(),
+                portOnePaymentId
         );
 
         Payment savedPayment = paymentRepository.save(payment);
-
-        String portOnePaymentId = UUID.randomUUID().toString();
 
         return PaymentPrepareResult.of(portOnePaymentId, savedPayment);
     }
 
     @Transactional
-    public Mono<PaymentResponse> completePayment(UUID paymentId, String portOnePaymentId) {
+    public Mono<PaymentResult> completePayment(String portOnePaymentId) {
+        return syncPayment(portOnePaymentId);
+    }
+    @Transactional
+    public Mono<PaymentResult> cancelPayment(UUID paymentId, String cancelReason) {
         Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new BusinessException(PaymentErrorCode.INVALID_PAYMENT));
+
+        String portonePaymentId = payment.getPortonePaymentId();
+
+        return Mono.fromFuture(portone.cancelPayment(
+                portonePaymentId,
+                null,
+                null,
+                null,
+                        cancelReason,
+                null,
+                null,
+                null
+        ))
+                .flatMap(cancelResponse -> {
+                    payment.cancelPayment();
+                    paymentRepository.save(payment);
+
+                    return Mono.just(PaymentResult.from(payment));
+                })
+                .onErrorMap(e -> new BusinessException(PaymentErrorCode.FAILED_CANCEL_PAYMENT));
+    }
+
+    public PaymentResult findPaymentByPaymentId(UUID paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new BusinessException(PaymentErrorCode.INVALID_PAYMENT));
+
+        return PaymentResult.from(payment);
+    }
+
+    public PaymentResult findPaymentByOrderId(UUID orderId) {
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new BusinessException(PaymentErrorCode.INVALID_PAYMENT));
+
+        return PaymentResult.from(payment);
+    }
+    public Mono<Unit> handleWebhook(String body, String webhookId, String webhookTimestamp, String webhookSignature) throws Exception {
+        Webhook webhook;
+        try {
+            webhook = portoneWebhook.verify(body, webhookId, webhookSignature, webhookTimestamp);
+        } catch (Exception e) {
+            throw new Exception();
+        }
+        if (webhook instanceof WebhookTransaction transaction) {
+            return syncPayment(transaction.getData().getPaymentId()).map(payment -> Unit.INSTANCE);
+        }
+        return Mono.empty();
+    }
+
+    @Transactional
+    public Mono<PaymentResult> syncPayment(String portOnePaymentId) {
+        Payment payment = paymentRepository.findByPortonePaymentId(portOnePaymentId)
                 .orElseThrow(() -> new BusinessException(PaymentErrorCode.INVALID_PAYMENT));
 
         return Mono.fromFuture(portone.getPayment(portOnePaymentId))
@@ -69,7 +143,6 @@ public class PaymentService {
                                 return Mono.error(new BusinessException(PaymentErrorCode.FAILED_VERIFYING_PAYMENT));
                             }
 
-
                             payment.completePayment();
                             paymentRepository.save(payment);
 
@@ -79,7 +152,6 @@ public class PaymentService {
                                         paidPayment.getId(),
                                         paidPayment.getTransactionId(),
                                         paidPayment.getStoreId(),
-                                        paidPayment.getCurrency().getValue(),
                                         paidPayment.getRequestedAt(),
                                         paidPayment.getUpdatedAt(),
                                         paidPayment.getStatusChangedAt()
@@ -109,35 +181,19 @@ public class PaymentService {
 
                                 paymentTransactionRepository.save(transaction);
                             }
-                            return Mono.just(PaymentResponse.from(PaymentResult.from(payment)));
+
+                            // Kafka 이벤트 발행
+                            PaymentCompletedEvent event = PaymentCompletedEvent.of(
+                                    payment.getPaymentId(),
+                                    payment.getOrderId(),
+                                    payment.getAmount(),
+                                    paidPayment.getCurrency().getValue()
+                            );
+                            paymentEventProducer.publishPaymentCompleted(event);
+
+                            return Mono.just(PaymentResult.from(payment));
                         default:
                             return Mono.error(new BusinessException(PaymentErrorCode.NOT_COMPLETED_PAYMENT));
-                    }
-                });
-    }
-
-    public Mono<Unit> handleWebhook(String body, String webhookId, String webhookTimestamp, String webhookSignature) throws Exception {
-        Webhook webhook;
-        try {
-            webhook = portoneWebhook.verify(body, webhookId, webhookSignature, webhookTimestamp);
-        } catch (Exception e) {
-            throw new Exception();
-        }
-        if (webhook instanceof WebhookTransaction transaction) {
-            return syncPayment(transaction.getData().getPaymentId()).map(payment -> Unit.INSTANCE);
-        }
-        return Mono.empty();
-    }
-
-    @Transactional
-    public Mono<Unit> syncPayment(String portOnePaymentId) {
-        return Mono.fromFuture(portone.getPayment(portOnePaymentId))
-                .flatMap(actualPayment -> {
-                    switch (actualPayment) {
-                        case PaidPayment paidPayment:
-                            return Mono.error(new BusinessException(PaymentErrorCode.NOT_FOUND_PORTONE_ID));
-                        default:
-                            return Mono.just(Unit.INSTANCE);
                     }
                 });
     }

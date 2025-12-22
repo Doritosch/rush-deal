@@ -18,7 +18,7 @@ public class PaymentPageController {
 
     private final PortOneSecretProperties secret;
 
-    @GetMapping("/{orderId}")
+    @GetMapping("/page/{orderId}")
     public String getPaymentRequest(
             @PathVariable UUID orderId,
             Model model

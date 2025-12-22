@@ -15,9 +15,9 @@ public class TimeDealStockDetail {
 
 	private TimeDealStatus timeDealStatus;
 
-	private Integer availableStock;     // 주문 가능한 재고
-	private Integer reservedStock;      // 예약된 재고
-	private Integer soldStock;          // 판매 완료된 재고
+	private Long availableStock;     // 주문 가능한 재고
+	private Long reservedStock;      // 예약된 재고
+	private Long soldStock;          // 판매 완료된 재고
 	private TimeDealStockStatus status;
 
 	// 상품 정보
@@ -34,6 +34,4 @@ public class TimeDealStockDetail {
 	// 판매자 정보
 	private UUID sellerId;
 	private String sellerName;
-
-	// private boolean isActive;
 }

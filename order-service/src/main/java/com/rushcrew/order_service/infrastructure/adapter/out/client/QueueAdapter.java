@@ -35,14 +35,4 @@ public class QueueAdapter implements QueuePort {
 			return false;
 		}
 	}
-
-	// @Override
-	// public boolean validateToken(@NonNull UUID timeDealId, @NonNull Long userId) {
-	// 	try {
-	// 		return feignClient.validateToken(timeDealId.toString(), userId);
-	// 	} catch (Exception e) {
-	// 		log.error("대기열 토큰 검증 실패: timeDealId={}, userId={}", timeDealId, userId, e);
-	// 		return false;
-	// 	}
-	// }
 }

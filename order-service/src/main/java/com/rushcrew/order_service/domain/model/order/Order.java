@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.rushcrew.common.entity.BaseEntity;
@@ -50,7 +52,7 @@ public class Order extends BaseEntity {
 	private OrderStatus status;
 
 	@Embedded
-	private ShippingInfo shippingInfo; // 현재 배송 서비스가 없어서 Embeddable 사용 --> 추후 배송 서비스를 독립적으로 개발하게 되면, 그때 ShippingInfo 테이블 분리 + Order에서 deliveryId 참조로 리팩토링
+	private ShippingInfo shippingInfo;
 
 	@Column(nullable = false)
 	private Instant orderedAt;
@@ -86,7 +88,7 @@ public class Order extends BaseEntity {
 	public static Order create(
 		Long userId,
 		List<OrderItem> orderItems,
-		BigDecimal pointUsed,
+		Long pointUsed,
 		ShippingInfo shippingInfo
 	) {
 		BigDecimal totalAmount = orderItems.stream()
@@ -127,25 +129,15 @@ public class Order extends BaseEntity {
 	}
 
 	// 포인트 사용량 수정 (PENDING 상태에서만 가능 - 결제 전)
-	public void updatePointUsed(BigDecimal newPointUsed) {
+	public void updatePointUsed(Long newPointUsed) {
 		this.status.validateCanUpdatePointUsed();
-		BigDecimal oldPointUsed = this.amount.getPointUsed();
+		Long oldPointUsed = this.amount.getPointUsed();
 		this.amount = this.amount.updatePointUsed(newPointUsed);
 		addHistory(
 			OrderEventType.POINT_USAGE_UPDATED,
 			status,
 			status,
 			"포인트 사용량 변경: %s --> %s".formatted(oldPointUsed, newPointUsed)
-		);
-	}
-
-	// 포인트 차감 실패 이력 기록
-	public void recordPointDeductionFailed(String reason) {
-		addHistory(
-			OrderEventType.POINT_DEDUCTION_FAILED,
-			this.status,
-			this.status,  // 상태는 PENDING 유지
-			reason
 		);
 	}
 
@@ -164,10 +156,18 @@ public class Order extends BaseEntity {
 		);
 	}
 
-	// 환불 (결제 완료 후)
+	/**
+	 * 환불 (결제 완료 후, 구매확정 전)
+	 * 
+	 * 환불은 PAID 상태에서만 가능
+	 * 구매확정(PURCHASE_CONFIRMED) 후에는 환불 불가능
+	 * 
+	 * @param reason 환불 사유
+	 * @throws IllegalStateException PAID 상태가 아닌 경우
+	 */
 	public void refund(String reason) {
-		this.status.validateCanRefund();
-		this.status.validateTransition(OrderStatus.REFUNDED);
+		this.status.validateCanRefund(); // PAID 상태만 허용
+		this.status.validateTransition(OrderStatus.REFUNDED); // PAID -> REFUNDED만 허용
 		OrderStatus previousStatus = this.status;
 		this.status = OrderStatus.REFUNDED;
 		this.refundedAt = Instant.now();
@@ -279,7 +279,7 @@ public class Order extends BaseEntity {
 		return amount.getTotalAmount();
 	}
 
-	public BigDecimal getPointUsed() {
+	public Long getPointUsed() {
 		return amount.getPointUsed();
 	}
 
@@ -287,4 +287,29 @@ public class Order extends BaseEntity {
 		return amount.getFinalAmount();
 	}
 
+	public Map<String, Object> toEventPayload() {
+		Map<String, Object> payload = new HashMap<>();
+		payload.put("orderId", this.orderId);
+		payload.put("userId", this.userId);
+
+		payload.put("totalAmount", this.amount.getTotalAmount());      // 주문 아이템 전체 합
+		payload.put("pointUsed", this.amount.getPointUsed());          // 사용한 포인트
+		payload.put("finalAmount", this.amount.getFinalAmount());      // 실제 결제 금액 (total - point)
+
+		payload.put("status", this.status.name());
+		payload.put("orderedAt", this.orderedAt);
+
+		payload.put("items", this.orderItems.stream()
+			.map(item -> {
+				Map<String, Object> itemMap = new HashMap<>();
+				itemMap.put("timeDealStockId", item.getTimeDealStockId());
+				itemMap.put("quantity", item.getQuantity());
+				itemMap.put("unitPrice", item.getUnitPrice());
+				itemMap.put("discountPrice", item.getDiscountPrice());
+				return itemMap;
+			})
+			.toList()
+		);
+		return payload;
+	}
 }

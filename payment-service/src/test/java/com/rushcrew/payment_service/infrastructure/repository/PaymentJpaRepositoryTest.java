@@ -28,9 +28,10 @@ class PaymentJpaRepositoryTest {
     @DisplayName("결제 저장 테스트")
     void savePayment() {
         UUID orderId = UUID.randomUUID();
-        BigDecimal amount = new BigDecimal("10000.00");
+        Long amount = 10000L;
+        String portOnePaymentId = UUID.randomUUID().toString();
 
-        Payment payment = Payment.create(orderId, amount);
+        Payment payment = Payment.create(orderId, amount, portOnePaymentId);
 
         Payment savedPayment = paymentJpaRepository.save(payment);
 
@@ -38,6 +39,6 @@ class PaymentJpaRepositoryTest {
         assertNotNull(savedPayment.getPaymentId());
         assertEquals(savedPayment.getOrderId(), orderId);
         assertEquals(savedPayment.getAmount(), amount);
-        assertEquals(savedPayment.getStatus(), PaymentStatus.READY);
+        assertEquals(savedPayment.getStatus(), PaymentStatus.PENDING);
     }
 }
