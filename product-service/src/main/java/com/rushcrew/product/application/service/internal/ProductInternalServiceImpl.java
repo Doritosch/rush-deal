@@ -28,6 +28,6 @@ public class ProductInternalServiceImpl implements ProductInternalService {
         product.getOptions().forEach(option -> optionIds.add(option.getId()));
         return ProductInfoResponse.of(
             product.getId(), optionIds,
-            product.getUserId().getId(), product.getPrice().getAmount());
+            product.getSellerId().getId(), product.getPrice().getAmount());
     }
 }

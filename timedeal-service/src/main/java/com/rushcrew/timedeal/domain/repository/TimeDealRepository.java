@@ -5,6 +5,7 @@ import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.domain.entity.TimeDeal;
 import com.rushcrew.timedeal.domain.entity.TimeDealProduct;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
+import java.util.List;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -23,5 +24,5 @@ public interface TimeDealRepository {
 
     Optional<TimeDealProduct> findProductByProductId(UUID productId);
 
-	Optional<TimeDealForOrderResult> findForOrder(UUID timeDealId);
+    List<TimeDeal> findAllById(List<UUID> idList);
 }

@@ -7,15 +7,17 @@ import com.rushcrew.timedeal.application.result.TimeDealForOrderResult;
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.application.result.UpdateTimeDealResult;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface TimeDealService {
 
-    UUID createTimeDeal(CreateTimeDealCommand command);
+    UUID createTimeDeal(Long userId, String role, CreateTimeDealCommand command);
 
-    UpdateTimeDealResult updateTimeDeal(UUID timeDealId, UpdateTimeDealCommand command);
+    UpdateTimeDealResult updateTimeDeal(
+        Long userId, String role, UUID timeDealId, UpdateTimeDealCommand command);
 
     void forceEndTimeDeal(UUID timeDealId);
 
@@ -23,5 +25,7 @@ public interface TimeDealService {
 
     TimeDealDetailResult getTimeDealDetail(UUID timeDealId);
 
-	TimeDealForOrderResult getTimeDealForOrder(UUID timeDealId);
+    List<String> startTimeDeals(List<String> timeDealIds);
+
+    List<String> endTimeDeals(List<String> timeDealIds);
 }
