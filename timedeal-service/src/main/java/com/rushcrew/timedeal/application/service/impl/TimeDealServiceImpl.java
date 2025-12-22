@@ -178,4 +178,11 @@ public class TimeDealServiceImpl implements TimeDealService {
 
         return updatedIds;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TimeDealForOrderResult getTimeDealForOrder(UUID timeDealId) {
+        return timeDealRepository.findForOrder(timeDealId)
+            .orElseThrow(() -> new BusinessException(TimeDealErrorCode.NOT_FOUND_TIME_DEAL));
+    }
 }

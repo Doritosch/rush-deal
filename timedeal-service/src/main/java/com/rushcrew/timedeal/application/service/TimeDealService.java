@@ -28,4 +28,6 @@ public interface TimeDealService {
     List<String> startTimeDeals(List<String> timeDealIds);
 
     List<String> endTimeDeals(List<String> timeDealIds);
+
+    TimeDealForOrderResult getTimeDealForOrder(UUID timeDealId);
 }
