@@ -13,6 +13,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: user_schema
+        hbm2ddl:
+          create_namespaces: true
+
         jdbc:
           batch_size: 1000
         order_inserts: true
@@ -22,6 +26,7 @@ spring:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
       password: ${SPRING_DATA_REDIS_PASSWORD:}
+
 eureka:
   client:
     service-url:

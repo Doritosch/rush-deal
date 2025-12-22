@@ -2,8 +2,11 @@ package com.rushcrew.order_service.presentation.api.query;
 
 import java.util.UUID;
 
+import com.rushcrew.order_service.global.security.model.UserDetailsImpl;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.rushcrew.common.dto.ApiResponse;
@@ -26,25 +29,24 @@ public class OrderQueryController {
 	private final GetOrderListUseCase getOrderListUseCase;
 
 	@GetMapping("/{orderId}")
+	@PreAuthorize("hasAnyRole('USER', 'MASTER', 'SELLER')")
 	public ApiResponse<OrderDetailResponse> getOrderDetail(
-		@PathVariable UUID orderId,
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role) {
+			@PathVariable UUID orderId,
+			@AuthenticationPrincipal UserDetailsImpl userDetails
+			) {
+		OrderDetailDto dto = getOrderDetailUseCase.getOrderDetail(orderId, userDetails.userId());
 
-		boolean isMaster = "MASTER".equalsIgnoreCase(role);
-		OrderDetailDto order = getOrderDetailUseCase.getOrderDetail(orderId, userId, isMaster);
-		return ApiResponse.success(OrderDetailResponse.from(order));
+		return ApiResponse.success(OrderDetailResponse.from(dto));
 	}
 
 	@GetMapping
+	@PreAuthorize("hasAnyRole('USER', 'MASTER')")
 	public ApiResponse<Page<OrderListResponse>> getOrderList(
-		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role,
-		Pageable pageable) {
-
-		boolean isMaster = "MASTER".equalsIgnoreCase(role);
+		@AuthenticationPrincipal UserDetailsImpl userDetails,
+		Pageable pageable
+	) {
 		OrderSearchCriteria criteria = OrderSearchCriteria.builder()
-			.userId(isMaster ? null : userId)
+			.userId(userDetails.userId())
 			.build();
 
 		Page<OrderListDto> orders = getOrderListUseCase.getOrderList(criteria, pageable);
