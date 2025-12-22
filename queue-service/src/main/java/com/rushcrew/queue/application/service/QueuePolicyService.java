@@ -36,9 +36,7 @@ public class QueuePolicyService implements QueuePolicyPort {
      */
     @Override
     @Transactional
-    public QueuePolicyQueryResponse createQueuePolicy(CreatePolicyCommand command, Long userId, String role) {
-        // 권한 유효성 검사
-        queuePolicyValidator.validateMasterRole(userId, role);
+    public QueuePolicyQueryResponse createQueuePolicy(CreatePolicyCommand command, Long userId) {
 
         // 중복 정책 검증 (해당 상품에 정책이 이미 있는지 검증)
         if (queuePolicyRepository.findByProductId(command.productId()).isPresent()) {
@@ -64,15 +62,12 @@ public class QueuePolicyService implements QueuePolicyPort {
     @Override
     @Transactional(readOnly = true)
     public Page<QueuePolicyQueryResponse> searchPolicies(PageQuery query, SearchPolicyCommand command,
-        Long userId, String role) {
+        Long userId) {
         QueuePolicyStatus status = command.getQueuePolicyStatus();
         SearchPolicyCondition condition = new SearchPolicyCondition(
             command.productId(),
             status
         );
-
-        // 권한 유효성 검사
-        queuePolicyValidator.validateMasterRole(userId, role);
 
         PageRequest pageable = query.toPageable();
 
@@ -92,9 +87,7 @@ public class QueuePolicyService implements QueuePolicyPort {
      */
     @Override
     @Transactional(readOnly = true)
-    public QueuePolicyQueryResponse getQueuePolicyInfo(UUID policyId, Long userId, String role) {
-        // 권한 유효성 검사
-        queuePolicyValidator.validateMasterRole(userId, role);
+    public QueuePolicyQueryResponse getQueuePolicyInfo(UUID policyId, Long userId) {
         QueuePolicy queuePolicy = getQueuePolicy(policyId);
         return QueuePolicyQueryResponse.from(queuePolicy);
     }
@@ -105,14 +98,12 @@ public class QueuePolicyService implements QueuePolicyPort {
      */
     @Override
     @Transactional
-    public QueuePolicyQueryResponse updateQueuePolicy(UpdatePolicyCommand command, UUID policyId, Long userId, String role) {
-        // 권한 유효성 검사
-        queuePolicyValidator.validateMasterRole(userId, role);
+    public QueuePolicyQueryResponse updateQueuePolicy(UpdatePolicyCommand command, UUID policyId, Long userId) {
         QueuePolicy queuePolicy = getQueuePolicy(policyId);
-        queuePolicy.update(queuePolicy.getTimeDealName(),
-            queuePolicy.getStatus(),
-            queuePolicy.getTimePeriod(),
-            queuePolicy.getTrafficSetting());
+        queuePolicy.update(command.timeDealName(),
+            command.status(),
+            command.timePeriod(),
+            command.trafficSetting());
         return QueuePolicyQueryResponse.from(queuePolicy);
     }
 
@@ -121,9 +112,7 @@ public class QueuePolicyService implements QueuePolicyPort {
      * */
     @Override
     @Transactional
-    public void deleteQueuePolicy(UUID policyId, Long userId, String role) {
-        // 권한 유효성 검사
-        queuePolicyValidator.validateMasterRole(userId, role);
+    public void deleteQueuePolicy(UUID policyId, Long userId) {
         QueuePolicy queuePolicy = getQueuePolicy(policyId);
 
         if (queuePolicy.isDeleted()) {

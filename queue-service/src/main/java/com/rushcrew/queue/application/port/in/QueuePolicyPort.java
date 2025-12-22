@@ -12,13 +12,13 @@ import org.springframework.data.domain.Page;
  * application 계층 usecase 정의
  */
 public interface QueuePolicyPort {
-    QueuePolicyQueryResponse createQueuePolicy(CreatePolicyCommand command, Long userId, String role);
+    QueuePolicyQueryResponse createQueuePolicy(CreatePolicyCommand command, Long userId);
 
-    Page<QueuePolicyQueryResponse> searchPolicies(PageQuery query, SearchPolicyCommand command, Long userId, String role);
+    Page<QueuePolicyQueryResponse> searchPolicies(PageQuery query, SearchPolicyCommand command, Long userId);
 
-    QueuePolicyQueryResponse getQueuePolicyInfo(UUID policyId, Long userId, String role);
+    QueuePolicyQueryResponse getQueuePolicyInfo(UUID policyId, Long userId);
 
-    QueuePolicyQueryResponse updateQueuePolicy(UpdatePolicyCommand command, UUID policyId, Long userId, String role);
+    QueuePolicyQueryResponse updateQueuePolicy(UpdatePolicyCommand command, UUID policyId, Long userId);
 
-    void deleteQueuePolicy(UUID policyId, Long userId, String role);
+    void deleteQueuePolicy(UUID policyId, Long userId);
 }

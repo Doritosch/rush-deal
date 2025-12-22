@@ -20,10 +20,4 @@ public class QueueTokenValidator {
 			throw new BusinessException(OrderErrorCode.INVALID_QUEUE_TOKEN);
 		}
 	}
-
-	// public void validate(UUID timeDealId, Long userId) {
-	// 	if (!queuePort.validateToken(timeDealId, userId)) {
-	// 		throw new BusinessException(OrderErrorCode.INVALID_QUEUE_TOKEN);
-	// 	}
-	// }
 }

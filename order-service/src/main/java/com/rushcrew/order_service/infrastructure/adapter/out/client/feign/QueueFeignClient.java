@@ -18,9 +18,4 @@ public interface QueueFeignClient {
 		@RequestHeader("X-User-Role") String role
 	);
 
-	// @GetMapping("/api/v1/queue/validate")
-	// boolean validateToken(
-	// 	@RequestParam("timeDealId") String timeDealId,
-	// 	@RequestParam("userId") Long userId
-	// );
 }

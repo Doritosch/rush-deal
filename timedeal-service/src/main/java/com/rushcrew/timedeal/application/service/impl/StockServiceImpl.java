@@ -25,9 +25,14 @@ import com.rushcrew.timedeal.domain.entity.TimeDealStock;
 import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
 import com.rushcrew.timedeal.domain.repository.StockRepository;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
+import com.rushcrew.timedeal.domain.vo.EventType;
 import com.rushcrew.timedeal.domain.vo.OrderId;
 import com.rushcrew.timedeal.domain.vo.Quantity;
 import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
+import com.rushcrew.timedeal.domain.vo.TimeDealProductStatus;
+import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
+
+import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -129,6 +134,55 @@ public class StockServiceImpl implements StockService {
         return ReserveStockResult
             .of(stock.getStockCounts().getAvailable(), "재고가 예약되었습니다.");
     }
+    // @Override
+    // @Transactional
+    // @Retryable(
+    //     retryFor = {ObjectOptimisticLockingFailureException.class},
+    //     maxAttempts = 5,
+    //     backoff = @Backoff(delay = 5, maxDelay = 20, multiplier = 2)
+    // )
+    // public ReserveStockResult reserveStock(ReserveStockCommand command) {
+    //     // TODO: 요청한 사용자가 ORDER 권한을 가지고 있는지 체크
+	//
+    //     TimeDealStock stock = getStockOrThrow(command.stockId());
+	//
+    //     stock.reserve(command.quantity(), command.orderId());
+    //     eventPublisher.publishEvent(
+    //         new StockReservedEvent(command.stockId(), command.quantity().getQuantity())
+    //     );
+	//
+    //     return ReserveStockResult
+    //         .of(stock.getStockCounts().getAvailable(), "재고가 예약되었습니다.");
+    // }
+
+// 	@Override
+// 	@Transactional
+// 	@Retryable(
+// 		retryFor = {ObjectOptimisticLockingFailureException.class},
+// 		maxAttempts = 5,
+// 		backoff = @Backoff(delay = 5, maxDelay = 20, multiplier = 2)
+// 	)
+// 	public ReserveStockResult reserveStock(ReserveStockCommand command) {
+// 		// TODO: 요청한 사용자가 ORDER 권한을 가지고 있는지 체크
+
+// 		TimeDealStock stock = getStockOrThrow(command.stockId());
+
+// 		// 재고 예약
+// 		stock.reserve(command.quantity(), command.orderId());
+
+// 		// 할인된 가격 조회
+// 		BigDecimal discountPrice = stock.getDiscountPrice();
+
+// 		eventPublisher.publishEvent(
+// 			new StockReservedEvent(command.stockId(), command.quantity().getQuantity())
+// 		);
+
+// 		return ReserveStockResult.of(
+// 			stock.getStockCounts().getAvailable(),
+// 			"재고가 예약되었습니다.",
+// 			discountPrice  // 할인된 가격 추가
+// 		);
+// 	}
 
     @Override
     @Transactional
@@ -151,8 +205,13 @@ public class StockServiceImpl implements StockService {
         StockLog log = getLastLogOrThrow(command.stockId(), orderId);
         validateOrderQuantity(log, command.quantity());
 
-        log.getEventType().applyRestore(
-            stock, OrderId.of(orderId), command.quantity(), command.reason());
+        if (log.getEventType() == EventType.RESERVE) {
+            stock.restoreFromReserved(OrderId.of(orderId), command.quantity(), command.reason());
+        } else if (log.getEventType() == EventType.SELL) {
+            stock.restoreFromSold(OrderId.of(orderId), command.quantity(), command.reason());
+        } else {
+            throw new BusinessException(TimeDealErrorCode.INVALID_ORDER_STATE);
+        }
 
         eventPublisher.publishEvent(
             new StockRestoredEvent(command.stockId(), command.quantity().getQuantity())
