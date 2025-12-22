@@ -49,7 +49,8 @@ public class TimeDeal extends BaseEntity {
     @Embedded
     @AttributeOverrides({
         @AttributeOverride(name = "title", column = @Column(nullable = false)),
-        @AttributeOverride(name = "description", column = @Column(nullable = false))
+        @AttributeOverride(name = "description", column = @Column(nullable = false)),
+        @AttributeOverride(name = "sellerId", column = @Column(name = "seller_id", nullable = false))
     })
     private TimeDealInfo timeDealInfo;
 
@@ -132,7 +133,8 @@ public class TimeDeal extends BaseEntity {
         String updatedTitle = newTitle != null ? newTitle : this.timeDealInfo.getTitle();
         String updatedDescription =
             newDescription != null ? newDescription : this.timeDealInfo.getDescription();
-        this.timeDealInfo = TimeDealInfo.of(updatedTitle, updatedDescription);
+        this.timeDealInfo =
+            TimeDealInfo.of(updatedTitle, updatedDescription, this.timeDealInfo.getSellerId());
     }
 
     private void updatePeriod(Instant newStartAt, Instant newEndAt) {

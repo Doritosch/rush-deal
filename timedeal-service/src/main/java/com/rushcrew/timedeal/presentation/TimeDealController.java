@@ -8,6 +8,7 @@ import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.application.result.UpdateTimeDealResult;
 import com.rushcrew.timedeal.application.service.TimeDealService;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
+import com.rushcrew.timedeal.global.security.model.UserDetailsImpl;
 import com.rushcrew.timedeal.presentation.dto.request.CreateTimeDealRequest;
 import com.rushcrew.timedeal.presentation.dto.request.UpdateTimeDealRequest;
 import com.rushcrew.timedeal.presentation.dto.response.TimeDealDetailResponse;
@@ -23,6 +24,8 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.SortDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,25 +43,33 @@ public class TimeDealController {
     private final TimeDealService timeDealService;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('MASTER', 'SELLER')")
     public ResponseEntity<UUID> createTimeDeal(
-        @RequestBody @Valid CreateTimeDealRequest request
+        @Valid @RequestBody CreateTimeDealRequest request,
+        @AuthenticationPrincipal UserDetailsImpl principal
     ) {
         CreateTimeDealCommand command = request.toCommand();
-        UUID timeDealId = timeDealService.createTimeDeal(command);
+        UUID timeDealId =
+            timeDealService.createTimeDeal(principal.userId(), principal.role(), command);
         return ResponseEntity.status(HttpStatus.CREATED).body(timeDealId);
     }
 
     @PatchMapping("/{timeDealId}")
+    @PreAuthorize("hasAnyRole('MASTER', 'SELLER')")
     public ResponseEntity<UpdateTimeDealResponse> updateTimeDeal(
-        @RequestBody @Valid UpdateTimeDealRequest request,
-        @PathVariable UUID timeDealId
+        @Valid UpdateTimeDealRequest request,
+        @PathVariable UUID timeDealId,
+        @AuthenticationPrincipal UserDetailsImpl principal
     ) {
         UpdateTimeDealCommand command = request.toCommand();
-        UpdateTimeDealResult result = timeDealService.updateTimeDeal(timeDealId, command);
+        UpdateTimeDealResult result =
+            timeDealService.updateTimeDeal(
+                principal.userId(), principal.role(), timeDealId, command);
         return ResponseEntity.ok(UpdateTimeDealResponse.from(result));
     }
 
     @PostMapping("/{timeDealId}/force-end")
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<Void> forceEndTimeDeal(
         @PathVariable UUID timeDealId
     ) {

@@ -14,9 +14,10 @@ import org.springframework.data.domain.Pageable;
 
 public interface TimeDealService {
 
-    UUID createTimeDeal(CreateTimeDealCommand command);
+    UUID createTimeDeal(Long userId, String role, CreateTimeDealCommand command);
 
-    UpdateTimeDealResult updateTimeDeal(UUID timeDealId, UpdateTimeDealCommand command);
+    UpdateTimeDealResult updateTimeDeal(
+        Long userId, String role, UUID timeDealId, UpdateTimeDealCommand command);
 
     void forceEndTimeDeal(UUID timeDealId);
 

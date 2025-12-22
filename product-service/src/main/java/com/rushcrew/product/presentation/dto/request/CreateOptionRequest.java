@@ -1,5 +1,6 @@
 package com.rushcrew.product.presentation.dto.request;
 
+import com.rushcrew.product.application.command.CreateOptionCommand;
 import jakarta.validation.constraints.NotBlank;
 
 public record CreateOptionRequest(
@@ -11,4 +12,7 @@ public record CreateOptionRequest(
     String color
 ) {
 
+    public CreateOptionCommand toCommand() {
+        return new CreateOptionCommand(size, color);
+    }
 }

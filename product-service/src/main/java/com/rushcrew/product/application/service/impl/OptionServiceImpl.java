@@ -5,7 +5,7 @@ import com.rushcrew.product.application.command.CreateOptionCommand;
 import com.rushcrew.product.application.command.UpdateOptionCommand;
 import com.rushcrew.product.application.result.UpdateOptionResult;
 import com.rushcrew.product.application.service.OptionService;
-import com.rushcrew.product.application.service.ProductValidator;
+import com.rushcrew.product.application.service.ProductPolicy;
 import com.rushcrew.product.domain.entity.Product;
 import com.rushcrew.product.domain.entity.ProductOption;
 import com.rushcrew.product.domain.exception.ProductErrorCode;
@@ -22,17 +22,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class OptionServiceImpl implements OptionService {
 
     private final ProductRepository productRepository;
-    private final ProductValidator productValidator;
+    private final ProductPolicy productPolicy;
 
     @Override
     @Transactional
-    public List<UUID> createProductOptions(UUID productId, List<CreateOptionCommand> commands) {
+    public List<UUID> createProductOptions(
+        Long userId, String role, UUID productId, List<CreateOptionCommand> commands
+    ) {
         if (commands == null || commands.isEmpty()) {
             throw new BusinessException(ProductErrorCode.OPTION_LIST_EMPTY);
         }
 
-        Product product = productValidator.findAndValidateProduct(productId);
-        productValidator.checkPermission(product);
+        Product product = productPolicy.findAndValidateProduct(productId);
+        productPolicy.validateSellerPermission(product, userId, role);
 
         List<ProductOption> newOptions = commands.stream()
             .map(command ->
@@ -44,10 +46,11 @@ public class OptionServiceImpl implements OptionService {
 
     @Override
     @Transactional
-    public UpdateOptionResult updateProductOption(UUID productId, UUID skuId,
-        UpdateOptionCommand command) {
-        Product product = productValidator.findAndValidateProduct(productId);
-        productValidator.checkPermission(product);
+    public UpdateOptionResult updateProductOption(
+        Long userId, String role, UUID productId, UUID skuId, UpdateOptionCommand command
+    ) {
+        Product product = productPolicy.findAndValidateProduct(productId);
+        productPolicy.validateSellerPermission(product, userId, role);
 
         ProductOption option = productRepository.findOptionBySkuId(skuId)
             .orElseThrow(() -> new BusinessException(ProductErrorCode.NOT_FOUND_OPTION));
@@ -60,12 +63,12 @@ public class OptionServiceImpl implements OptionService {
 
     @Override
     @Transactional
-    public void deleteProductOption(UUID productId, UUID skuId) {
-        Product product = productValidator.findAndValidateProduct(productId);
-        productValidator.checkPermission(product);
+    public void deleteProductOption(Long userId, String role, UUID productId, UUID skuId) {
+        Product product = productPolicy.findAndValidateProduct(productId);
+        productPolicy.validateSellerPermission(product, userId, role);
 
         ProductOption option = productRepository.findOptionBySkuId(skuId)
             .orElseThrow(() -> new BusinessException(ProductErrorCode.NOT_FOUND_OPTION));
-//        option.softDelete(userId); TODO: 추후에 주석처리 풀 예정
+        option.softDelete(userId);
     }
 }

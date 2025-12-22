@@ -1,6 +1,8 @@
 package com.rushcrew.timedeal.application.service.impl;
 
+import com.rushcrew.common.enums.UserRole;
 import com.rushcrew.common.exception.BusinessException;
+import com.rushcrew.common.global.error.CommonErrorCode;
 import com.rushcrew.timedeal.application.command.CreateTimeDealCommand;
 import com.rushcrew.timedeal.application.command.UpdateTimeDealCommand;
 import com.rushcrew.timedeal.application.event.TimeDealScheduledEvent;
@@ -10,6 +12,7 @@ import com.rushcrew.timedeal.application.result.TimeDealForOrderResult;
 import com.rushcrew.timedeal.application.result.TimeDealProductResult;
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.application.result.UpdateTimeDealResult;
+import com.rushcrew.timedeal.application.service.TimeDealPolicy;
 import com.rushcrew.timedeal.application.service.TimeDealService;
 import com.rushcrew.timedeal.domain.entity.TimeDeal;
 import com.rushcrew.timedeal.domain.exception.TimeDealErrorCode;
@@ -18,10 +21,12 @@ import com.rushcrew.timedeal.domain.model.UpdateTimeDealParams;
 import com.rushcrew.timedeal.domain.port.ProductClient;
 import com.rushcrew.timedeal.domain.port.TimeDealQueueKey;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
+import com.rushcrew.timedeal.domain.vo.TimeDealInfo;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,21 +42,26 @@ public class TimeDealServiceImpl implements TimeDealService {
 
     private final TimeDealRepository timeDealRepository;
     private final ProductClient productClient;
+    private final TimeDealPolicy timeDealPolicy;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
-    public UUID createTimeDeal(CreateTimeDealCommand command) {
+    public UUID createTimeDeal(Long userId, String role, CreateTimeDealCommand command) {
         ProductInfo productInfo = productClient.getProductItemIds(command.productId());
 
-        // TODO: 요청사용자가 SELLER(productInfo.sellerId()) or MASTER 인지 확인하는 로직 추가 예정
+        Long sellerId = productInfo.sellerId();
+        if (role.equals(UserRole.SELLER.getDescription()) && !Objects.equals(userId, sellerId)) {
+            throw new BusinessException(CommonErrorCode.FORBIDDEN);
+        }
+
         if (command.discountPrice().isMoreExpensiveThan(productInfo.price())) {
             throw new BusinessException(TimeDealErrorCode.MUST_BE_CHEAPER);
         }
 
         CreateTimeDealParams params = new CreateTimeDealParams(
-            command.timeDealInfo(), command.discountPrice(),
-            command.limitQuantity(), command.period(), command.status(),
+            TimeDealInfo.of(command.title(), command.description(), sellerId),
+            command.discountPrice(), command.limitQuantity(), command.period(), command.status(),
             command.productId(), productInfo.optionIds()
         );
         TimeDeal newTimeDeal = TimeDeal.create(params);
@@ -69,11 +79,12 @@ public class TimeDealServiceImpl implements TimeDealService {
 
     @Override
     @Transactional
-    public UpdateTimeDealResult updateTimeDeal(UUID timeDealId, UpdateTimeDealCommand command) {
-        // TODO: 요청사용자가 SELLER(productInfo.sellerId()) or MASTER 인지 확인하는 로직 추가 예정
-
+    public UpdateTimeDealResult updateTimeDeal(
+        Long userId, String role, UUID timeDealId, UpdateTimeDealCommand command
+    ) {
         TimeDeal timeDeal = timeDealRepository.findById(timeDealId)
             .orElseThrow(() -> new BusinessException(TimeDealErrorCode.NOT_FOUND_TIME_DEAL));
+        timeDealPolicy.validateSellerPermission(timeDeal, userId, role);
 
         UpdateTimeDealParams params = new UpdateTimeDealParams(
             command.title(), command.description(), command.discountPrice(),
@@ -100,8 +111,6 @@ public class TimeDealServiceImpl implements TimeDealService {
     @Override
     @Transactional
     public void forceEndTimeDeal(UUID timeDealId) {
-        // TODO: 요청사용자가 MASTER 인지 확인하는 로직 추가 예정
-
         TimeDeal timeDeal = timeDealRepository.findById(timeDealId)
             .orElseThrow(() -> new BusinessException(TimeDealErrorCode.NOT_FOUND_TIME_DEAL));
         timeDeal.forceEnd();
