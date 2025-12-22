@@ -11,7 +11,7 @@ public record UpdateOrderResult(
 	UUID orderId,
 	String orderStatus,
 	ShippingInfoResult shippingInfo,
-	BigDecimal pointUsed,
+	Long pointUsed,
 	BigDecimal totalAmount,
 	BigDecimal finalAmount,
 	Instant updatedAt

@@ -18,11 +18,32 @@ public interface OutboxEventJpaRepository extends JpaRepository<OutboxEventEntit
 	/**
 	 * PENDING 상태의 이벤트 조회 (Polling용)
 	 * LIMIT 100 → Pageable 사용
+	 * 
+	 * 주의: 동시성 제어를 위해 FOR UPDATE SKIP LOCKED를 사용하는 것을 권장한다
+	 * 현재는 기본 조회만 제공하며, 동시성 문제가 발생할 수 있다
 	 */
 	@Query("SELECT o FROM OutboxEventEntity o " +
 		"WHERE o.status = 'PENDING' " +
 		"ORDER BY o.createdAt ASC")
 	List<OutboxEventEntity> findPendingEvents(Pageable pageable);
+
+	/**
+	 * PENDING 상태의 이벤트 조회 (동시성 제어 포함)
+	 * FOR UPDATE SKIP LOCKED를 사용하여 여러 인스턴스가 동시에 실행해도
+	 * 같은 이벤트를 중복 처리하지 않도록 보장
+	 * 
+	 * @param limit 조회할 최대 이벤트 수
+	 * @return 처리 가능한 PENDING 이벤트 목록
+	 */
+	@Query(
+		value = "SELECT * FROM order_schema.p_outbox_event o " +
+			"WHERE o.status = 'PENDING' " +
+			"ORDER BY o.created_at ASC " +
+			"LIMIT :limit " +
+			"FOR UPDATE SKIP LOCKED",
+		nativeQuery = true
+	)
+	List<OutboxEventEntity> findPendingEventsForUpdate(@Param("limit") int limit);
 
 
 	/**

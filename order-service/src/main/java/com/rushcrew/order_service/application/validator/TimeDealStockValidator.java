@@ -2,22 +2,16 @@ package com.rushcrew.order_service.application.validator;
 
 import org.springframework.stereotype.Component;
 
-import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.order_service.application.port.dto.TimeDealStockDetail;
 import com.rushcrew.order_service.application.port.dto.TimeDealStockStatus;
-import com.rushcrew.order_service.global.error.OrderErrorCode;
 
 @Component
 public class TimeDealStockValidator {
 
 	public void validate(TimeDealStockDetail stockDetail) {
-		// 상품 활성 상태 확인
-		// if (!stockDetail.isActive()) {
-		// 	throw new BusinessException(OrderErrorCode.INVALID_PRODUCT);
-		// }
-		// 재고 상태 확인
-		if (stockDetail.getStatus() == TimeDealStockStatus.PAUSED) {
-			throw new IllegalArgumentException("판매 중지된 상품입니다.");
+		// 재고 상태: AVAILABLE 만 허용
+		if (stockDetail.getStatus() != TimeDealStockStatus.AVAILABLE) {
+			throw new IllegalArgumentException("재고가 판매 가능한 상태가 아닙니다.");
 		}
 	}
 }

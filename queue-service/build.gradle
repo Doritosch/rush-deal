@@ -7,12 +7,12 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
-//	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	runtimeOnly 'org.postgresql:postgresql'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 
 	// 자체 공통 모듈
-	implementation 'com.github.RushCrew:rush-deal-common:v0.0.7'
+	implementation 'com.github.RushCrew:rush-deal-common:v0.0.9'
 
 	// 서비스 간 통신 위한 Feign Client
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
@@ -20,6 +20,9 @@ dependencies {
 	// Redis / Redisson
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.redisson:redisson-spring-boot-starter:3.20.0'
+
+	// Kafka
+	implementation 'org.springframework.kafka:spring-kafka'
 
 	// Eureka 클라이언트
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'

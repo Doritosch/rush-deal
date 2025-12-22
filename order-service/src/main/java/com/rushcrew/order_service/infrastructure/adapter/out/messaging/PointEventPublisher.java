@@ -25,7 +25,7 @@ public class PointEventPublisher implements PointEventPort {
 	private final ObjectMapper objectMapper;
 
 	@Override
-	public void publishPointEarnRequested(Long userId, UUID orderId, BigDecimal finalAmount, String reason, Instant timestamp) {
+	public void publishPointEarnRequested(Long userId, UUID orderId, BigDecimal finalAmount, String reason) {
 		try {
 			log.info("포인트 적립 요청 이벤트 발행: userId={}, orderId={}, finalAmount={}", userId, orderId, finalAmount);
 
@@ -33,8 +33,8 @@ public class PointEventPublisher implements PointEventPort {
 			event.put("userId", userId);
 			event.put("orderId", orderId.toString());
 			event.put("finalAmount", finalAmount);
-			event.put("reason", reason);
-			event.put("timestamp", timestamp.toString());
+			// event.put("reason", reason);
+			// event.put("timestamp", timestamp.toString());
 
 			String payload = objectMapper.writeValueAsString(event);
 
@@ -55,8 +55,7 @@ public class PointEventPublisher implements PointEventPort {
 	}
 
 	@Override
-	public void publishPointRefundRequested(Long userId, UUID orderId, BigDecimal pointUsed, String reason,
-		Instant timestamp) {
+	public void publishPointRefundRequested(Long userId, UUID orderId, Long pointUsed, String reason) {
 		try {
 			log.info("포인트 환불 요청 이벤트 발행: userId={}, orderId={}, pointUsed={}", userId, orderId, pointUsed);
 
@@ -64,8 +63,8 @@ public class PointEventPublisher implements PointEventPort {
 			event.put("userId", userId);
 			event.put("orderId", orderId.toString());
 			event.put("pointUsed", pointUsed);
-			event.put("reason", reason);
-			event.put("timestamp", timestamp.toString());
+			// event.put("reason", reason);
+			// event.put("timestamp", timestamp.toString());
 
 			String payload = objectMapper.writeValueAsString(event);
 
@@ -82,6 +81,35 @@ public class PointEventPublisher implements PointEventPort {
 		} catch (Exception e) {
 			log.error("포인트 환불 요청 이벤트 발행 실패: orderId={}", orderId, e);
 			throw new RuntimeException("포인트 환불 요청 이벤트 발행 실패", e);
+		}
+	}
+
+	@Override
+	public void publishPointDeductRequested(Long userId, UUID orderId, Long pointAmount, String reason) {
+		try {
+			log.info("포인트 차감 요청 이벤트 발행: userId={}, orderId={}, pointAmount={}", userId, orderId, pointAmount);
+
+			Map<String, Object> event = new HashMap<>();
+			event.put("userId", userId);
+			event.put("orderId", orderId.toString());
+			event.put("pointAmount", pointAmount);
+			// event.put("reason", reason);
+
+			String payload = objectMapper.writeValueAsString(event);
+
+			OutboxEventEntity outbox = OutboxEventEntity.create(
+				"ORDER",         // aggregateType
+				orderId,                     // aggregateId
+				"POINT_DEDUCT_REQUESTED",     // eventType
+				payload                      // json
+			);
+
+			outboxRepository.save(outbox);
+			log.info("포인트 차감 요청 이벤트 Outbox 저장 완료: orderId={}", orderId);
+
+		} catch (Exception e) {
+			log.error("포인트 차감 요청 이벤트 발행 실패: orderId={}", orderId, e);
+			throw new RuntimeException("포인트 차감 요청 이벤트 발행 실패", e);
 		}
 	}
 }

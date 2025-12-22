@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder(access = AccessLevel.PRIVATE)
+@Builder
 public class OrderReservation extends BaseEntity {
 
 	@Id
@@ -41,7 +41,7 @@ public class OrderReservation extends BaseEntity {
 	private UUID timeDealStockId;
 
 	@Column(nullable = false)
-	private Integer quantity;
+	private Long quantity;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 20)
@@ -63,7 +63,7 @@ public class OrderReservation extends BaseEntity {
 	// ============================================
 
 	// 예약 생성 (15분 TTL)
-	public static OrderReservation create(UUID timeDealStockId, Integer quantity) {
+	public static OrderReservation create(UUID timeDealStockId, Long quantity) {
 		return OrderReservation.builder()
 			.orderReservationId(UUID.randomUUID())
 			.timeDealStockId(timeDealStockId)

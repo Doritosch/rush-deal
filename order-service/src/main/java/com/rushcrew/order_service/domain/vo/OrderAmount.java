@@ -25,7 +25,7 @@ public class OrderAmount {
 	private BigDecimal totalAmount;
 
 	@Column(nullable = false, precision = 12, scale = 2)
-	private BigDecimal pointUsed;
+	private Long pointUsed;
 
 	@Column(nullable = false, precision = 12, scale = 2)
 	private BigDecimal finalAmount;
@@ -35,26 +35,25 @@ public class OrderAmount {
 	//                 도메인 로직
 	// ============================================
 
-	public static OrderAmount create(BigDecimal totalAmount, BigDecimal pointUsed) {
+	public static OrderAmount create(BigDecimal totalAmount, Long pointUsed) {
 		validate(totalAmount, pointUsed);
-		if (pointUsed.compareTo(totalAmount) > 0) {
+		BigDecimal point = BigDecimal.valueOf(pointUsed);
+		if (point.compareTo(totalAmount) > 0) {
 			throw new IllegalArgumentException(
 				"포인트 사용량은 주문 금액을 초과할 수 없습니다. (포인트: %s, 주문금액: %s)"
 					.formatted(pointUsed, totalAmount)
 			);
 		}
-		BigDecimal finalAmount = totalAmount.subtract(pointUsed);
-		if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
-			throw new IllegalArgumentException("최종 결제 금액은 0보다 작을 수 없습니다.");
-		}
+		BigDecimal finalAmount = totalAmount.subtract(point);
 		return new OrderAmount(totalAmount, pointUsed, finalAmount);
 	}
 
-	public OrderAmount updatePointUsed(BigDecimal newPointUsed) {
-		if (newPointUsed == null || newPointUsed.compareTo(BigDecimal.ZERO) < 0) {
+	public OrderAmount updatePointUsed(Long newPointUsed) {
+		if (newPointUsed == null || newPointUsed < 0) {
 			throw new IllegalArgumentException("포인트 사용량은 0 이상이어야 합니다.");
 		}
-		if (newPointUsed.compareTo(this.totalAmount) > 0) {
+		BigDecimal point = BigDecimal.valueOf(newPointUsed);
+		if (point.compareTo(this.totalAmount) > 0) {
 			throw new IllegalArgumentException(
 				"포인트 사용량은 주문 금액을 초과할 수 없습니다. (포인트: %s, 주문금액: %s)"
 					.formatted(newPointUsed, this.totalAmount)
@@ -63,18 +62,18 @@ public class OrderAmount {
 		return create(this.totalAmount, newPointUsed);
 	}
 
-	private static void validate(BigDecimal totalAmount, BigDecimal pointUsed) {
+	private static void validate(BigDecimal totalAmount, Long pointUsed) {
 		if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) < 0) {
 			throw new IllegalArgumentException("주문 금액은 0 이상이어야 합니다.");
 		}
-		if (pointUsed == null || pointUsed.compareTo(BigDecimal.ZERO) < 0) {
+		if (pointUsed == null || pointUsed < 0L) {
 			throw new IllegalArgumentException("포인트 사용량은 0 이상이어야 합니다.");
 		}
 	}
 
 	// 포인트 사용 X
 	public static OrderAmount withoutPoint(BigDecimal totalAmount) {
-		return create(totalAmount, BigDecimal.ZERO);
+		return create(totalAmount, 0L);
 	}
 
 }

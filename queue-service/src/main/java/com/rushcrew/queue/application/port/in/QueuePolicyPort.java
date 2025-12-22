@@ -1,0 +1,24 @@
+package com.rushcrew.queue.application.port.in;
+
+import com.rushcrew.queue.application.command.policy.CreatePolicyCommand;
+import com.rushcrew.queue.application.command.policy.SearchPolicyCommand;
+import com.rushcrew.queue.application.command.policy.UpdatePolicyCommand;
+import com.rushcrew.queue.application.dto.PageQuery;
+import com.rushcrew.queue.application.dto.QueuePolicyQueryResponse;
+import java.util.UUID;
+import org.springframework.data.domain.Page;
+
+/**
+ * application 계층 usecase 정의
+ */
+public interface QueuePolicyPort {
+    QueuePolicyQueryResponse createQueuePolicy(CreatePolicyCommand command, Long userId);
+
+    Page<QueuePolicyQueryResponse> searchPolicies(PageQuery query, SearchPolicyCommand command, Long userId);
+
+    QueuePolicyQueryResponse getQueuePolicyInfo(UUID policyId, Long userId);
+
+    QueuePolicyQueryResponse updateQueuePolicy(UpdatePolicyCommand command, UUID policyId, Long userId);
+
+    void deleteQueuePolicy(UUID policyId, Long userId);
+}

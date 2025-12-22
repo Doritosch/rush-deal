@@ -7,9 +7,9 @@ import lombok.Getter;
 
 @Getter
 public enum QueueStatus {
-    WAITING("대기"),   // 대기열 진입 (Redis Sorted Set)
-    ACTIVE("입장가능"), // 입장 가능 (Set)
-    EXPIRED("만료"); // 만료
+    WAITING("WAITING"),   // 대기열 진입 (Redis Sorted Set)
+    ACTIVE("ACTIVE"), // 입장 가능 (Set)
+    EXPIRED("EXPIRED"); // 만료
 
     private final String description;
 
@@ -22,5 +22,9 @@ public enum QueueStatus {
             .filter(s -> s.name().equalsIgnoreCase(status))
             .findFirst()
             .orElseThrow(() -> new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND));
+    }
+
+    public String getDescription() {
+        return this.description;
     }
 }

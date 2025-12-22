@@ -1,6 +1,6 @@
 package com.rushcrew.queue.presentation.dto.request;
 
-import com.rushcrew.queue.application.command.UpdatePolicyCommand;
+import com.rushcrew.queue.application.command.policy.UpdatePolicyCommand;
 import com.rushcrew.queue.domain.enums.QueuePolicyStatus;
 import com.rushcrew.queue.domain.vo.TimePeriod;
 import com.rushcrew.queue.domain.vo.TrafficSetting;
@@ -8,14 +8,12 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record UpdatePolicyRequest(
-    // TODO : 추후 추가 예정
-//    Long userId,
-//    UserRole role,
     UUID productId,
     String timeDealName,
     QueuePolicyStatus status,
     LocalDateTime startTime,
     LocalDateTime endTime,
+    Integer maxCapacity,
     Integer limitSize,
     Integer queueGap,
     Integer ttl
@@ -23,7 +21,7 @@ public record UpdatePolicyRequest(
     public UpdatePolicyCommand toCommand() {
         // vo 생성 시 유효성 검증
         TimePeriod timePeriod = new TimePeriod(startTime, endTime);
-        TrafficSetting traffic = new TrafficSetting(limitSize, queueGap, ttl);
+        TrafficSetting traffic = new TrafficSetting(maxCapacity, limitSize, queueGap, ttl);
 
         return UpdatePolicyCommand.builder()
             .productId(productId)

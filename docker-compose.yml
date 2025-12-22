@@ -14,10 +14,12 @@ services:
     volumes:
       - rushdeal_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rushdeal -d rushdeal_db"]
+      test: [ "CMD-SHELL", "pg_isready -U rushdeal -d rushdeal_db" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - rushdeal-net
 
   rushdeal_queue_redis: # 서비스 이름은 rushdeal_redis로 설정합니다.
     image: redis:7-alpine
@@ -27,11 +29,14 @@ services:
       - "6380:6379" # 6379가 Redis 기본 포트이나, 호스트 포트를 6380으로 설정하여 기존 충돌을 피합니다.
     volumes:
       - rushdeal_queue_redis_data:/data # 데이터 영속성을 위한 볼륨
+    command: redis-server --save 60 1 --loglevel warning # 개발 중 데이터 날아가는거 방지 위해 60초마다 스냅샷 저장
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
+    networks:
+      - rushdeal-net
 
   rushdeal_order_redis:
     image: redis:7-alpine
@@ -41,6 +46,39 @@ services:
       - "6381:6379"
     volumes:
       - rushdeal_order_redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - rushdeal-net
+
+  rushdeal_auth_redis:
+    image: redis:7-alpine
+    container_name: rushdeal_auth_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - rushdeal_auth_redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - rushdeal-net
+
+  rushdeal_timedeal_redis:
+    image: redis:7-alpine
+    container_name: rushdeal_timedeal_redis
+    restart: unless-stopped
+    ports:
+      - "6382:6379"
+    volumes:
+      - rushdeal_timedeal_redis_data:/data
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
@@ -71,7 +109,8 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-
+    networks:
+      - rushdeal-net
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: rushdeal_kafka
@@ -80,11 +119,13 @@ services:
       - "9092:9092"
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ZOOKEEPER_CONNECT: rushdeal_zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - rushdeal-net
     depends_on:
       - zookeeper
 
@@ -98,10 +139,50 @@ services:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+    networks:
+      - rushdeal-net
     depends_on:
       - kafka
+
+  # [MSA 서비스] 스프링 부트 앱 설정
+  auth-service:
+    container_name: rushdeal-auth-service
+    build:
+      context: .
+      dockerfile: Dockerfile.template
+      args:
+        SERVICE_NAME: auth-service
+    ports:
+      - "8000:8000"
+    environment:
+        - SERVER_PORT=8000
+        - DB_URL=jdbc:postgresql://rushdeal_postgres:5432/rushdeal_db
+        - REDIS_HOST=rushdeal_queue_redis # 공용 Redis가 없다면 적절한 곳 연결
+        - KAFKA_BROKERS=kafka:29092
+    depends_on:
+      rushdeal_postgres:
+        condition: service_healthy
+      kafka:
+          condition: service_healthy
+
+  user-service:
+    container_name: rushdeal-user-service
+    build:
+      context: .
+      dockerfile: Dockerfile.template
+      args:
+        SERVICE_NAME: user-service
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
 
 volumes:
   rushdeal_pg_data:
   rushdeal_queue_redis_data:
   rushdeal_order_redis_data:
+  rushdeal_auth_redis_data:
+  rushdeal_timedeal_redis_data:
+
+networks:
+  rushdeal-net:
