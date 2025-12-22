@@ -22,9 +22,6 @@ dependencies {
     // Spring Batch
     implementation 'org.springframework.boot:spring-boot-starter-batch'
 
-    // Quartz (스케줄러)
-    implementation 'org.springframework.boot:spring-boot-starter-quartz'
-
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     runtimeOnly 'org.postgresql:postgresql'
 

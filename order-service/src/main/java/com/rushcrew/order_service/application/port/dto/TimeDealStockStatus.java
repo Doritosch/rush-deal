@@ -4,5 +4,14 @@ public enum TimeDealStockStatus {
 	AVAILABLE,
 	RESERVED,
 	SOLD,
-	PAUSED
+	PAUSED;
+
+	public static TimeDealStockStatus from(String status) {
+		try {
+			return TimeDealStockStatus.valueOf(status);
+		} catch (Exception e) {
+			// 알 수 없는 상태는 재고 정지로 처리
+			return PAUSED;
+		}
+	}
 }

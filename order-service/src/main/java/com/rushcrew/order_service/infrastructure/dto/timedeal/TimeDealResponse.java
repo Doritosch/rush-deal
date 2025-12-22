@@ -10,10 +10,10 @@ import lombok.NonNull;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TimeDealResponse {
+
 	@NonNull private String timeDealId;
 	@NonNull private String title;
-	@NonNull private TimeDealStatusResponse status;
+	@NonNull private String status;
 	@NonNull private BigDecimal discountPrice;
-	@NonNull private Integer discountRate;
-	@NonNull private Integer limitQuantity;
+	@NonNull private Long limitQuantity;
 }

@@ -135,6 +135,7 @@ services:
     networks:
       - rushdeal-network
 
+
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: rushdeal_kafka_ui

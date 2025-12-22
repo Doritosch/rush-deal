@@ -12,14 +12,11 @@ import com.rushcrew.order_service.application.query.dto.OrderListDto;
 import com.rushcrew.order_service.application.query.dto.OrderSearchCriteria;
 import com.rushcrew.order_service.application.query.usecase.GetOrderDetailUseCase;
 import com.rushcrew.order_service.application.query.usecase.GetOrderListUseCase;
-import com.rushcrew.order_service.global.util.RoleChecker;
 import com.rushcrew.order_service.presentation.dto.response.OrderDetailResponse;
 import com.rushcrew.order_service.presentation.dto.response.OrderListResponse;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
@@ -32,31 +29,25 @@ public class OrderQueryController {
 	public ApiResponse<OrderDetailResponse> getOrderDetail(
 		@PathVariable UUID orderId,
 		@RequestHeader("X-User-Id") Long userId,
-		@RequestHeader(value = "X-User-Role", required = false) String role
-	) {
-		RoleChecker.checkRole(role, "USER", "MASTER", "SELLER");
+		@RequestHeader(value = "X-User-Role", required = false) String role) {
+
 		boolean isMaster = "MASTER".equalsIgnoreCase(role);
-
-		OrderDetailDto dto = getOrderDetailUseCase.getOrderDetail(orderId, userId, isMaster);
-
-		return ApiResponse.success(OrderDetailResponse.from(dto));
+		OrderDetailDto order = getOrderDetailUseCase.getOrderDetail(orderId, userId, isMaster);
+		return ApiResponse.success(OrderDetailResponse.from(order));
 	}
 
 	@GetMapping
 	public ApiResponse<Page<OrderListResponse>> getOrderList(
 		@RequestHeader("X-User-Id") Long userId,
 		@RequestHeader(value = "X-User-Role", required = false) String role,
-		Pageable pageable
-	) {
-		RoleChecker.checkRole(role, "USER", "MASTER");
-		boolean isMaster = "MASTER".equalsIgnoreCase(role);
+		Pageable pageable) {
 
+		boolean isMaster = "MASTER".equalsIgnoreCase(role);
 		OrderSearchCriteria criteria = OrderSearchCriteria.builder()
 			.userId(isMaster ? null : userId)
 			.build();
 
-		Page<OrderListDto> dtos = getOrderListUseCase.getOrderList(criteria, pageable);
-
-		return ApiResponse.success(dtos.map(OrderListResponse::from));
+		Page<OrderListDto> orders = getOrderListUseCase.getOrderList(criteria, pageable);
+		return ApiResponse.success(orders.map(OrderListResponse::from));
 	}
 }
