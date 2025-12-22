@@ -17,8 +17,8 @@ public class OrderCommandAdapter implements OrderCommandPort {
 	private final OrderJpaRepository orderJpaRepository;
 
 	@Override
-	public Integer getTotalPurchasedQuantity(Long userId, UUID timeDealId) {
-		return orderJpaRepository.getTotalPurchasedQuantity(userId, timeDealId);
+	public Long getTotalPurchasedQuantity(Long userId, UUID productId) {
+		return orderJpaRepository.getTotalPurchasedQuantity(userId, productId);
 	}
 
 	@Override

@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: queue-service
+
+  kafka:
+    # 환경변수 KAFKA_BROKERS가 있으면 그걸 쓰고, 없으면 로컬값(localhost:9092) 사용
+    bootstrap-servers: ${KAFKA_BROKERS:localhost:9092}  # 로컬 개발 환경 기준 (Docker 내부 통신 시 kafka:29092)
+    consumer:
+      group-id: queue-service-group   # 컨슈머 그룹 ID (중요)
+      auto-offset-reset: latest       # 가장 최신 메시지부터 읽음
+      spring.json.trusted.packages: "*" # 모든 패키지의 객체를 신뢰하고 역직렬화 허용
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # JSON으로 받을거면 JsonDeserializer 사용 가능하지만, String으로 받아 직접 파싱하는게 디버깅에 유리함
+
+  data:
+    redis:
+      host: ${QUEUE_REDIS_HOST:localhost} # Docker 환경이라면 컨테이너 이름 또는 IP
+      port: ${QUEUE_REDIS_PORT:6380}
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:none} # 운영에선 none이나 validate로 바꾸기 위해 변수 처리
+    properties:
+      hibernate:
+        default_schema: queue_schema
+        format_sql: false
+        use_sql_comments: false
+    show-sql: ${SHOW_SQL:false} # 운영에선 로그 너무 많이 찍히니 false로 끄기 위해
+
+logging:
+  level:
+    root: INFO
+    com.rushcrew: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type: WARN
+    org.springframework.web: INFO
+    org.springframework.kafka: INFO
+    org.springframework.data.redis: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+eureka:
+  client:
+    enabled: ${EUREKA_ENABLED:false}  # AWS에서는 false
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+
+server:
+  port: ${QUEUE_SERVER_PORT:8040}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      access: unrestricted
+  tracing:
+    sampling:
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+
+    zipkin:
+      tracing:
+        endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}

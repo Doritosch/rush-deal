@@ -7,7 +7,7 @@ import com.rushcrew.order_service.domain.model.order.Order;
 
 public interface OrderCommandPort {
 	/* 기존 구매 수량 */
-	Integer getTotalPurchasedQuantity(Long userId, UUID timeDealId);
+	Long getTotalPurchasedQuantity(Long userId, UUID productId);
 
 	Order save(Order order);
 

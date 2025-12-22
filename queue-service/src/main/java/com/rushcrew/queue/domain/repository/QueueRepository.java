@@ -75,4 +75,20 @@ public interface QueueRepository {
      * @return
      */
     Double getWaitingScore(UUID productId, TokenId tokenId);
+
+    /**
+     * 토큰 만료 삭제
+     * @param productId
+     * @param tokenId
+     */
+    void removeToken(UUID productId, TokenId tokenId);
+
+    /**
+     * 명시적 퇴장 : 활성열/대기열 토큰 삭제 + USER_INDEX_KEY 삭제
+     * QueueService에서 사용자가 직접 취소하거나 주문 완료 시 호출
+     * @param productId
+     * @param tokenId
+     * @param userId
+     */
+    void removeTokenWithUserIdxKey(UUID productId, TokenId tokenId, Long userId);
 }

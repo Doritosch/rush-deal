@@ -1,6 +1,9 @@
 package com.rushcrew.user_service.user.domain.entity;
 
+import com.rushcrew.common.exception.BusinessException;
+import com.rushcrew.user_service.user.domain.common.BaseEntity;
 import com.rushcrew.user_service.user.domain.enums.UserRole;
+import com.rushcrew.user_service.user.domain.error.UserErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,11 +16,11 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Getter
 @Entity
 @Table(name = "p_user", schema = "user_schema")
-@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User {
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,9 +39,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-
     public static User create(String email, String password, String name, UserRole role) {
         User user = new User();
+
+        validateUserInfo(email, password, name);
 
         user.email = email;
         user.password = password;
@@ -48,6 +52,20 @@ public class User {
         return user;
     }
 
+    public static void validateUserInfo(String email, String password, String name) {
+        if (email == null) {
+            throw new BusinessException(UserErrorCode.INVALID_USER_INFO);
+        }
+
+        if (password == null) {
+            throw new BusinessException(UserErrorCode.INVALID_USER_INFO);
+        }
+
+        if (name == null) {
+            throw new BusinessException(UserErrorCode.INVALID_USER_INFO);
+        }
+    }
+
     public void updateUser(String newPassword, String newName) {
         changePassword(newPassword);
         changeName(newName);
@@ -55,17 +73,15 @@ public class User {
 
     private void changePassword(String newPassword) {
         if (newPassword == null || newPassword.isBlank()) {
-            throw new IllegalArgumentException("비밀번호는 필수입니다");
+            throw new BusinessException(UserErrorCode.INVALID_USER_INFO);
         }
-
         this.password = newPassword;
     }
 
     private void changeName(String name) {
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("이름은 필수입니다");
+            throw new BusinessException(UserErrorCode.INVALID_USER_INFO);
         }
         this.name = name;
     }
-
 }
