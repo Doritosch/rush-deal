@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   rushdeal_postgres:
@@ -65,7 +65,7 @@ services:
       - rushdeal_queue_redis_data:/data # 데이터 영속성을 위한 볼륨
     command: redis-server --save 60 1 --loglevel warning # 개발 중 데이터 날아가는거 방지 위해 60초마다 스냅샷 저장
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -81,7 +81,21 @@ services:
     volumes:
       - rushdeal_order_redis_data:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  rushdeal_user_redis:
+    image: redis:7-alpine
+    container_name: rushdeal_user_redis
+    restart: unless-stopped
+    ports:
+      - "6383:6379"
+    volumes:
+      - rushdeal_user_redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -115,7 +129,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     networks:
       - rushdeal-network
-
+      
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: rushdeal_kafka
