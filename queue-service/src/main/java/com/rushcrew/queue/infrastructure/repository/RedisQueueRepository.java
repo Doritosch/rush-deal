@@ -34,7 +34,7 @@ public class RedisQueueRepository implements QueueRepository {
 
     // FAST TRACK(대기열 진입 정책) 기준 인원 (100인 미만이면 대기열 토큰 생성 시 바로 활성열로 이동)
     // TODO: 추후 QueuePolicy (정책 DB)에서 관리하도록 수정 예정
-    private static final Long MAX_ACTIVE_COUNT = 100L;
+    private static final Long MAX_ACTIVE_COUNT = 0L;
 
     public RedisQueueRepository(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -93,6 +93,8 @@ public class RedisQueueRepository implements QueueRepository {
 
         // FAST TRACK 판단 : 활성열 인원 조회
         Long activeCount = countActiveTokens(token.getProductId());
+
+        log.warn("[QUEUE:INFO] 현재 활성열 인원 개수 count={}", activeCount);
         if (activeCount != null && activeCount < MAX_ACTIVE_COUNT) {
             // [Fast Track] 대기 없이 바로 활성 상태 진입
             return registerFastTrack(token, dealEndTime, activeTtl, userIndexKey);
@@ -328,7 +330,7 @@ public class RedisQueueRepository implements QueueRepository {
     }
 
     private String getActiveKey(UUID productId) {
-        return String.format(ACTIVE_KEY, productId);
+        return String.format(ACTIVE_KEY, productId.toString());
     }
 
     private String getUserIndexKey(UUID productId, Long userId) {
