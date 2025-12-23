@@ -1,5 +1,8 @@
 package com.rushcrew.order_service.application.saga.step;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
@@ -45,13 +48,17 @@ public class CreateOrderStep {
 
 		// 2. Order 생성
 		Order order = Order.create(
+			data.getOrderId(),
 			command.userId(),
 			orderItems,
 			command.pointUsed(),
 			command.shippingInfo()
 		);
 
-		// 3. 재고 예약 정보 추가
+		// 3. Saga ID 저장 (구매확정 시 멱등성 보장용)
+		order.assignSagaId(context.getSagaId());
+
+		// 4. 재고 예약 정보 추가
 		event.reservedItems().forEach(reservedItem ->
 			order.addReservation(
 				OrderReservation.create(
@@ -61,24 +68,59 @@ public class CreateOrderStep {
 			)
 		);
 
-		// 4. 저장
+		// 5. Order 저장
 		Order savedOrder = orderCommandPort.save(order);
 
-		// 5. Outbox 이벤트
+		log.info("[Saga-{}] 주문 저장 완료: orderId={}", context.getSagaId(), savedOrder.getOrderId());
+
+		// 6. Outbox 이벤트
 		try {
 			outboxPort.createAndSave(
 				"ORDER",
 				savedOrder.getOrderId(),
 				"ORDER_CREATED",
-				objectMapper.writeValueAsString(savedOrder.toEventPayload())
+				objectMapper.writeValueAsString(
+					toOrderCreatedPayload(savedOrder, orderItems)
+				)
 			);
+			log.info("[Saga-{}] ORDER_CREATED 이벤트 발행 완료", context.getSagaId());
 		} catch (Exception e) {
+			log.error("[Saga-{}] ORDER_CREATED Outbox 실패", context.getSagaId(), e);
 			throw new IllegalStateException("ORDER_CREATED Outbox 실패", e);
 		}
 
 		// 6. SagaData 반영
-		data.bindOrderId(savedOrder.getOrderId());
+		// data.bindOrderId(savedOrder.getOrderId());
 
 		log.info("[Saga-{}] CreateOrderStep 완료: orderId={}", context.getSagaId(), savedOrder.getOrderId());
 	}
+
+	private Map<String, Object> toOrderCreatedPayload(
+		Order order,
+		List<OrderItem> items
+	) {
+		Map<String, Object> payload = new HashMap<>();
+
+		payload.put("orderId", order.getOrderId());
+		payload.put("userId", order.getUserId());
+		payload.put("totalAmount", order.getTotalAmount());
+		payload.put("pointUsed", order.getPointUsed());
+		payload.put("finalAmount", order.getFinalAmount());
+		payload.put("status", order.getStatus().name());
+		payload.put("orderedAt", order.getOrderedAt());
+
+		payload.put("items", items.stream()
+			.map(item -> {
+				Map<String, Object> itemMap = new HashMap<>();
+				itemMap.put("timeDealStockId", item.getTimeDealStockId());
+				itemMap.put("quantity", item.getQuantity());
+				itemMap.put("unitPrice", item.getUnitPrice());
+				itemMap.put("discountPrice", item.getDiscountPrice()); // null 허용
+				return itemMap;
+			})
+			.toList()
+		);
+		return payload;
+	}
+
 }

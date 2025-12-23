@@ -58,6 +58,7 @@ public class ConfirmPurchaseService implements ConfirmPurchaseUseCase {
 			savedOrder.getUserId(),
 			savedOrder.getOrderId(),
 			savedOrder.getFinalAmount(),
+			savedOrder.getSagaId(),
 			"구매확정"
 		);
 

@@ -8,6 +8,7 @@ import com.rushcrew.order_service.application.port.out.SagaInstancePort;
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
 import com.rushcrew.order_service.application.saga.step.CreateOrderStep;
+import com.rushcrew.order_service.application.saga.step.UsePointStep;
 import com.rushcrew.order_service.domain.enums.SagaStatus;
 import com.rushcrew.order_service.domain.enums.SagaStepName;
 import com.rushcrew.order_service.domain.model.saga.SagaInstance;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OrderSagaEventHandler {
 
 	private final SagaInstancePort sagaInstancePort;
+	private final UsePointStep usePointStep;
 	private final CreateOrderStep createOrderStep;
 	private final MetricsPort metricsPort;
 
@@ -41,7 +43,7 @@ public class OrderSagaEventHandler {
 		OrderCreationSagaData data = saga.restoreData();
 
 		try {
-			// Step 3: 주문 생성 (포인트 X)
+			// Step 4: 주문 생성
 			createOrderStep.execute(context, data, event);
 			saga.addStep(SagaStepName.CREATE_ORDER, SagaStatus.COMPLETED);
 
@@ -53,9 +55,8 @@ public class OrderSagaEventHandler {
 
 		} catch (Exception e) {
 			log.error("[Saga-{}] 주문 생성 실패: {}", event.sagaId(), e.getMessage(), e);
-			saga.fail(e.getMessage());
-			sagaInstancePort.save(saga);
-			metricsPort.recordSagaFailure();
+			// 보상 트랜잭션 실행
+			executeCompensation(saga, context, data, "주문 생성 실패: " + e.getMessage());
 			throw e;
 		}
 	}
@@ -65,13 +66,58 @@ public class OrderSagaEventHandler {
 		SagaInstance saga = sagaInstancePort.findBySagaId(event.sagaId());
 
 		if (saga.isCompleted() || saga.isFailed()) {
-			log.warn("[Saga-{}] 이미 완료 또는 실패한 Saga입니다. 현재 상태: {}", event.sagaId(), saga.getStatus());
+			log.warn("[Saga-{}] 이미 완료 또는 실패한 Saga입니다. 현재 상태: {}",
+				event.sagaId(), saga.getStatus());
 			return;
 		}
 
+		SagaContext context = SagaContext.restore(saga);
+		OrderCreationSagaData data = saga.restoreData();
+
 		log.error("[Saga-{}] 재고 예약 실패: {}", event.sagaId(), event.reason());
-		saga.fail(event.reason());
-		sagaInstancePort.save(saga);
-		metricsPort.recordSagaFailure();
+
+		// 보상 트랜잭션 실행
+		executeCompensation(saga, context, data, "재고 예약 실패: " + event.reason());
+	}
+
+	/**
+	 * 보상 트랜잭션 실행
+	 */
+	private void executeCompensation(
+		SagaInstance saga,
+		SagaContext context,
+		OrderCreationSagaData data,
+		String failureReason
+	) {
+		log.info("[Saga-{}] 보상 트랜잭션 시작", saga.getSagaId());
+
+		try {
+			// 1. 포인트 복구 (USE_POINT가 완료된 경우)
+			if (saga.hasCompletedStep(SagaStepName.USE_POINT)) {
+				log.info("[Saga-{}] 포인트 보상 트랜잭션 실행", saga.getSagaId());
+				usePointStep.compensate(context, data);
+				saga.addStep(SagaStepName.USE_POINT_COMPENSATE, SagaStatus.COMPLETED);
+			}
+
+			// 2. 재고 복구는 Stock 서비스에서 자동으로 처리됨 (Timeout 등)
+			// 필요시 명시적 취소 이벤트 발행 가능
+
+			saga.fail(failureReason);
+			sagaInstancePort.save(saga);
+			metricsPort.recordSagaFailure();
+
+			log.info("[Saga-{}] 보상 트랜잭션 완료", saga.getSagaId());
+
+		} catch (Exception compensateError) {
+			log.error("[Saga-{}] 보상 트랜잭션 실패: {}",
+				saga.getSagaId(), compensateError.getMessage(), compensateError);
+
+			saga.fail("보상 트랜잭션 실패: " + compensateError.getMessage());
+			sagaInstancePort.save(saga);
+			metricsPort.recordSagaFailure();
+
+			// 보상 실패는 별도 모니터링/알림 필요
+			throw new RuntimeException("보상 트랜잭션 실패", compensateError);
+		}
 	}
 }
