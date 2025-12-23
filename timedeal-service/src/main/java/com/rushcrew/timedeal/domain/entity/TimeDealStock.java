@@ -29,6 +29,9 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -72,6 +75,10 @@ public class TimeDealStock extends BaseEntity {
     })
     private StockCounts stockCounts;
 
+	// 할인된 가격 추가
+	@Column(name = "discount_price", precision = 10, scale = 2)
+	private BigDecimal discountPrice;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TimeDealStockStatus status;
@@ -84,6 +91,7 @@ public class TimeDealStock extends BaseEntity {
     @Builder.Default
     private List<StockLog> stockLogs = new ArrayList<>();
 
+	// TODO: 할인 가격 저장
     public static TimeDealStock create(CreateStockCommand command,
         TimeDealProduct timeDealProduct) {
         TimeDealStock stock = TimeDealStock.builder()

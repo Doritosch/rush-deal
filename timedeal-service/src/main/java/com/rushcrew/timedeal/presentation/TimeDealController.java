@@ -4,6 +4,7 @@ import com.rushcrew.timedeal.application.command.CreateTimeDealCommand;
 import com.rushcrew.timedeal.application.command.UpdateTimeDealCommand;
 import com.rushcrew.timedeal.application.result.CreateTimeDealResult;
 import com.rushcrew.timedeal.application.result.TimeDealDetailResult;
+import com.rushcrew.timedeal.application.result.TimeDealForOrderResult;
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.application.result.UpdateTimeDealResult;
 import com.rushcrew.timedeal.application.service.TimeDealService;
@@ -13,6 +14,7 @@ import com.rushcrew.timedeal.presentation.dto.request.CreateTimeDealRequest;
 import com.rushcrew.timedeal.presentation.dto.request.UpdateTimeDealRequest;
 import com.rushcrew.timedeal.presentation.dto.response.CreateTimeDealResponse;
 import com.rushcrew.timedeal.presentation.dto.response.TimeDealDetailResponse;
+import com.rushcrew.timedeal.presentation.dto.response.TimeDealForOrderResponse;
 import com.rushcrew.timedeal.presentation.dto.response.TimeDealResponse;
 import com.rushcrew.timedeal.presentation.dto.response.UpdateTimeDealResponse;
 import jakarta.validation.Valid;
@@ -94,4 +96,14 @@ public class TimeDealController {
         TimeDealDetailResult result = timeDealService.getTimeDealDetail(timeDealId);
         return ResponseEntity.ok(TimeDealDetailResponse.from(result));
     }
+
+
+	@GetMapping("/{timeDealId}/order")
+	public ResponseEntity<TimeDealForOrderResponse> getTimeDealForOrder(
+		@PathVariable UUID timeDealId
+	) {
+		TimeDealForOrderResult result = timeDealService.getTimeDealForOrder(timeDealId);
+		return ResponseEntity.ok(TimeDealForOrderResponse.from(result));
+	}
+
 }

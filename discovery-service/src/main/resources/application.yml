@@ -1,9 +1,6 @@
 spring:
   application:
-    name: server
-
-server:
-  port: 8761
+    name: discovery-service
 
 eureka:
   client:
@@ -11,5 +8,16 @@ eureka:
     fetch-registry: false
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
-  instance:
-    hostname: ${EUREKA_HOSTNAME:localhost}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      access: unrestricted
+server:
+  port: 8761

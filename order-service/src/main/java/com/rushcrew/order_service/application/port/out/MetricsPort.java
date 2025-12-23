@@ -41,4 +41,9 @@ public interface MetricsPort {
 	 * @param sample 타이머 샘플
 	 */
 	void stopOrderCreationTimer(Object sample);
+
+	void recordSagaTimeout();
+
+	void recordSagaRecoveryFailure();
 }
+

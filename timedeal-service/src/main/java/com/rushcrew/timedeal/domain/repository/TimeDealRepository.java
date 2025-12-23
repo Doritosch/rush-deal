@@ -1,5 +1,6 @@
 package com.rushcrew.timedeal.domain.repository;
 
+import com.rushcrew.timedeal.application.result.TimeDealForOrderResult;
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.domain.entity.TimeDeal;
 import com.rushcrew.timedeal.domain.entity.TimeDealProduct;
@@ -23,4 +24,6 @@ public interface TimeDealRepository {
     Optional<TimeDealProduct> findProductByProductId(UUID productId);
 
     List<TimeDeal> findAllById(List<UUID> idList);
+
+    Optional<TimeDealForOrderResult> findForOrder(UUID timeDealId);
 }

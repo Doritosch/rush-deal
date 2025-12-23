@@ -9,6 +9,7 @@ import com.rushcrew.timedeal.application.event.TimeDealScheduledEvent;
 import com.rushcrew.timedeal.application.model.ProductInfo;
 import com.rushcrew.timedeal.application.result.CreateTimeDealResult;
 import com.rushcrew.timedeal.application.result.TimeDealDetailResult;
+import com.rushcrew.timedeal.application.result.TimeDealForOrderResult;
 import com.rushcrew.timedeal.application.result.TimeDealProductResult;
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.application.result.UpdateTimeDealResult;
@@ -179,5 +180,12 @@ public class TimeDealServiceImpl implements TimeDealService {
         }
 
         return updatedIds;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TimeDealForOrderResult getTimeDealForOrder(UUID timeDealId) {
+        return timeDealRepository.findForOrder(timeDealId)
+            .orElseThrow(() -> new BusinessException(TimeDealErrorCode.NOT_FOUND_TIME_DEAL));
     }
 }

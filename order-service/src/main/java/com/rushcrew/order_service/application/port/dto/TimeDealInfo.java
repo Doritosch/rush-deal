@@ -13,7 +13,7 @@ public record TimeDealInfo(
 	BigDecimal originalPrice,
 	BigDecimal discountPrice,
 	Integer discountRate,
-	Integer limitQuantity,
+	Long limitQuantity,
 	TimeDealStatus status,
 	boolean isActive
 ) {}

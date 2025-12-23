@@ -4,6 +4,7 @@ import com.rushcrew.timedeal.application.command.CreateTimeDealCommand;
 import com.rushcrew.timedeal.application.command.UpdateTimeDealCommand;
 import com.rushcrew.timedeal.application.result.CreateTimeDealResult;
 import com.rushcrew.timedeal.application.result.TimeDealDetailResult;
+import com.rushcrew.timedeal.application.result.TimeDealForOrderResult;
 import com.rushcrew.timedeal.application.result.TimeDealResult;
 import com.rushcrew.timedeal.application.result.UpdateTimeDealResult;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
@@ -28,4 +29,6 @@ public interface TimeDealService {
     List<String> startTimeDeals(List<String> timeDealIds);
 
     List<String> endTimeDeals(List<String> timeDealIds);
+
+    TimeDealForOrderResult getTimeDealForOrder(UUID timeDealId);
 }

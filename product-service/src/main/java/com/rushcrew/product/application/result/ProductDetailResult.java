@@ -20,7 +20,7 @@ public record ProductDetailResult(
         List<ProductOptionResult> optionResultList) {
         return new ProductDetailResult(
             product.getId(),
-            product.getUserId().getId(),
+            product.getSellerId().getId(),
             product.getCompanyName(),
             product.getProductInfo().getName(),
             product.getProductInfo().getDescription(),

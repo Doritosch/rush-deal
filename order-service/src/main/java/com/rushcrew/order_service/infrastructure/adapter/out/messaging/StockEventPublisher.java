@@ -24,7 +24,7 @@ public class StockEventPublisher implements StockEventPort {
 	private final ObjectMapper objectMapper;
 
 	@Override
-	public void publishStockReservationCancelled(UUID orderId, UUID timeDealStockId, Integer quantity, String reason,
+	public void publishStockReservationCancelled(UUID orderId, UUID timeDealStockId, Long quantity, String reason,
 		Instant timestamp) {
 		try {
 			log.info("재고 예약 취소 이벤트 발행: orderId={}, timeDealStockId={}, quantity={}",
@@ -58,7 +58,7 @@ public class StockEventPublisher implements StockEventPort {
 	}
 
 	@Override
-	public void publishStockRollbackRequested(UUID orderId, UUID timeDealStockId, Integer quantity, String reason,
+	public void publishStockRollbackRequested(UUID orderId, UUID timeDealStockId, Long quantity, String reason,
 		Instant timestamp) {
 		try {
 			log.info("재고 롤백 요청 이벤트 발행: orderId={}, timeDealStockId={}, quantity={}",

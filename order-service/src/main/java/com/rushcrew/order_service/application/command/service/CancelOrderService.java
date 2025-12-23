@@ -19,6 +19,7 @@ import com.rushcrew.order_service.domain.enums.ReservationStatus;
 import com.rushcrew.order_service.domain.model.order.Order;
 import com.rushcrew.order_service.domain.model.order.OrderReservation;
 import com.rushcrew.order_service.global.error.OrderErrorCode;
+import com.rushcrew.order_service.infrastructure.messaging.event.OutboxEventType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -91,7 +92,7 @@ public class CancelOrderService implements CancelOrderUseCase {
 			outboxPort.createAndSave(
 				"ORDER",
 				savedOrder.getOrderId(),
-				"ORDER_CANCELLED",
+				OutboxEventType.ORDER_CANCELLED,
 				objectMapper.writeValueAsString(eventPayload)
 			);
 		} catch (Exception e) {

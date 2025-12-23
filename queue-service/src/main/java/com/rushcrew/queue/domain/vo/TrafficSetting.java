@@ -47,6 +47,7 @@ public class TrafficSetting {
         if (ttl == null || ttl <= 60) {
             throw new IllegalArgumentException("TTL은 최소 60초 이상이어야 합니다.");
         }
+        this.maxCapacity = maxCapacity;
         this.limitSize = limitSize;
         this.queueGap = queueGap;
         this.ttl = ttl;
