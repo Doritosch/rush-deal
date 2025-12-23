@@ -1,4 +1,4 @@
-package com.rushcrew.timedeal.infrastructure.kafka.dto;
+package com.rushcrew.timedeal.application.port.out.event;
 
 import java.math.BigDecimal;
 import java.time.Instant;
