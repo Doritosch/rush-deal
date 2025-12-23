@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:1.8
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=k6
+    networks:
+      - k6-net
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+    networks:
+      - k6-net
+
+  k6:
+    image: grafana/k6:latest
+    ports:
+      - "6565:6565"
+    environment:
+      - K6_OUT=influxdb=http://influxdb:8086/k6
+    volumes:
+      - ./queue-load-test:/scripts
+    networks:
+      - k6-net
+    # 여기서 host.docker.internal을 매핑해줍니다.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  k6-net:
