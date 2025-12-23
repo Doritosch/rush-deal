@@ -5,6 +5,6 @@ import java.util.UUID;
 
 public record PaymentCommand(
         UUID orderId,
-        BigDecimal totalAmount
+        Long totalAmount
 ) {
 }

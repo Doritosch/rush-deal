@@ -1,5 +1,6 @@
 package com.rushcrew.timedeal.infrastructure.repository;
 
+import com.rushcrew.timedeal.application.result.StockLogResult;
 import com.rushcrew.timedeal.application.result.StockResult;
 import com.rushcrew.timedeal.domain.entity.StockLog;
 import com.rushcrew.timedeal.domain.entity.TimeDealStock;
@@ -30,6 +31,7 @@ public interface StockJpaRepository extends JpaRepository<TimeDealStock, UUID> {
                   SELECT new com.rushcrew.timedeal.application.result.StockResult(
                                   tds.id,
                                   tdp.id,
+                                  tdp.timeDeal.timeDealInfo.sellerId,
                                   tds.stockCounts.available,
                                   tds.stockCounts.reserved,
                                   tds.stockCounts.sold,
@@ -56,6 +58,7 @@ public interface StockJpaRepository extends JpaRepository<TimeDealStock, UUID> {
                   SELECT new com.rushcrew.timedeal.application.result.StockResult(
                                   tds.id,
                                   tdp.id,
+                                  tdp.timeDeal.timeDealInfo.sellerId,
                                   tds.stockCounts.available,
                                   tds.stockCounts.reserved,
                                   tds.stockCounts.sold,
@@ -82,5 +85,24 @@ public interface StockJpaRepository extends JpaRepository<TimeDealStock, UUID> {
     Optional<StockLog> findLastByStockIdAndOrderId(
         @Param("stockId") UUID stockId,
         @Param("orderId") UUID orderId
+    );
+
+    @Query("""
+                    SELECT new com.rushcrew.timedeal.application.result.StockLogResult(
+                                       sl.id,
+                                       sl.timeDealStock.id,
+                                       sl.orderId.orderId,
+                                       sl.eventType,
+                                       sl.quantity.quantity,
+                                       sl.description
+                                  )
+                    FROM StockLog sl
+                    WHERE (:stockId IS NULL OR sl.timeDealStock.id = :stockId)
+                      AND (:eventType IS NULL OR sl.eventType = :eventType)
+        """)
+    Page<StockLogResult> findLogByIdAndFilter(
+        @Param("stockId") UUID stockId,
+        @Param("eventType") String eventType,
+        Pageable pageable
     );
 }

@@ -49,7 +49,8 @@ public class TimeDeal extends BaseEntity {
     @Embedded
     @AttributeOverrides({
         @AttributeOverride(name = "title", column = @Column(nullable = false)),
-        @AttributeOverride(name = "description", column = @Column(nullable = false))
+        @AttributeOverride(name = "description", column = @Column(nullable = false)),
+        @AttributeOverride(name = "sellerId", column = @Column(name = "seller_id", nullable = false))
     })
     private TimeDealInfo timeDealInfo;
 
@@ -118,17 +119,6 @@ public class TimeDeal extends BaseEntity {
         this.status = TimeDealStatus.ENDED;
     }
 
-    public void updateStatusByPeriod(Instant now) {
-        Instant start = this.period.getStartAt();
-        Instant end = this.period.getEndAt();
-
-        if (now.isAfter(end)) { // 종료 후
-            this.status = TimeDealStatus.ENDED;
-        } else if (!now.isBefore(start) && !now.isAfter(end)) { // 진행중
-            this.status = TimeDealStatus.IN_PROGRESS;
-        }
-    }
-
     private void addTimeDealProduct(UUID productId, UUID optionId) {
         this.timeDealProducts.add(TimeDealProduct.create(
             this, ProductItemIds.of(productId, optionId)
@@ -143,7 +133,8 @@ public class TimeDeal extends BaseEntity {
         String updatedTitle = newTitle != null ? newTitle : this.timeDealInfo.getTitle();
         String updatedDescription =
             newDescription != null ? newDescription : this.timeDealInfo.getDescription();
-        this.timeDealInfo = TimeDealInfo.of(updatedTitle, updatedDescription);
+        this.timeDealInfo =
+            TimeDealInfo.of(updatedTitle, updatedDescription, this.timeDealInfo.getSellerId());
     }
 
     private void updatePeriod(Instant newStartAt, Instant newEndAt) {

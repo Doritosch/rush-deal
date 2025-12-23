@@ -6,6 +6,7 @@ import com.rushcrew.timedeal.domain.entity.TimeDeal;
 import com.rushcrew.timedeal.domain.entity.TimeDealProduct;
 import com.rushcrew.timedeal.domain.repository.TimeDealRepository;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -46,15 +47,20 @@ public class TimeDealRepositoryAdapter implements TimeDealRepository {
         return timeDealJpaRepository.findProductByProductId(productId);
     }
 
-	@Override
-	public Optional<TimeDealForOrderResult> findForOrder(UUID timeDealId) {
-		return timeDealJpaRepository.findForOrderNative(timeDealId)
-			.map(v -> new TimeDealForOrderResult(
-				v.getTimeDealId(),
-				v.getTitle(),
-				v.getStatus(),
-				v.getDiscountPrice(),
-				v.getLimitQuantity()
-			));
-	}
+    @Override
+    public List<TimeDeal> findAllById(List<UUID> idList) {
+        return timeDealJpaRepository.findAllById(idList);
+    }
+
+    @Override
+    public Optional<TimeDealForOrderResult> findForOrder(UUID timeDealId) {
+        return timeDealJpaRepository.findForOrderNative(timeDealId)
+            .map(v -> new TimeDealForOrderResult(
+                v.getTimeDealId(),
+                v.getTitle(),
+                v.getStatus(),
+                v.getDiscountPrice(),
+                v.getLimitQuantity()
+            ));
+    }
 }

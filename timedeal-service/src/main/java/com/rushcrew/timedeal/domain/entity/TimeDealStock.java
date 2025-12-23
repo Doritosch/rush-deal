@@ -14,6 +14,7 @@ import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -86,7 +87,7 @@ public class TimeDealStock extends BaseEntity {
     @Column(nullable = false)
     private Long version;
 
-    @OneToMany(mappedBy = "timeDealStock", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "timeDealStock", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @Builder.Default
     private List<StockLog> stockLogs = new ArrayList<>();
 
@@ -198,6 +199,18 @@ public class TimeDealStock extends BaseEntity {
     private void updateStatus() {
         this.status = TimeDealStockStatus.AVAILABLE;
         this.timeDealProduct.updateStatus(TimeDealProductStatus.IN_STOCK);
-        this.timeDealProduct.getTimeDeal().updateStatusByPeriod(Instant.now());
+    }
+
+    public void validQuantity(Long quantity) {
+        // 변화할 재고 수량이 음수일 때, 품절인지 아닌지 체크
+        if (quantity < 0 &&
+            TimeDealProductStatus.OUT_OF_STOCK.equals(this.getTimeDealProduct().getStatus())) {
+            throw new BusinessException(TimeDealErrorCode.CAN_NOT_DECREASE_STOCK);
+        }
+
+        // 남은 재고 수량이 감소할 수량보다 적은지 체크
+        if (this.getStockCounts().getAvailable() + quantity < 0) {
+            throw new BusinessException(TimeDealErrorCode.CAN_NOT_DECREASE_BELOW_ZERO);
+        }
     }
 }

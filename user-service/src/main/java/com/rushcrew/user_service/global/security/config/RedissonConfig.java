@@ -24,13 +24,16 @@ public class RedissonConfig {
     public RedissonClient redissonClient() {
         Config config = new Config();
 
-        config.useSingleServer()
+        var singleServerConfig = config.useSingleServer()
             .setAddress("redis://" + redisHost + ":" + redisPort)
-            .setPassword(redisPassword)
             .setConnectionPoolSize(50)
             .setConnectionMinimumIdleSize(10)
             .setRetryAttempts(3)
             .setRetryInterval(1500);
+
+        if (redisPassword != null && !redisPassword.trim().isEmpty()) {
+            singleServerConfig.setPassword(redisPassword);
+        }
 
         return Redisson.create(config);
     }
