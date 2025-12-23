@@ -1,9 +1,6 @@
 package com.rushcrew.order_service.presentation.dto.request;
 
-import java.math.BigDecimal;
 import java.util.List;
-
-import com.rushcrew.order_service.domain.vo.ShippingInfo;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -17,6 +14,9 @@ public record CreateOrderRequest(
 	@NotBlank(message = "타임딜 ID는 필수입니다")
 	String timeDealId,
 
+	@NotBlank(message = "상품 ID는 필수입니다")
+	String productId,
+
 	@NotNull(message = "주문 아이템은 필수입니다")
 	@Size(min = 1, message = "최소 1개 이상의 상품이 필요합니다")
 	@Valid
@@ -24,7 +24,7 @@ public record CreateOrderRequest(
 
 	@NotNull(message = "포인트 사용량은 필수입니다")
 	@Min(value = 0, message = "포인트 사용량은 0 이상이어야 합니다")
-	BigDecimal pointUsed,
+	Long pointUsed,
 
 	@NotNull(message = "배송 정보는 필수입니다")
 	@Valid
@@ -32,13 +32,12 @@ public record CreateOrderRequest(
 ) {
 
 	public record OrderItemRequest(
-
 		@NotBlank(message = "타임딜 재고 ID는 필수입니다")
 		String timeDealStockId,
 
 		@NotNull(message = "수량은 필수입니다")
 		@Min(value = 1, message = "수량은 1개 이상이어야 합니다")
-		Integer quantity
+		Long quantity
 	) {}
 
 	public record ShippingInfoRequest(
@@ -65,16 +64,5 @@ public record CreateOrderRequest(
 
 		@Size(max = 100, message = "배송 메시지는 100자 이내여야 합니다")
 		String deliveryMessage
-	) {
-		public ShippingInfo toShippingInfo() {
-			return ShippingInfo.builder()
-				.recipientName(recipientName)
-				.recipientPhone(recipientPhone)
-				.zipCode(zipCode)
-				.addressBase(addressBase)
-				.addressDetail(addressDetail)
-				.deliveryMessage(deliveryMessage)
-				.build();
-		}
-	}
+	) {}
 }

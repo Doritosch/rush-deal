@@ -43,7 +43,7 @@ public class Product extends BaseEntity {
 
     @Embedded
     @AttributeOverride(name = "id", column = @Column(name = "seller_id", nullable = false))
-    private SellerId userId;
+    private SellerId sellerId;
 
     @Column(name = "company_name", nullable = false)
     private String companyName;
@@ -73,7 +73,7 @@ public class Product extends BaseEntity {
 
     public static Product create(CreateProductParams params) {
         Product product = Product.builder()
-            .userId(params.sellerId())
+            .sellerId(params.sellerId())
             .companyName(params.companyName())
             .productInfo(params.productInfo())
             .price(params.price())

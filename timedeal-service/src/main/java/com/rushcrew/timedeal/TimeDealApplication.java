@@ -5,6 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {
@@ -16,6 +18,8 @@ import org.springframework.context.annotation.ComponentScan;
     "com.rushcrew.common"
 })
 @EnableFeignClients
+@EnableRetry
+@EnableScheduling
 public class TimeDealApplication {
 
     public static void main(String[] args) {

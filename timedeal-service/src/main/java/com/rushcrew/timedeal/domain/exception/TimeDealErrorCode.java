@@ -23,6 +23,18 @@ public enum TimeDealErrorCode implements ErrorCode {
     MUST_BE_CHEAPER(HttpStatus.BAD_REQUEST, "TD-012", "타임딜 할인가격은 기존 가격보다 낮아야 합니다."),
     NOT_FOUND_TIME_DEAL(HttpStatus.NOT_FOUND, "TD-013", "존재하지 않는 타임딜입니다."),
     ALREADY_ENDED(HttpStatus.CONFLICT, "TD-014", "이미 종료된 타임딜입니다."),
+    TIME_DEAL_UPDATE_NOT_ALLOWED(HttpStatus.CONFLICT, "TD-015",
+        "타임딜 정보 수정은 SCHEDULED 상태에서만 가능합니다."),
+    NOT_FOUND_STOCK(HttpStatus.NOT_FOUND, "TD-016", "존재하지 않는 타임딜 재고입니다."),
+    CAN_NOT_DECREASE_STOCK(HttpStatus.BAD_REQUEST, "TD-017", "품절 상태의 재고는 감소시킬 수 없습니다."),
+    CAN_NOT_DECREASE_BELOW_ZERO(HttpStatus.BAD_REQUEST, "TD-018", "남은 재고보다 더 많이 감소시킬 수 없습니다."),
+    CAN_NOT_DELETE_STOCK(HttpStatus.BAD_REQUEST, "TD-019", "예약된 재고가 있어 삭제할 수 없습니다."),
+    OUT_OF_STOCK(HttpStatus.BAD_REQUEST, "TD-020", "재고가 부족합니다."),
+    NOT_FOUND_LOG(HttpStatus.NOT_FOUND, "TD-021", "존재하지 않는 재고 로그입니다."),
+    INVALID_ORDER_INFO(HttpStatus.BAD_REQUEST, "TD-022", "주문 정보와 일치하지 않습니다."),
+    INVALID_ORDER_STATE(HttpStatus.BAD_REQUEST, "TD-023", "복구 불가능한 주문 상태입니다."),
+    START_TIME_TOO_CLOSE(HttpStatus.BAD_REQUEST, "TD-024", "시작 시간은 현재 시간으로부터 최소 5초 이후여야 합니다."),
+    REQUIRED_SELLER_ID(HttpStatus.BAD_REQUEST, "TD-025", "판매자 ID는 필수입니다."),
 
     ;
 

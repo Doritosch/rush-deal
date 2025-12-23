@@ -8,9 +8,11 @@ import java.util.UUID;
 
 public interface OptionService {
 
-    List<UUID> createProductOptions(UUID productId, List<CreateOptionCommand> commands);
+    List<UUID> createProductOptions(
+        Long userId, String role, UUID productId, List<CreateOptionCommand> commands);
 
-    UpdateOptionResult updateProductOption(UUID productId, UUID skuId, UpdateOptionCommand command);
+    UpdateOptionResult updateProductOption(
+        Long userId, String role, UUID productId, UUID skuId, UpdateOptionCommand command);
 
-    void deleteProductOption(UUID productId, UUID skuId);
+    void deleteProductOption(Long userId, String role, UUID productId, UUID skuId);
 }

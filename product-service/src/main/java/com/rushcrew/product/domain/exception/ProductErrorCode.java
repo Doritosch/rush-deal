@@ -13,6 +13,7 @@ public enum ProductErrorCode implements ErrorCode {
 
     // 상품
     NOT_FOUND_PRODUCT(HttpStatus.NOT_FOUND, "P-001", "존재하지 않는 상품입니다."),
+    REQUIRED_SELLER_ID(HttpStatus.BAD_REQUEST, "P-002", "MASTER로 상품 생성 시 sellerId는 필수입니다."),
 
     ;
 

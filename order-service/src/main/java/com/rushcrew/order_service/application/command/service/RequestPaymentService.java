@@ -65,7 +65,7 @@ public class RequestPaymentService implements RequestPaymentUseCase {
 		order.completePayment();
 		Order savedOrder = orderCommandPort.save(order);
 
-		// 결제 완료 이벤트 발행 (kafka 비동기 통신 - outbox 패턴) --> outbox 테이블에 저장 후 스케줄러(OutboxEventScheduler)로 실행
+		// 결제 완료 이벤트 발행 (kafka 비동기 통신 - outbox 패턴) --> TODO: 확인 필요
 		paymentEventPort.publishPaymentCompleted(
 			savedOrder.getOrderId(),
 			savedOrder.getUserId(),
