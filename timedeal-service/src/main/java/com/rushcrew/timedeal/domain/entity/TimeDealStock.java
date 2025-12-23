@@ -14,6 +14,7 @@ import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import com.rushcrew.timedeal.domain.vo.TimeDealStockStatus;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -79,7 +80,7 @@ public class TimeDealStock extends BaseEntity {
     @Column(nullable = false)
     private Long version;
 
-    @OneToMany(mappedBy = "timeDealStock", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "timeDealStock", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @Builder.Default
     private List<StockLog> stockLogs = new ArrayList<>();
 

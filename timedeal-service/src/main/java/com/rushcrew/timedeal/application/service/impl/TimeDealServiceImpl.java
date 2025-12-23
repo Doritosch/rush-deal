@@ -7,6 +7,7 @@ import com.rushcrew.timedeal.application.command.CreateTimeDealCommand;
 import com.rushcrew.timedeal.application.command.UpdateTimeDealCommand;
 import com.rushcrew.timedeal.application.event.TimeDealScheduledEvent;
 import com.rushcrew.timedeal.application.model.ProductInfo;
+import com.rushcrew.timedeal.application.result.CreateTimeDealResult;
 import com.rushcrew.timedeal.application.result.TimeDealDetailResult;
 import com.rushcrew.timedeal.application.result.TimeDealProductResult;
 import com.rushcrew.timedeal.application.result.TimeDealResult;
@@ -46,7 +47,9 @@ public class TimeDealServiceImpl implements TimeDealService {
 
     @Override
     @Transactional
-    public UUID createTimeDeal(Long userId, String role, CreateTimeDealCommand command) {
+    public CreateTimeDealResult createTimeDeal(
+        Long userId, String role, CreateTimeDealCommand command
+    ) {
         ProductInfo productInfo = productClient.getProductItemIds(command.productId());
 
         Long sellerId = productInfo.sellerId();
@@ -73,7 +76,7 @@ public class TimeDealServiceImpl implements TimeDealService {
         eventPublisher.publishEvent(
             new TimeDealScheduledEvent(newTimeDeal.getId(), endAt, TimeDealQueueKey.END));
 
-        return newTimeDeal.getId();
+        return CreateTimeDealResult.from(newTimeDeal);
     }
 
     @Override

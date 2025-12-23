@@ -23,7 +23,9 @@ public class TimeDealScheduler {
         }
 
         List<String> updatedIds = timeDealService.startTimeDeals(startedTimeDealIds);
-        timeDealCache.removeTimedOut(TimeDealQueueKey.START, updatedIds);
+        if(!updatedIds.isEmpty()) {
+            timeDealCache.removeTimedOut(TimeDealQueueKey.START, updatedIds);
+        }
     }
 
     @Scheduled(fixedDelay = 1000)
@@ -34,6 +36,8 @@ public class TimeDealScheduler {
         }
 
         List<String> updatedIds = timeDealService.endTimeDeals(endedTimeDealIds);
-        timeDealCache.removeTimedOut(TimeDealQueueKey.END, updatedIds);
+        if(!updatedIds.isEmpty()) {
+            timeDealCache.removeTimedOut(TimeDealQueueKey.END, updatedIds);
+        }
     }
 }
