@@ -1,5 +1,4 @@
 # ⏰ Rush Deal
-***
 > 트래픽 집중 상황을 고려한 MSA 기반 타임딜 이커머스 플랫폼
 
 
@@ -16,7 +15,6 @@
 
 
 ## 📌 프로젝트 소개
-***
 ### 개요
 한정된 시간, 수량 안에서 주문이 집중되는 타임딜 커머스 환경의 
 MSA(Microservices Architecture) 기반 커머스 플랫폼입니다.
@@ -28,7 +26,6 @@ MSA(Microservices Architecture) 기반 커머스 플랫폼입니다.
 
 
 ## 🚩 프로젝트 목표
-***
 ### 대규모 트래픽 대응
 - MSA 기반 서비스 분리로 확장성 고려
 - Redis, Kafka로 대규모 트래픽 안정적 처리
@@ -43,7 +40,6 @@ MSA(Microservices Architecture) 기반 커머스 플랫폼입니다.
 
 
 ## ▶️ 로컬 실행 방법
-***
 1. 환경 변수 설정
 2. Docker 컨테이너 실행
     ```
@@ -52,7 +48,6 @@ MSA(Microservices Architecture) 기반 커머스 플랫폼입니다.
 
 
 ## **🔑** 주요 기능
-***
 ### 프로젝트 주요 기능
 #### Saga·Outbox 패턴 기반의 고신뢰 주문 결제 시스템
 - 주문-재고-포인트 서비스 간 분산 트랜잭션을 Saga 패턴으로 관리하고, 장애 발생 시 자동 보상 트랜잭션 수행
@@ -83,7 +78,6 @@ MSA(Microservices Architecture) 기반 커머스 플랫폼입니다.
 
 
 ## 🧑‍🤝‍🧑 팀원 및 역할
-***
 | 이름                                     | 담당 업무             |
 |----------------------------------------|-------------------|
 | [변영재(팀장)](https://github.com/bbangjae) | 인증 및 인가, 사용자, 포인트 |
@@ -94,7 +88,6 @@ MSA(Microservices Architecture) 기반 커머스 플랫폼입니다.
 
 
 ## 🛠 기술 스택
-***
 ### Back-End
 - Java 21
 - Spring Boot 3.5.8
@@ -123,15 +116,12 @@ MSA(Microservices Architecture) 기반 커머스 플랫폼입니다.
 - Zipkin
 
 ## 🏗 시스템 아키텍처
-***
 ![erd.png](docs/image/architecture.png)
 
 ## 🗄 ERD
-***
 ![erd.png](docs/image/rushdeal_erd.png)
 
 ## 📂 프로젝트 구조
-*** 
 ```
 rush-deal
 ├── api-gateway         # 요청 라우팅 및 인증 처리
