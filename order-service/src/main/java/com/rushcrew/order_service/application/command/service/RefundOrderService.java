@@ -67,12 +67,11 @@ public class RefundOrderService implements RefundOrderUseCase {
 			throw new BusinessException(OrderErrorCode.ORDER_CANNOT_REFUND);
 		}
 
-		// 결제 취소 (동기)
+		// 결제 취소
 		try {
 			paymentPort.cancelPayment(
 				order.getOrderId(),
-				order.getUserId(),
-				order.getFinalAmount()
+				order.getUserId()
 			);
 			log.info("결제 취소 완료: orderId={}, refundAmount={}",
 				order.getOrderId(), order.getFinalAmount());

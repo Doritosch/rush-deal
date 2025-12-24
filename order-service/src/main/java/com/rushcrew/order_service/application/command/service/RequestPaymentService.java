@@ -28,7 +28,6 @@ public class RequestPaymentService implements RequestPaymentUseCase {
 
 	private final OrderCommandPort orderCommandPort;
 	private final PaymentPort paymentPort;
-	private final PaymentEventPort paymentEventPort;
 	private final OutboxPort outboxPort;
 	private final ObjectMapper objectMapper;
 
@@ -63,14 +62,6 @@ public class RequestPaymentService implements RequestPaymentUseCase {
 		// 주문 상태 변경 PENDING -> PAID
 		order.completePayment();
 		Order savedOrder = orderCommandPort.save(order);
-
-		// 결제 완료 이벤트 발행 (kafka 비동기 통신 - outbox 패턴) --> TODO: 확인 필요
-		paymentEventPort.publishPaymentCompleted(
-			savedOrder.getOrderId(),
-			savedOrder.getUserId(),
-			savedOrder.getFinalAmount(),
-			Instant.now()
-		);
 
 		// ORDER_PAID 이벤트 outbox에 저장
 		try {
