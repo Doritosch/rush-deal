@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rushcrew.order_service.application.port.out.StockEventPort;
+import com.rushcrew.order_service.infrastructure.messaging.event.OutboxEventType;
 import com.rushcrew.order_service.infrastructure.persistence.outbox.entity.OutboxEventEntity;
 import com.rushcrew.order_service.infrastructure.persistence.outbox.repository.OutboxEventJpaRepository;
 
@@ -40,7 +41,7 @@ public class StockEventPublisher implements StockEventPort {
 			OutboxEventEntity outbox = OutboxEventEntity.create(
 				"ORDER",         // aggregateType
 				orderId,                       // aggregateId
-				"STOCK_RESERVATION_CANCELLED", // eventType
+				OutboxEventType.STOCK_RESERVATION_CANCELLED,
 				payload                        // json
 			);
 

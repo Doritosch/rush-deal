@@ -9,6 +9,7 @@ import com.rushcrew.order_service.application.port.out.SagaInstancePort;
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
 import com.rushcrew.order_service.application.saga.step.CreateOrderStep;
+import com.rushcrew.order_service.application.saga.step.RequestStockReservationStep;
 import com.rushcrew.order_service.application.saga.step.UsePointStep;
 import com.rushcrew.order_service.domain.enums.SagaStatus;
 import com.rushcrew.order_service.domain.enums.SagaStepName;
@@ -26,6 +27,7 @@ public class OrderSagaEventHandler {
 
 	private final SagaInstancePort sagaInstancePort;
 	private final UsePointStep usePointStep;
+	private final RequestStockReservationStep requestStockReservationStep;
 	private final CreateOrderStep createOrderStep;
 	private final MetricsPort metricsPort;
 	private final QueueEventPort queueEventPort;
@@ -60,6 +62,8 @@ public class OrderSagaEventHandler {
 
 		} catch (Exception e) {
 			log.error("[Saga-{}] 주문 생성 실패: {}", event.sagaId(), e.getMessage(), e);
+			// 재고 예약 성공 상태 마킹 (보상 대상임을 명시)
+			saga.addStep(SagaStepName.REQUEST_STOCK_RESERVATION, SagaStatus.COMPLETED);
 			// 보상 트랜잭션 실행
 			executeCompensation(saga, context, data, "주문 생성 실패: " + e.getMessage());
 			throw e;
@@ -97,15 +101,19 @@ public class OrderSagaEventHandler {
 		log.info("[Saga-{}] 보상 트랜잭션 시작", saga.getSagaId());
 
 		try {
-			// 1. 포인트 복구 (USE_POINT가 완료된 경우)
+			// 1. 재고 복구 (REQUEST_STOCK_RESERVATION이 완료된 경우만)
+			if (saga.hasCompletedStep(SagaStepName.REQUEST_STOCK_RESERVATION)) {
+				log.info("[Saga-{}] 재고 예약 취소 실행", saga.getSagaId());
+				requestStockReservationStep.compensate(context, data);
+				saga.addStep(SagaStepName.REQUEST_STOCK_RESERVATION_COMPENSATE, SagaStatus.COMPLETED);
+			}
+
+			// 2. 포인트 복구 (USE_POINT가 완료된 경우)
 			if (saga.hasCompletedStep(SagaStepName.USE_POINT)) {
 				log.info("[Saga-{}] 포인트 보상 트랜잭션 실행", saga.getSagaId());
 				usePointStep.compensate(context, data);
 				saga.addStep(SagaStepName.USE_POINT_COMPENSATE, SagaStatus.COMPLETED);
 			}
-
-			// 2. 재고 복구는 Stock 서비스에서 자동으로 처리됨 (Timeout 등)
-			// 필요시 명시적 취소 이벤트 발행 가능
 
 			saga.fail(failureReason);
 			sagaInstancePort.save(saga);
