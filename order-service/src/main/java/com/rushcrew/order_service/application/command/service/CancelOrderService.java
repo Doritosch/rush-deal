@@ -53,7 +53,7 @@ public class CancelOrderService implements CancelOrderUseCase {
 		}
 
 		// 주문 상태 변경 (PENDING → CANCELLED)
-		order.cancelBeforePayment("사용자 요청에 의한 주문 취소");
+		order.cancelBeforePayment("시스템에 의한 주문 취소");
 
 		// 각 예약된 재고에 대해 예약 취소 처리
 		for (OrderReservation reservation : order.getReservations()) {

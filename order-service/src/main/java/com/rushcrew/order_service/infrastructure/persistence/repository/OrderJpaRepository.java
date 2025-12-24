@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -70,4 +71,27 @@ public interface OrderJpaRepository extends JpaRepository<Order, UUID> {
         ORDER BY o.orderedAt ASC
     """)
 	List<UUID> findOrderIdsBefore(@Param("before") Instant before);
+
+	/**
+	 * 타임아웃된 PENDING 주문 조회
+	 *
+	 * 용도: PendingOrderTimeoutScheduler
+	 *
+	 * 조건:
+	 * - PENDING 상태
+	 * - 생성 시간이 기준 시간보다 이전
+	 */
+	@Query("""
+        SELECT o 
+        FROM Order o 
+        WHERE o.status = :status 
+        AND o.orderedAt < :createdBefore 
+        ORDER BY o.orderedAt ASC
+    """)
+	List<Order> findByStatusAndOrderedAtBefore(
+		@Param("status") OrderStatus status,
+		@Param("createdBefore") Instant createdBefore,
+		Pageable pageable
+	);
+
 }

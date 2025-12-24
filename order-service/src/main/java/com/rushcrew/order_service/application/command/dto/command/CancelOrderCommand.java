@@ -7,5 +7,7 @@ import lombok.Builder;
 @Builder
 public record CancelOrderCommand(
 	UUID orderId,
-	Long userId
+	Long userId,
+	String cancelReason,
+	boolean isSystemCancel
 ) {}
