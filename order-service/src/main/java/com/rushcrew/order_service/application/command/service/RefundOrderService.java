@@ -1,6 +1,5 @@
 package com.rushcrew.order_service.application.command.service;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -96,6 +95,7 @@ public class RefundOrderService implements RefundOrderUseCase {
 				pointEventPort.publishPointRefundRequested(
 					savedOrder.getUserId(),
 					savedOrder.getOrderId(),
+					savedOrder.getSagaId(),
 					savedOrder.getPointUsed(),
 					"주문 환불에 의한 포인트 환불"
 				);
@@ -108,12 +108,11 @@ public class RefundOrderService implements RefundOrderUseCase {
 		// 재고 복구 이벤트 발행
 		for (OrderItem orderItem : savedOrder.getOrderItems()) {
 			try {
-				stockEventPort.publishStockRollbackRequested(
+				stockEventPort.publishStockReservationCancelled(
 					savedOrder.getOrderId(),
 					orderItem.getTimeDealStockId(),
 					orderItem.getQuantity(),
-					"주문 환불에 의한 재고 복구",
-					Instant.now()
+					"주문 환불에 의한 재고 복구"
 				);
 			} catch (Exception e) {
 				log.error("재고 이벤트 발행 실패", e);
