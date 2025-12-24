@@ -43,6 +43,7 @@ public class QueueEventPublisher implements QueueEventPort {
 				.aggregateId(productId)
 				.eventType("TOKEN_REMOVE_REQUESTED")
 				.payload(payloadJson)
+				.status(OutboxEventEntity.OutboxStatus.PENDING)
 				.createdAt(Instant.now())
 				.build();
 
