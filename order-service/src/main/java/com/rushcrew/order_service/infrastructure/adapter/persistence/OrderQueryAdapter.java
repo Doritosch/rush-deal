@@ -1,6 +1,7 @@
 package com.rushcrew.order_service.infrastructure.adapter.persistence;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -60,20 +61,17 @@ public class OrderQueryAdapter implements OrderQueryPort {
 			return Optional.empty();
 		}
 
-		// 2. Order Items 조회 (JSONB 필드 접근)
+		// 2. Order Items 조회
 		String sql = """
-            SELECT 
-                oi.order_item_id,
-                oi.product_snapshot->>'productName' as product_name,
-                oi.product_snapshot->>'optionName' as option_name,
-                oi.quantity,
-                oi.unit_price,
-                oi.discount_price,
-                oi.subtotal
-            FROM order_schema.p_order_item oi
-            WHERE oi.order_id = :orderId
-            ORDER BY oi.created_at
-            """;
+			SELECT 
+				oi.order_item_id,
+				oi.quantity,
+				oi.discount_price,
+				oi.subtotal
+			FROM order_schema.p_order_item oi
+			WHERE oi.order_id = :orderId
+			ORDER BY oi.created_at
+		""";
 
 		Query query = entityManager.createNativeQuery(sql);
 		query.setParameter("orderId", orderId);
@@ -82,19 +80,27 @@ public class OrderQueryAdapter implements OrderQueryPort {
 		List<Object[]> results = query.getResultList();
 
 		List<OrderItemQueryDto> orderItems = results.stream()
-			.map(row -> OrderItemQueryDto.builder()
-				.orderItemId(UUID.fromString(row[0].toString()))
-				.productName((String) row[1])
-				.optionName((String) row[2])
-				.quantity(((Number) row[3]).longValue())
-				.unitPrice((BigDecimal) row[4])
-				.discountPrice((BigDecimal) row[5])
-				.subtotal((BigDecimal) row[6])
-				.build())
+			.map(row -> {
+				try {
+					OrderItemQueryDto dto = OrderItemQueryDto.builder()
+						.orderItemId(row[0] instanceof UUID ? (UUID) row[0] : UUID.fromString(row[0].toString()))
+						.productName(null)
+						.optionName(null)
+						.quantity(row[1] != null ? ((Number) row[1]).longValue() : 0L)
+						.unitPrice(null)
+						.discountPrice(row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO)
+						.subtotal(row[3] != null ? (BigDecimal) row[3] : BigDecimal.ZERO)
+						.build();
+					return dto;
+				} catch (Exception e) {
+					return null;
+				}
+			})
+			.filter(item -> item != null)
 			.toList();
 
 		// 3. OrderItems를 포함한 완전한 DTO 반환
-		return Optional.of(OrderDetailDto.builder()
+		OrderDetailDto finalDto = OrderDetailDto.builder()
 			.orderId(orderDetail.getOrderId())
 			.userId(orderDetail.getUserId())
 			.orderStatus(orderDetail.getOrderStatus())
@@ -108,7 +114,9 @@ public class OrderQueryAdapter implements OrderQueryPort {
 			.autoConfirmScheduledAt(orderDetail.getAutoConfirmScheduledAt())
 			.shippingInfo(orderDetail.getShippingInfo())
 			.orderItems(orderItems)
-			.build());
+			.build();
+
+		return Optional.of(finalDto);
 	}
 
 	@Override
@@ -157,7 +165,7 @@ public class OrderQueryAdapter implements OrderQueryPort {
 				.orderId(UUID.fromString(row[0].toString()))
 				.orderStatus((String) row[1])
 				.finalAmount((BigDecimal) row[2])
-				.orderedAt(((java.sql.Timestamp) row[3]).toInstant())
+				.orderedAt(((Instant) row[3]))
 				.itemCount((Integer) row[4])
 				.firstProductName((String) row[5])
 				.build())
