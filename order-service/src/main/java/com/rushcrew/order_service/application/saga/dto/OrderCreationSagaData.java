@@ -39,6 +39,7 @@ public class OrderCreationSagaData {
 	 * 주문 생성 결과 (실제 주문 ID)
 	 */
 	private UUID orderId;
+	private String queueToken;
 
 	/* 주문 ID 설정 (호환성 유지) */
 	public void bindOrderId(UUID orderId) {

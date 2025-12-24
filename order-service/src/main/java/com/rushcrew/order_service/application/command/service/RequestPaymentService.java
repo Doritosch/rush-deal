@@ -13,7 +13,6 @@ import com.rushcrew.order_service.application.command.dto.result.RequestPaymentR
 import com.rushcrew.order_service.application.command.port.out.OrderCommandPort;
 import com.rushcrew.order_service.application.command.usecase.RequestPaymentUseCase;
 import com.rushcrew.order_service.application.port.out.OutboxPort;
-import com.rushcrew.order_service.application.port.out.PaymentEventPort;
 import com.rushcrew.order_service.application.port.out.PaymentPort;
 import com.rushcrew.order_service.domain.model.order.Order;
 import com.rushcrew.order_service.global.error.OrderErrorCode;
