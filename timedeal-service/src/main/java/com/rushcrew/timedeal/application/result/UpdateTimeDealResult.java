@@ -20,7 +20,7 @@ public record UpdateTimeDealResult(
             timeDeal.getTimeDealInfo().getTitle(),
             timeDeal.getTimeDealInfo().getDescription(),
             timeDeal.getPrice().getAmount(),
-            timeDeal.getLimitQuantity().getQuantity(),
+            timeDeal.getLimitQuantity() == null ? null : timeDeal.getLimitQuantity().getQuantity(),
             timeDeal.getPeriod().getStartAt(),
             timeDeal.getPeriod().getEndAt()
         );

@@ -3,14 +3,14 @@ package com.rushcrew.timedeal.application.command;
 import com.rushcrew.timedeal.domain.vo.LimitQuantity;
 import com.rushcrew.timedeal.domain.vo.Period;
 import com.rushcrew.timedeal.domain.vo.Price;
-import com.rushcrew.timedeal.domain.vo.TimeDealInfo;
 import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import com.rushcrew.timedeal.presentation.dto.request.CreateTimeDealRequest;
 import java.util.UUID;
 
 public record CreateTimeDealCommand(
 
-    TimeDealInfo timeDealInfo,
+    String title,
+    String description,
     Price discountPrice,
     LimitQuantity limitQuantity,
     Period period,
@@ -20,7 +20,8 @@ public record CreateTimeDealCommand(
 
     public static CreateTimeDealCommand from(CreateTimeDealRequest request) {
         return new CreateTimeDealCommand(
-            TimeDealInfo.of(request.title(), request.description()),
+            request.title(),
+            request.description(),
             Price.of(request.discountPrice()),
             LimitQuantity.of(request.limitQuantity()),
             Period.of(request.startAt(), request.endAt()),

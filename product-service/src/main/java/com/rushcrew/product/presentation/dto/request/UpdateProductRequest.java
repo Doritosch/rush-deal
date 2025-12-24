@@ -1,5 +1,6 @@
 package com.rushcrew.product.presentation.dto.request;
 
+import com.rushcrew.product.application.command.UpdateProductCommand;
 import com.rushcrew.product.domain.vo.Category;
 import jakarta.validation.constraints.PositiveOrZero;
 
@@ -11,4 +12,13 @@ public record UpdateProductRequest(
     Category category
 ) {
 
+    public UpdateProductCommand toCommand() {
+        return new UpdateProductCommand(
+            this.companyName(),
+            this.productName(),
+            this.description(),
+            this.price(),
+            this.category()
+        );
+    }
 }

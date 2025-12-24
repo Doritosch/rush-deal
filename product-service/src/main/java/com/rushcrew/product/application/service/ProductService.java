@@ -13,15 +13,16 @@ import org.springframework.data.domain.Pageable;
 
 public interface ProductService {
 
-    CreateProductResult createProduct(CreateProductCommand command);
+    CreateProductResult createProduct(Long userId, String role, CreateProductCommand command);
 
-    UpdateProductResult updateProduct(UUID productId, UpdateProductCommand command);
+    UpdateProductResult updateProduct(Long userId, String role, UUID productId,
+        UpdateProductCommand command);
 
-    void disableProduct(UUID productId);
+    void disableProduct(Long userId, String role, UUID productId);
 
-    void enableProduct(UUID productId);
+    void enableProduct(Long userId, String role, UUID productId);
 
-    void deleteProduct(UUID productId);
+    void deleteProduct(Long userId, String role, UUID productId);
 
     Page<ProductResult> getProducts(ProductFilter productFilter, Pageable pageable);
 

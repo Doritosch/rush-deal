@@ -16,7 +16,7 @@ public interface QueuePort {
     /**
      * 대기 상태 조회 (Polling)
      */
-    QueueRedisResponse getQueueRank(UUID productId, String token, Long userId, String role);
+    QueueRedisResponse getQueueRank(UUID productId, String token, Long userId);
 
     /**
      * 토큰 형식 검증
@@ -26,7 +26,7 @@ public interface QueuePort {
     /**
      * 토큰 형식 검증 + 유저 토큰 활성화 여부
      */
-    boolean validateActivatedQueueToken(UUID productId, String token);
+    boolean validateActivatedQueueToken(UUID productId, String token, Long userId, String role);
 
     /**
      * 토큰 활성화

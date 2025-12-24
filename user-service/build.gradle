@@ -16,8 +16,23 @@ dependencies {
     // validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    // 자체 공통 모듈
-    implementation 'com.github.RushCrew:rush-deal-common:v0.0.7'
+	// 자체 공통 모듈
+	implementation 'com.github.RushCrew:rush-deal-common:v0.0.7'
+
+	// 분산락
+	implementation 'org.redisson:redisson-spring-boot-starter:3.35.0'
+
+	// QueryDSL JPA
+	implementation 'io.github.openfeign.querydsl:querydsl-core:7.0'
+	implementation 'io.github.openfeign.querydsl:querydsl-jpa:7.0'
+	annotationProcessor 'io.github.openfeign.querydsl:querydsl-apt:7.0:jpa'
+
+	// kafka
+	implementation 'org.springframework.kafka:spring-kafka'
+
+	// security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	testImplementation 'org.springframework.security:spring-security-test'
 
     // 분산락
     implementation 'org.redisson:redisson-spring-boot-starter:3.35.0'

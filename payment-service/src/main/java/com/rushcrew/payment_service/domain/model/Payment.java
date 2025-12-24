@@ -23,24 +23,38 @@ public class Payment extends BaseEntity {
     private UUID orderId;
 
     @Column(nullable = false)
-    private BigDecimal amount;
+    private Long amount;
+
+    @Column(name = "portone_payment_id")
+    private String portonePaymentId;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
-    public static Payment create(UUID orderId, BigDecimal amount) {
+    public static Payment create(UUID orderId, Long amount, String portonePaymentId) {
         Payment payment = new Payment();
 
         payment.orderId = orderId;
         payment.amount = amount;
+        payment.portonePaymentId = portonePaymentId;
         payment.status = PaymentStatus.PENDING;
 
         return payment;
     }
 
     public void completePayment() {
+        if (!status.isPending()) {
+            throw new IllegalArgumentException("결제 요청 상태에서만 완료할 수 있습니다.");
+        }
         this.status = PaymentStatus.PAID;
+    }
+
+    public void cancelPayment() {
+        if (!status.isPaid()) {
+            throw new IllegalArgumentException("결제 완료 상태에서만 취소할 수 있습니다.");
+        }
+        this.status = PaymentStatus.CANCELLED;
     }
 
     public void verifyPaymentOrThrow(Long amount, String currency) {
