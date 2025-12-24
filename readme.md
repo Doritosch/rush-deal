@@ -115,6 +115,9 @@ MSA(Microservices Architecture) 기반 커머스 플랫폼입니다.
 - Grafana
 - Zipkin
 
+## 🔁 Flowchart
+![flowchart.png](docs/image/flowchart.png)
+
 ## 🏗 시스템 아키텍처
 ![erd.png](docs/image/architecture.png)
 
