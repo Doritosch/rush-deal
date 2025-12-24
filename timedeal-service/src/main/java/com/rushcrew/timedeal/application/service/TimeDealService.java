@@ -26,9 +26,9 @@ public interface TimeDealService {
 
     TimeDealDetailResult getTimeDealDetail(UUID timeDealId);
 
-    List<String> startTimeDeals(List<String> timeDealIds);
+    void startTimeDeals(List<String> timeDealIds);
 
-    List<String> endTimeDeals(List<String> timeDealIds);
+    void endTimeDeals(List<String> timeDealIds);
 
     TimeDealForOrderResult getTimeDealForOrder(UUID timeDealId);
 }
