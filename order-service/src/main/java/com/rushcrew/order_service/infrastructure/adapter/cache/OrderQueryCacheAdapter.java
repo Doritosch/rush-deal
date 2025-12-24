@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OrderCacheAdapter implements OrderCachePort {
+public class OrderQueryCacheAdapter implements OrderCachePort {
 
 	private final RedisTemplate<String, Object> redisTemplate;
 	private final ObjectMapper objectMapper;
@@ -37,11 +37,15 @@ public class OrderCacheAdapter implements OrderCachePort {
 				TimeUnit.SECONDS
 			);
 
-			log.info("주문 캐시 업데이트 완료: orderId={}", orderId);
+			log.debug("[Cache] 주문 캐시 업데이트: orderId={}, status={}",
+				orderId, orderDetailDto.getOrderStatus());
 
 		} catch (JsonProcessingException e) {
-			log.error("주문 캐시 업데이트 실패: orderId={}", orderId, e);
+			log.error("[Cache] 주문 캐시 업데이트 실패 (JSON 변환): orderId={}", orderId, e);
 			throw new RuntimeException("Redis 캐시 업데이트 실패", e);
+		} catch (Exception e) {
+			log.error("[Cache] 주문 캐시 업데이트 실패 (Redis 오류): orderId={}", orderId, e);
+			// Redis 장애 시에도 비즈니스 로직은 계속 진행되도록
 		}
 	}
 
@@ -52,17 +56,35 @@ public class OrderCacheAdapter implements OrderCachePort {
 			Boolean exists = redisTemplate.hasKey(key);
 
 			if (exists != null && exists) {
-				log.debug("캐시에 존재하는 주문: orderId={}", orderId);
+				log.debug("[Cache] 캐시에 존재: orderId={}", orderId);
 				return true;
 			}
 
-			log.debug("캐시에 존재하지 않는 주문: orderId={}", orderId);
+			log.debug("[Cache] 캐시에 없음: orderId={}", orderId);
 			return false;
 
 		} catch (Exception e) {
-			log.error("캐시 존재 여부 확인 실패: orderId={}", orderId, e);
-			// Redis 장애 시에도 false 반환 (멱등성 체크 실패해도 업데이트는 진행)
+			log.error("[Cache] 캐시 존재 여부 확인 실패: orderId={}", orderId, e);
+			// Redis 장애 시 false 반환 (멱등성 체크 실패해도 업데이트는 진행)
 			return false;
+		}
+	}
+
+	@Override
+	public void evictOrderCache(UUID orderId) {
+		try {
+			String key = ORDER_KEY_PREFIX + orderId;
+			Boolean deleted = redisTemplate.delete(key);
+
+			if (deleted != null && deleted) {
+				log.debug("[Cache] 주문 캐시 삭제 완료: orderId={}", orderId);
+			} else {
+				log.debug("[Cache] 삭제할 캐시 없음: orderId={}", orderId);
+			}
+
+		} catch (Exception e) {
+			log.error("[Cache] 주문 캐시 삭제 실패: orderId={}", orderId, e);
+			// 삭제 실패는 무시 (TTL로 자동 만료됨)
 		}
 	}
 }
