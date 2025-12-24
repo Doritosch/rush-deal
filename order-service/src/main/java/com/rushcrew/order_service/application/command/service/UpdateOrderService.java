@@ -19,6 +19,7 @@ import com.rushcrew.order_service.application.port.out.OutboxPort;
 import com.rushcrew.order_service.domain.enums.OrderStatus;
 import com.rushcrew.order_service.domain.model.order.Order;
 import com.rushcrew.order_service.global.error.OrderErrorCode;
+import com.rushcrew.order_service.infrastructure.messaging.event.OutboxEventType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,7 +94,7 @@ public class UpdateOrderService implements UpdateOrderUseCase {
 			outboxPort.createAndSave(
 				"ORDER",
 				savedOrder.getOrderId(),
-				"ORDER_UPDATED",
+				OutboxEventType.ORDER_UPDATED,
 				objectMapper.writeValueAsString(eventPayload)
 			);
 

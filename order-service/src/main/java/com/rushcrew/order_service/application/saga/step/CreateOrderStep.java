@@ -16,6 +16,7 @@ import com.rushcrew.order_service.domain.model.order.Order;
 import com.rushcrew.order_service.domain.model.order.OrderItem;
 import com.rushcrew.order_service.domain.model.order.OrderReservation;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rushcrew.order_service.infrastructure.messaging.event.OutboxEventType;
 import com.rushcrew.order_service.infrastructure.messaging.event.StockReservedEvent;
 
 import jakarta.transaction.Transactional;
@@ -78,7 +79,7 @@ public class CreateOrderStep {
 			outboxPort.createAndSave(
 				"ORDER",
 				savedOrder.getOrderId(),
-				"ORDER_CREATED",
+				OutboxEventType.ORDER_CREATED,
 				objectMapper.writeValueAsString(
 					toOrderCreatedPayload(savedOrder, orderItems)
 				)

@@ -16,6 +16,7 @@ import com.rushcrew.order_service.application.port.out.OutboxPort;
 import com.rushcrew.order_service.application.port.out.PaymentPort;
 import com.rushcrew.order_service.domain.model.order.Order;
 import com.rushcrew.order_service.global.error.OrderErrorCode;
+import com.rushcrew.order_service.infrastructure.messaging.event.OutboxEventType;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -76,7 +77,7 @@ public class RequestPaymentService implements RequestPaymentUseCase {
 			outboxPort.createAndSave(
 				"ORDER",
 				savedOrder.getOrderId(),
-				"ORDER_PAID",
+				OutboxEventType.ORDER_PAID,
 				objectMapper.writeValueAsString(eventPayload)
 			);
 		} catch (Exception e) {
