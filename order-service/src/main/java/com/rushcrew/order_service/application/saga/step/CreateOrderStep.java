@@ -1,28 +1,25 @@
 package com.rushcrew.order_service.application.saga.step;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
 import com.rushcrew.order_service.application.command.port.out.OrderCommandPort;
-import com.rushcrew.order_service.application.port.dto.TimeDealInfo;
 import com.rushcrew.order_service.application.port.out.OutboxPort;
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
-import com.rushcrew.order_service.application.saga.dto.SagaStepResult;
 import com.rushcrew.order_service.domain.model.order.Order;
 import com.rushcrew.order_service.domain.model.order.OrderItem;
 import com.rushcrew.order_service.domain.model.order.OrderReservation;
-import com.rushcrew.order_service.domain.vo.ProductSnapshot;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rushcrew.order_service.infrastructure.messaging.event.OutboxEventType;
+import com.rushcrew.order_service.infrastructure.messaging.event.StockReservedEvent;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,115 +32,96 @@ public class CreateOrderStep {
 	private final OutboxPort outboxPort;
 	private final ObjectMapper objectMapper;
 
-	/**
-	 * Forward Transaction: 주문 생성
-	 * - Order 엔티티 생성 및 저장
-	 * - Outbox에 ORDER_CREATED 이벤트 저장
-	 */
-	public SagaStepResult execute(SagaContext context, OrderCreationSagaData data) {
+	@Transactional
+	public void execute(SagaContext context, OrderCreationSagaData data, StockReservedEvent event) {
+		log.info("[Saga-{}] CreateOrderStep 시작", context.getSagaId());
+
+		CreateOrderCommand command = data.getCommand();
+
+		// 1. OrderItem 생성 stock.reserved 수신한 StockReservedEvent 사용
+		var orderItems = event.reservedItems().stream()
+			.map(reservedItem -> OrderItem.create(
+				UUID.fromString(reservedItem.timeDealStockId()),
+				reservedItem.quantity(),
+				reservedItem.discountedPrice()
+			))
+			.toList();
+
+		// 2. Order 생성
+		Order order = Order.create(
+			data.getOrderId(),
+			command.userId(),
+			orderItems,
+			command.pointUsed(),
+			command.shippingInfo()
+		);
+
+		// 3. Saga ID 저장 (구매확정 시 멱등성 보장용)
+		order.assignSagaId(context.getSagaId());
+
+		// 4. 재고 예약 정보 추가
+		event.reservedItems().forEach(reservedItem ->
+			order.addReservation(
+				OrderReservation.create(
+					UUID.fromString(reservedItem.timeDealStockId()),
+					reservedItem.quantity()
+				)
+			)
+		);
+
+		// 5. Order 저장
+		Order savedOrder = orderCommandPort.save(order);
+
+		log.info("[Saga-{}] 주문 저장 완료: orderId={}", context.getSagaId(), savedOrder.getOrderId());
+
+		// 6. Outbox 이벤트
 		try {
-			log.info("[Saga-{}] CreateOrder 실행 시작", context.getSagaId());
-
-			CreateOrderCommand command = data.getCommand();
-			TimeDealInfo timeDeal = (TimeDealInfo) context.getData("timeDeal");
-
-			// 1. OrderItem 목록 생성
-			List<OrderItem> orderItems = data.getOrderItems().stream()
-				.map(itemResult -> {
-					// ProductSnapshot 생성
-					ProductSnapshot snapshot = ProductSnapshot.builder()
-						.timeDealStockId(String.valueOf(itemResult.timeDealStockId()))
-						.productId(String.valueOf(itemResult.productId()))
-						.productName(itemResult.productName())
-						// .productDescription("")
-						.optionName(itemResult.optionName())
-						.timeDealId(String.valueOf(timeDeal.timeDealId()))
-						.timeDealTitle(timeDeal.title())
-						// .discountRate(timeDeal.discountRate())
-						.build();
-
-					return OrderItem.create(
-						itemResult.timeDealStockId(),
-						itemResult.quantity(),
-						itemResult.unitPrice(),
-						itemResult.discountPrice(),
-						snapshot
-					);
-				})
-				.collect(Collectors.toList());
-
-			// 2. Order 생성
-			Order order = Order.create(
-				command.userId(),
-				orderItems,
-				command.pointUsed(),
-				command.shippingInfo()
-			);
-
-			// 3. OrderReservation 추가
-			for (CreateOrderCommand.OrderItemCommand itemCommand : command.orderItems()) {
-				OrderReservation reservation = OrderReservation.create(
-					itemCommand.timeDealStockId(),
-					itemCommand.quantity()
-				);
-				order.addReservation(reservation);
-			}
-
-			// 4. Order 저장 --> PostgreSQL
-			Order savedOrder = orderCommandPort.save(order);
-
-			log.info("[Saga-{}] Order 저장 완료: orderId={}", context.getSagaId(), savedOrder.getOrderId());
-
-			// 5. Outbox에 ORDER_CREATED 이벤트 저장 (같은 트랜잭션)
-			Map<String, Object> eventPayload = new HashMap<>();
-			eventPayload.put("orderId", savedOrder.getOrderId());
-			eventPayload.put("userId", savedOrder.getUserId());
-			eventPayload.put("status", savedOrder.getStatus().name());
-			eventPayload.put("totalAmount", savedOrder.getTotalAmount());
-			eventPayload.put("pointUsed", savedOrder.getPointUsed());
-			eventPayload.put("finalAmount", savedOrder.getFinalAmount());
-			eventPayload.put("orderedAt", savedOrder.getOrderedAt());
-
 			outboxPort.createAndSave(
 				"ORDER",
 				savedOrder.getOrderId(),
-				"ORDER_CREATED",
-				objectMapper.writeValueAsString(eventPayload)
+				OutboxEventType.ORDER_CREATED,
+				objectMapper.writeValueAsString(
+					toOrderCreatedPayload(savedOrder, orderItems)
+				)
 			);
-
-			log.info("[Saga-{}] Outbox 이벤트 저장 완료", context.getSagaId());
-
-			// 6. SagaData에 orderId 저장
-			data.setOrderId(savedOrder.getOrderId());
-			context.setData("orderId", savedOrder.getOrderId());
-
-			// 7. 결과 데이터 생성
-			Instant reservationExpiresAt = savedOrder.getReservations().stream()
-				.map(OrderReservation::getExpiresAt)
-				.findFirst()
-				.orElse(Instant.now().plus(15, ChronoUnit.MINUTES));
-
-			// reservationExpiresAt, orderedAt, orderStatus를 context에 저장 (OrderCreationSagaOrchestrator에서 사용)
-			context.setData("reservationExpiresAt", reservationExpiresAt);
-			context.setData("orderedAt", savedOrder.getOrderedAt());
-			context.setData("orderStatus", savedOrder.getStatus().name());
-
-			Map<String, Object> resultData = new HashMap<>();
-			resultData.put("orderId", savedOrder.getOrderId());
-			resultData.put("reservationExpiresAt", reservationExpiresAt);
-
-			log.info("[Saga-{}] CreateOrder 실행 완료: orderId={}",
-				context.getSagaId(), savedOrder.getOrderId());
-
-			return SagaStepResult.success(resultData);
-
-		} catch (JsonProcessingException e) {
-			log.error("[Saga-{}] CreateOrder 실패: JSON 변환 오류", context.getSagaId(), e);
-			return SagaStepResult.failure("주문 생성 실패: JSON 변환 오류");
+			log.info("[Saga-{}] ORDER_CREATED 이벤트 발행 완료", context.getSagaId());
 		} catch (Exception e) {
-			log.error("[Saga-{}] CreateOrder 실패", context.getSagaId(), e);
-			return SagaStepResult.failure("주문 생성 실패: " + e.getMessage());
+			log.error("[Saga-{}] ORDER_CREATED Outbox 실패", context.getSagaId(), e);
+			throw new IllegalStateException("ORDER_CREATED Outbox 실패", e);
 		}
+
+		// 6. SagaData 반영
+		// data.bindOrderId(savedOrder.getOrderId());
+
+		log.info("[Saga-{}] CreateOrderStep 완료: orderId={}", context.getSagaId(), savedOrder.getOrderId());
+	}
+
+	private Map<String, Object> toOrderCreatedPayload(
+		Order order,
+		List<OrderItem> items
+	) {
+		Map<String, Object> payload = new HashMap<>();
+
+		payload.put("orderId", order.getOrderId());
+		payload.put("userId", order.getUserId());
+		payload.put("totalAmount", order.getTotalAmount());
+		payload.put("pointUsed", order.getPointUsed());
+		payload.put("finalAmount", order.getFinalAmount());
+		payload.put("status", order.getStatus().name());
+		payload.put("orderedAt", order.getOrderedAt());
+
+		payload.put("items", items.stream()
+			.map(item -> {
+				Map<String, Object> itemMap = new HashMap<>();
+				itemMap.put("timeDealStockId", item.getTimeDealStockId());
+				itemMap.put("quantity", item.getQuantity());
+				itemMap.put("unitPrice", item.getUnitPrice());
+				itemMap.put("discountPrice", item.getDiscountPrice()); // null 허용
+				return itemMap;
+			})
+			.toList()
+		);
+		return payload;
 	}
 
 }

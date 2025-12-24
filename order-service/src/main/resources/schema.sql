@@ -1,2 +1,1 @@
 CREATE SCHEMA IF NOT EXISTS order_schema;
-CREATE SCHEMA IF NOT EXISTS quartz_schema;

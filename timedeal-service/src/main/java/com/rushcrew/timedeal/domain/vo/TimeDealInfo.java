@@ -16,8 +16,9 @@ public class TimeDealInfo {
 
     private String title;
     private String description;
+    private Long sellerId;
 
-    private TimeDealInfo(String title, String description) {
+    private TimeDealInfo(String title, String description, Long sellerId) {
         if (title == null || title.isBlank()) {
             throw new BusinessException(TimeDealErrorCode.REQUIRED_TITLE);
         }
@@ -25,11 +26,16 @@ public class TimeDealInfo {
             throw new BusinessException(TimeDealErrorCode.REQUIRED_DESCRIPTION);
         }
 
+        if (sellerId == null) {
+            throw new BusinessException(TimeDealErrorCode.REQUIRED_SELLER_ID);
+        }
+
         this.title = title;
         this.description = description;
+        this.sellerId = sellerId;
     }
 
-    public static TimeDealInfo of(String title, String description) {
-        return new TimeDealInfo(title, description);
+    public static TimeDealInfo of(String title, String description, Long sellerId) {
+        return new TimeDealInfo(title, description, sellerId);
     }
 }

@@ -92,8 +92,8 @@ public class AutoConfirmPurchaseBatchJob {
 					order.getUserId(),
 					order.getOrderId(),
 					order.getFinalAmount(),
-					"자동 구매확정",
-					Instant.now()
+					order.getSagaId(),
+					"자동 구매확정"
 				);
 
 				log.info("자동 구매확정 완료 + 포인트 적립 요청 - 주문 ID: {}, 사용자 ID: {}",

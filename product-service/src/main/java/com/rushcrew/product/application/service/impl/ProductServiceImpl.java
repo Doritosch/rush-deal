@@ -9,10 +9,12 @@ import com.rushcrew.product.application.result.ProductOptionResult;
 import com.rushcrew.product.application.result.ProductResult;
 import com.rushcrew.product.application.result.UpdateProductResult;
 import com.rushcrew.product.application.service.ProductService;
+import com.rushcrew.product.application.service.ProductPolicy;
 import com.rushcrew.product.domain.entity.Product;
 import com.rushcrew.product.domain.model.CreateProductParams;
 import com.rushcrew.product.domain.model.UpdateProductParams;
 import com.rushcrew.product.domain.repository.ProductRepository;
+import com.rushcrew.product.domain.vo.SellerId;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -27,14 +29,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductPolicy productPolicy;
 
     @Override
     @Transactional
-    public CreateProductResult createProduct(CreateProductCommand command) {
-        // TODO: 요청한 사용자 userRole이 ADMIN or SELLEER인지 확인하는 로직 추가 예정
+    public CreateProductResult createProduct(
+        Long userId, String role, CreateProductCommand command
+    ) {
+        SellerId sellerId = productPolicy.decideSellerId(command.sellerId(), userId, role);
 
         CreateProductParams params = new CreateProductParams(
-            command.sellerId(), command.companyName(), command.productInfo(),
+            sellerId, command.companyName(), command.productInfo(),
             command.price(), command.category(), command.optionCommands()
         );
 
@@ -45,9 +50,11 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public UpdateProductResult updateProduct(UUID productId, UpdateProductCommand command) {
-        Product product = findAndValidateProduct(productId);
-        checkPermission(product);
+    public UpdateProductResult updateProduct(
+        Long userId, String role, UUID productId, UpdateProductCommand command
+    ) {
+        Product product = productPolicy.findAndValidateProduct(productId);
+        productPolicy.validateSellerPermission(product, userId, role);
 
         UpdateProductParams params = new UpdateProductParams(
             command.companyName(), command.category(), command.price(),
@@ -60,28 +67,27 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public void disableProduct(UUID productId) {
-        Product product = findAndValidateProduct(productId);
-        checkPermission(product);
+    public void disableProduct(Long userId, String role, UUID productId) {
+        Product product = productPolicy.findAndValidateProduct(productId);
+        productPolicy.validateSellerPermission(product, userId, role);
         product.deactivate();
     }
 
     @Override
     @Transactional
-    public void enableProduct(UUID productId) {
-        Product product = findAndValidateProduct(productId);
-        checkPermission(product);
+    public void enableProduct(Long userId, String role, UUID productId) {
+        Product product = productPolicy.findAndValidateProduct(productId);
+        productPolicy.validateSellerPermission(product, userId, role);
         product.activate();
     }
 
     @Override
     @Transactional
-    public void deleteProduct(UUID productId) {
-        Product product = findAndValidateProduct(productId);
-        checkPermission(product);
+    public void deleteProduct(Long userId, String role, UUID productId) {
+        Product product = productPolicy.findAndValidateProduct(productId);
+        productPolicy.validateSellerPermission(product, userId, role);
 
-        // TODO: 추후에 사용자 정보 가지고 오면 주석처리 풀 예정
-//        product.delete(userId);
+        product.delete(userId);
     }
 
     @Override
@@ -98,20 +104,5 @@ public class ProductServiceImpl implements ProductService {
             product.getOptions().stream().map(ProductOptionResult::from).toList();
 
         return ProductDetailResult.of(product, optionResultList);
-    }
-
-    // 유효성 검증한 product 반환
-    private Product findAndValidateProduct(UUID productId) {
-        // TODO: 요청한 사용자 userRole이 ADMIN or SELLEER인지 확인하는 로직 추가 예정
-
-        return productRepository.findByIdAndDeletedAtIsNull(productId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
-    }
-
-    private void checkPermission(Product product) {
-        /* TODO: 요청한 사용자 userRole이
-            ADMIN or product.sellerId와 일치하는 SELLEER인지
-            확인하는 로직 추가 예정
-        */
     }
 }

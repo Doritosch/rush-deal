@@ -2,9 +2,9 @@ package com.rushcrew.order_service.application.query.service;
 
 import java.util.UUID;
 
+import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.order_service.application.query.dto.OrderDetailDto;
@@ -16,9 +16,7 @@ import com.rushcrew.order_service.application.query.port.out.OrderQueryPort;
 import com.rushcrew.order_service.global.error.OrderErrorCode;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderQueryService implements GetOrderDetailUseCase, GetOrderListUseCase {
@@ -27,18 +25,19 @@ public class OrderQueryService implements GetOrderDetailUseCase, GetOrderListUse
 
 	@Override
 	public OrderDetailDto getOrderDetail(UUID orderId, Long userId, boolean isMaster) {
-		log.info("주문 상세 조회: orderId={}, userId={}", orderId, userId);
-		OrderDetailDto dto = orderQueryPort.findById(orderId)
+		OrderDetailDto dto = orderQueryPort.findOrderDetail(orderId)
 			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
+
+		// 권한 검증: 관리자가 아니고 본인 주문이 아니면 예외
 		if (!isMaster && !dto.getUserId().equals(userId)) {
 			throw new BusinessException(OrderErrorCode.ORDER_ACCESS_DENIED);
 		}
+
 		return dto;
 	}
 
 	@Override
 	public Page<OrderListDto> getOrderList(OrderSearchCriteria criteria, Pageable pageable) {
-		log.info("주문 목록 조회: userId={}", criteria.getUserId());
 		return orderQueryPort.findByCriteria(criteria, pageable);
 	}
 }

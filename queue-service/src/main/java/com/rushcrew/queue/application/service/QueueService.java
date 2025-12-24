@@ -42,9 +42,14 @@ public class QueueService implements QueuePort {
     @Override
     @Transactional(readOnly = true)
     public QueueRedisResponse enterQueue(EnterQueueCommand command) {
+        // 재고 품절 여부 확인 (Redis 조회)
+        if (queueRepository.isSoldOut(command.productId())) {
+            throw new BusinessException(QueueErrorCode.PRODUCT_SOLD_OUT);
+        }
+
         // 대기열 정책 확인 (RDB 조회 - 상품 존재 여부 및 시간 확인)
         QueuePolicy policy = queuePolicyRepository.findByProductId(command.productId())
-            .orElseThrow(() -> new NoSuchElementException("타임딜이 운영되지 않는 상품입니다."));
+            .orElseThrow(() -> new BusinessException(QueueErrorCode.NO_TIMEDEAL_PRODUCT));
 
         QueueToken queueToken = QueueToken.create(command.productId(), command.userId());
 
@@ -56,25 +61,15 @@ public class QueueService implements QueuePort {
             throw new BusinessException(QueueErrorCode.USER_ALREADY_IN_WAITING_QUEUE);
         }
 
-        // 현재 순번 조회
-        Long waitingRank = queueRepository.getWaitingRank(command.productId(), queueToken.getId());
-        // 요청시간 LocalDateTime 타입으로 변환
-        LocalDateTime enteredAt = convertLocalDateTime(queueToken.getRequestTime());
-
-        return QueueRedisResponse.builder()
-            .token(queueToken.getId().getValue())
-            .productId(queueToken.getProductId())
-            .rank(waitingRank)
-            .status(queueToken.getStatus())
-            .enteredAt(enteredAt)
-            .build();
+        String tokenValue = queueToken.getId().getValue().toString();
+        return getQueueRank(command.productId(), tokenValue, command.userId(), command.role());
     }
 
     /**
      * 대기열 순번, 상태 조회 (polling)
      */
     @Override
-    public QueueRedisResponse getQueueRank(UUID productId, String token, Long userId, String role) {
+    public QueueRedisResponse getQueueRank(UUID productId, String token, Long userId) {
         // 토큰 유효성 검증: 본인 확인 (대기열 토큰 소유권 검증)
         boolean isOwner = queueRepository.verifyTokenOwner(productId, userId, token);
         if (!isOwner) {
@@ -185,7 +180,7 @@ public class QueueService implements QueuePort {
      * 토큰 유효성 검증 (활성화 여부)
      */
     @Override
-    public boolean validateActivatedQueueToken(UUID productId, String token) {
+    public boolean validateActivatedQueueToken(UUID productId, String token, Long userId, String role) {
         TokenId tokenId = extractValidQueueTokenId(token);
         return queueRepository.isActivatedToken(productId, tokenId);
     }

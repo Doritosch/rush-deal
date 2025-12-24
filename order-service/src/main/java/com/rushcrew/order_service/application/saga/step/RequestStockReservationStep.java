@@ -1,0 +1,120 @@
+package com.rushcrew.order_service.application.saga.step;
+
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
+import com.rushcrew.order_service.application.port.out.OutboxPort;
+import com.rushcrew.order_service.application.port.out.StockEventPort;
+import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
+import com.rushcrew.order_service.application.saga.dto.SagaContext;
+import com.rushcrew.order_service.application.saga.dto.SagaStepResult;
+import com.rushcrew.order_service.infrastructure.messaging.event.OutboxEventType;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class RequestStockReservationStep {
+
+	private final OutboxPort outboxPort;
+	private final ObjectMapper objectMapper;
+	private final StockEventPort stockEventPort;
+
+	public SagaStepResult execute(SagaContext context, OrderCreationSagaData data) {
+		try {
+			log.info("[Saga-{}] 재고 예약 요청 Outbox 저장", context.getSagaId());
+
+			CreateOrderCommand command = data.getCommand();
+
+			// 페이로드 구성
+			StockReservationRequestPayload payload = StockReservationRequestPayload.builder()
+				.sagaId(context.getSagaId().toString())
+				.userId(command.userId())
+				.timeDealId(command.timeDealId().toString())
+				.productId(command.productId().toString())
+				.orderItems(command.orderItems().stream()
+					.map(item -> new StockReservationRequestPayload.StockItem(
+						item.timeDealStockId().toString(),
+						item.quantity()
+					))
+					.toList())
+				.build();
+
+			// Outbox에 이벤트 저장 (CreateOrderStep과 동일한 방식)
+			outboxPort.createAndSave(
+				"ORDER_SAGA",                           // aggregateType
+				context.getSagaId(),                    // aggregateId (sagaId)
+				OutboxEventType.STOCK_RESERVATION_REQUESTED,
+				objectMapper.writeValueAsString(payload) // payload
+			);
+
+			log.info("[Saga-{}] 재고 예약 요청 Outbox 저장 완료", context.getSagaId());
+			return SagaStepResult.success();
+
+		} catch (Exception e) {
+			log.error("[Saga-{}] 재고 예약 요청 Outbox 저장 실패", context.getSagaId(), e);
+			return SagaStepResult.failure("재고 예약 요청 실패: " + e.getMessage());
+		}
+	}
+
+	public void compensate(SagaContext context, OrderCreationSagaData data) {
+		try {
+			log.info("[Saga-{}] 재고 예약 취소 시작", context.getSagaId());
+
+			CreateOrderCommand command = data.getCommand();
+
+			// 각 주문 아이템에 대해 재고 예약 취소 이벤트 발행
+			command.orderItems().forEach(item -> {
+				try {
+					stockEventPort.publishStockReservationCancelled(
+						data.getOrderId(),           // orderId
+						item.timeDealStockId(),      // timeDealStockId
+						item.quantity(),             // quantity
+						"Saga 보상 트랜잭션"           // reason
+					);
+
+					log.info("[Saga-{}] 재고 예약 취소 완료: timeDealStockId={}, quantity={}",
+						context.getSagaId(), item.timeDealStockId(), item.quantity());
+
+				} catch (Exception e) {
+					log.error("[Saga-{}] 재고 예약 취소 실패: timeDealStockId={}",
+						context.getSagaId(), item.timeDealStockId(), e);
+					throw e; // 재시도를 위해 예외 전파
+				}
+			});
+
+			log.info("[Saga-{}] 모든 재고 예약 취소 완료", context.getSagaId());
+
+		} catch (Exception e) {
+			log.error("[Saga-{}] 재고 예약 취소 실패", context.getSagaId(), e);
+			throw new RuntimeException("재고 예약 취소 실패", e);
+		}
+	}
+
+
+	/**
+	 * 재고 예약 요청 페이로드
+	 */
+	@Getter
+	@Builder
+	public static class StockReservationRequestPayload {
+		private String sagaId;
+		private Long userId;
+		private String timeDealId;
+		private String productId;
+		private java.util.List<StockItem> orderItems;
+
+		@Getter
+		@AllArgsConstructor
+		public static class StockItem {
+			private String timeDealStockId;
+			private Long quantity;
+		}
+	}
+}

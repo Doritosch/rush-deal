@@ -1,12 +1,14 @@
 spring:
   application:
     name: timedeal-service
-  config:
-    import: "optional:file:.env"
+  data:
+    redis:
+      host: ${TIMEDEAL_REDIS_HOST}
+      port: ${TIMEDEAL_REDIS_PORT}
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${TIME_DEAL_DB}
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -19,11 +21,27 @@ spring:
   sql:
     init:
       mode: always
-
-server:
-  port: 8030
+  kafka:
+    bootstrap-servers: ${BOOTSTRAP_SERVERS}
 
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      access: unrestricted
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+  tracing:
+    sampling:
+      probability: 1.0

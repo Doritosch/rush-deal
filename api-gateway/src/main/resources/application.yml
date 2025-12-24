@@ -37,6 +37,32 @@ spring:
               uri: lb://auth-service
               predicates:
                 - Path=/api/v1/auth/**
+
+            - id: product-routes
+              uri: lb://product-service
+              predicates:
+                - Path=/api/v1/product/**
+
+            - id: timedeal-routes
+              uri: lb://timedeal-service
+              predicates:
+                - Path=/api/v1/timedeal/**
+
+            - id: order-routes
+              uri: lb://order-service
+              predicates:
+                - Path=/api/v1/order/**
+
+            - id: payment-routes
+              uri: lb://payment-service
+              predicates:
+                - Path=/api/v1/payments/**
+
+            - id: queue-service
+              uri: lb://queue-service
+              predicates:
+                - Path=/api/v1/queues/**, /api/v1/queue/policies/**, /api/v1/internal/queues/**
+
           discovery:
             locator:
               enabled: true
@@ -56,3 +82,14 @@ gateway:
     - /api/v1/auth/signup
     - /api/v1/auth/login
     - /actuator/health
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      access: unrestricted

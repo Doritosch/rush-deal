@@ -1,7 +1,6 @@
 package com.rushcrew.order_service.infrastructure.adapter.out.messaging;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -25,7 +24,13 @@ public class PointEventPublisher implements PointEventPort {
 	private final ObjectMapper objectMapper;
 
 	@Override
-	public void publishPointEarnRequested(Long userId, UUID orderId, BigDecimal finalAmount, String reason, Instant timestamp) {
+	public void publishPointEarnRequested(
+		Long userId,
+		UUID orderId,
+		BigDecimal finalAmount,
+		UUID sagaId,
+		String reason
+	) {
 		try {
 			log.info("포인트 적립 요청 이벤트 발행: userId={}, orderId={}, finalAmount={}", userId, orderId, finalAmount);
 
@@ -33,8 +38,9 @@ public class PointEventPublisher implements PointEventPort {
 			event.put("userId", userId);
 			event.put("orderId", orderId.toString());
 			event.put("finalAmount", finalAmount);
-			event.put("reason", reason);
-			event.put("timestamp", timestamp.toString());
+			event.put("sagaId", sagaId);
+			// event.put("reason", reason);
+			// event.put("timestamp", timestamp.toString());
 
 			String payload = objectMapper.writeValueAsString(event);
 
@@ -55,17 +61,17 @@ public class PointEventPublisher implements PointEventPort {
 	}
 
 	@Override
-	public void publishPointRefundRequested(Long userId, UUID orderId, BigDecimal pointUsed, String reason,
-		Instant timestamp) {
+	public void publishPointRefundRequested(Long userId, UUID orderId, UUID sagaId, Long pointUsed, String reason) {
 		try {
 			log.info("포인트 환불 요청 이벤트 발행: userId={}, orderId={}, pointUsed={}", userId, orderId, pointUsed);
 
 			Map<String, Object> event = new HashMap<>();
 			event.put("userId", userId);
 			event.put("orderId", orderId.toString());
-			event.put("pointUsed", pointUsed);
-			event.put("reason", reason);
-			event.put("timestamp", timestamp.toString());
+			event.put("sagaId", sagaId);
+			// event.put("pointUsed", pointUsed);
+			// event.put("reason", reason);
+			// event.put("timestamp", timestamp.toString());
 
 			String payload = objectMapper.writeValueAsString(event);
 

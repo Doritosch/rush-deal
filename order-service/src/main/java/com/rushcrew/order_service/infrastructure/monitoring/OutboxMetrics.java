@@ -6,7 +6,10 @@ import org.springframework.stereotype.Component;
 import com.rushcrew.order_service.infrastructure.persistence.outbox.entity.OutboxEventEntity;
 import com.rushcrew.order_service.infrastructure.persistence.outbox.repository.OutboxEventJpaRepository;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,20 +21,44 @@ public class OutboxMetrics {
 	private final OutboxEventJpaRepository outboxRepository;
 	private final MeterRegistry meterRegistry;
 
-	@Scheduled(fixedDelay = 60000) // 1분마다
+	@Getter
+	private long currentPendingCount = 0;
+	@Getter
+	private long currentFailedCount = 0;
+
+	@PostConstruct
+	public void initMetrics() {
+		Gauge.builder("outbox.pending.count", this, OutboxMetrics::getCurrentPendingCount)
+			.description("발행 대기 중인 Outbox 이벤트 수")
+			.register(meterRegistry);
+
+		Gauge.builder("outbox.failed.count", this, OutboxMetrics::getCurrentFailedCount)
+			.description("발행 실패한 Outbox 이벤트 수")
+			.register(meterRegistry);
+	}
+
+	@Scheduled(fixedDelay = 60000)
 	public void recordMetrics() {
-		long pendingCount = outboxRepository.countByStatus(OutboxEventEntity.OutboxStatus.PENDING);
-		long failedCount = outboxRepository.countByStatus(OutboxEventEntity.OutboxStatus.FAILED);
+		try {
+			currentPendingCount =
+				outboxRepository.countByStatus(OutboxEventEntity.OutboxStatus.PENDING);
+			currentFailedCount =
+				outboxRepository.countByStatus(OutboxEventEntity.OutboxStatus.FAILED);
 
-		meterRegistry.gauge("outbox.pending.count", pendingCount);
-		meterRegistry.gauge("outbox.failed.count", failedCount);
+			log.debug("Outbox 메트릭 업데이트: PENDING={}, FAILED={}",
+				currentPendingCount, currentFailedCount);
 
-		if (pendingCount > 100) {
-			log.warn("Outbox PENDING 이벤트가 {}개로 많습니다!", pendingCount);
-		}
+			if (currentPendingCount > 100) {
+				log.warn("⚠️ Outbox PENDING 이벤트 {}개", currentPendingCount);
+			}
 
-		if (failedCount > 10) {
-			log.error("Outbox FAILED 이벤트가 {}개입니다. 확인이 필요합니다!", failedCount);
+			if (currentFailedCount > 10) {
+				log.error("🚨 Outbox FAILED 이벤트 {}개", currentFailedCount);
+			}
+
+		} catch (Exception e) {
+			log.error("Outbox 메트릭 수집 실패", e);
 		}
 	}
+
 }

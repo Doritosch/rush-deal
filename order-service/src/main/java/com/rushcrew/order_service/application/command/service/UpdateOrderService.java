@@ -16,10 +16,10 @@ import com.rushcrew.order_service.application.command.port.out.OrderCachePort;
 import com.rushcrew.order_service.application.command.port.out.OrderCommandPort;
 import com.rushcrew.order_service.application.command.usecase.UpdateOrderUseCase;
 import com.rushcrew.order_service.application.port.out.OutboxPort;
-import com.rushcrew.order_service.application.query.dto.OrderDetailDto;
 import com.rushcrew.order_service.domain.enums.OrderStatus;
 import com.rushcrew.order_service.domain.model.order.Order;
 import com.rushcrew.order_service.global.error.OrderErrorCode;
+import com.rushcrew.order_service.infrastructure.messaging.event.OutboxEventType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -79,16 +79,6 @@ public class UpdateOrderService implements UpdateOrderUseCase {
 		// 주문 저장
 		Order savedOrder = orderCommandPort.save(order);
 
-		// 캐시 업데이트
-		try {
-			OrderDetailDto orderDetailDto = OrderDetailDto.fromEntity(savedOrder);
-			orderCachePort.updateOrderCache(savedOrder.getOrderId(), orderDetailDto);
-			log.info("주문 캐시 업데이트 완료: orderId={}", savedOrder.getOrderId());
-		} catch (Exception e) {
-			log.error("주문 캐시 업데이트 실패: orderId={}", savedOrder.getOrderId(), e);
-			// 캐시 업데이트 실패는 치명적이지 않으므로 예외를 던지지 않음
-		}
-
 		log.info("주문 수정 완료: orderId={}", savedOrder.getOrderId());
 
 		// Outbox 이벤트 저장
@@ -104,7 +94,7 @@ public class UpdateOrderService implements UpdateOrderUseCase {
 			outboxPort.createAndSave(
 				"ORDER",
 				savedOrder.getOrderId(),
-				"ORDER_UPDATED",
+				OutboxEventType.ORDER_UPDATED,
 				objectMapper.writeValueAsString(eventPayload)
 			);
 
@@ -152,7 +142,7 @@ public class UpdateOrderService implements UpdateOrderUseCase {
 			}
 		}
 
-		// PAID 상태: 결제 완료 후 7일 이내만 수정 가능 --> TODO: 추후 배송 상태 추가하거나 배송 기능 추가되면 이 부분 로직 변경해야 함
+		// PAID 상태: 결제 완료 후 7일 이내만 수정 가능
 		if (status == OrderStatus.PAID) {
 			if (order.getPaymentCompletedAt() == null) {
 				throw new IllegalStateException("PAID 상태인데 결제 완료 시간이 없습니다.");

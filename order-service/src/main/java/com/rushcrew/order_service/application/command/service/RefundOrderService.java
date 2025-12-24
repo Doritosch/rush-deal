@@ -1,7 +1,5 @@
 package com.rushcrew.order_service.application.command.service;
 
-import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,6 +19,7 @@ import com.rushcrew.order_service.application.port.out.StockEventPort;
 import com.rushcrew.order_service.domain.model.order.Order;
 import com.rushcrew.order_service.domain.model.order.OrderItem;
 import com.rushcrew.order_service.global.error.OrderErrorCode;
+import com.rushcrew.order_service.infrastructure.messaging.event.OutboxEventType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +36,21 @@ public class RefundOrderService implements RefundOrderUseCase {
 	private final OutboxPort outboxPort;
 	private final ObjectMapper objectMapper;
 
+	/**
+	 * 주문 환불 처리
+	 * 
+	 * 환불은 PAID 상태에서만 가능하다
+	 * 구매확정(PURCHASE_CONFIRMED) 후에는 환불 불가능
+	 * 
+	 * 처리 순서:
+	 * 1. 주문 검증 (존재 여부, 소유자 확인)
+	 * 2. 환불 가능 상태 검증 (PAID 상태만 가능)
+	 * 3. 결제 취소 (Payment Service)
+	 * 4. 주문 상태 변경 (PAID → REFUNDED)
+	 * 5. 포인트 환불 이벤트 발행
+	 * 6. 재고 복구 이벤트 발행
+	 * 7. 주문 환불 이벤트 발행
+	 */
 	@Override
 	@Transactional
 	public RefundOrderResult refundOrder(RefundOrderCommand command) {
@@ -49,16 +63,16 @@ public class RefundOrderService implements RefundOrderUseCase {
 			throw new BusinessException(OrderErrorCode.ORDER_ACCESS_DENIED);
 		}
 
+		// 환불 가능 상태 검증: PAID 상태만 가능 (구매확정 후 환불 불가)
 		if (!order.canRefund()) {
 			throw new BusinessException(OrderErrorCode.ORDER_CANNOT_REFUND);
 		}
 
-		// 결제 취소 (동기)
+		// 결제 취소
 		try {
 			paymentPort.cancelPayment(
 				order.getOrderId(),
-				order.getUserId(),
-				order.getFinalAmount()
+				order.getUserId()
 			);
 			log.info("결제 취소 완료: orderId={}, refundAmount={}",
 				order.getOrderId(), order.getFinalAmount());
@@ -76,14 +90,14 @@ public class RefundOrderService implements RefundOrderUseCase {
 			savedOrder.getOrderId(), savedOrder.getRefundedAt());
 
 		// 포인트 환불 이벤트 발행
-		if (savedOrder.getPointUsed().compareTo(BigDecimal.ZERO) > 0) {
+		if (savedOrder.getPointUsed() != null && savedOrder.getPointUsed() > 0L) {
 			try {
 				pointEventPort.publishPointRefundRequested(
 					savedOrder.getUserId(),
 					savedOrder.getOrderId(),
+					savedOrder.getSagaId(),
 					savedOrder.getPointUsed(),
-					"주문 환불에 의한 포인트 환불",
-					Instant.now()
+					"주문 환불에 의한 포인트 환불"
 				);
 			} catch (Exception e) {
 				log.error("포인트 이벤트 발행 실패", e);
@@ -94,12 +108,11 @@ public class RefundOrderService implements RefundOrderUseCase {
 		// 재고 복구 이벤트 발행
 		for (OrderItem orderItem : savedOrder.getOrderItems()) {
 			try {
-				stockEventPort.publishStockRollbackRequested(
+				stockEventPort.publishStockReservationCancelled(
 					savedOrder.getOrderId(),
 					orderItem.getTimeDealStockId(),
 					orderItem.getQuantity(),
-					"주문 환불에 의한 재고 복구",
-					Instant.now()
+					"주문 환불에 의한 재고 복구"
 				);
 			} catch (Exception e) {
 				log.error("재고 이벤트 발행 실패", e);
@@ -121,7 +134,7 @@ public class RefundOrderService implements RefundOrderUseCase {
 			outboxPort.createAndSave(
 				"ORDER",
 				savedOrder.getOrderId(),
-				"ORDER_REFUNDED",
+				OutboxEventType.ORDER_REFUNDED,
 				objectMapper.writeValueAsString(eventPayload)
 			);
 		} catch (Exception e) {

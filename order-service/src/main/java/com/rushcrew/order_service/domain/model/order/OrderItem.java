@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import org.hibernate.annotations.Type;
 
-import com.rushcrew.common.entity.BaseEntity;
+import com.rushcrew.order_service.domain.common.BaseEntity;
 import com.rushcrew.order_service.domain.vo.ProductSnapshot;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 
@@ -42,9 +42,9 @@ public class OrderItem extends BaseEntity {
 	private UUID timeDealStockId;
 
 	@Column(nullable = false)
-	private Integer quantity;
+	private Long quantity;
 
-	@Column(nullable = false, precision = 12, scale = 2)
+	@Column(precision = 12, scale = 2)
 	private BigDecimal unitPrice; // 상품 원가
 
 	@Column(nullable = false, precision = 12, scale = 2)
@@ -53,12 +53,11 @@ public class OrderItem extends BaseEntity {
 	@Column(nullable = false, precision = 12, scale = 2)
 	private BigDecimal subtotal;
 
-	// ★ 새로 추가되는 필드 (쿼리용)
-	@Column(nullable = false)
-	private UUID timeDealId;
+	// @Column(nullable = false)
+	// private UUID timeDealId;
 
 	@Type(JsonBinaryType.class)
-	@Column(columnDefinition = "jsonb", nullable = false)
+	@Column(columnDefinition = "jsonb")
 	private ProductSnapshot productSnapshot;
 
 
@@ -66,27 +65,28 @@ public class OrderItem extends BaseEntity {
 	//                 도메인 로직
 	// ============================================
 
+	// TODO: OrderItem 만들 때 ProductSnapShot 생성해서 주문 당시의 상품 정보가 같이 저장되도록
 	public static OrderItem create(
 		UUID timeDealStockId,
-		Integer quantity,
-		BigDecimal unitPrice,
-		BigDecimal discountPrice,
-		ProductSnapshot productSnapshot
+		Long quantity,
+		// BigDecimal unitPrice,
+		// ProductSnapshot productSnapshot,
+		BigDecimal discountPrice
 	) {
 		if (quantity == null || quantity <= 0) {
 			throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");
 		}
-		if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) <= 0) {
-			throw new IllegalArgumentException("상품 가격은 0보다 커야 합니다.");
-		}
+		// if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) <= 0) {
+		// 	throw new IllegalArgumentException("상품 가격은 0보다 커야 합니다.");
+		// }
 		if (discountPrice == null || discountPrice.compareTo(BigDecimal.ZERO) < 0) {
 			throw new IllegalArgumentException("할인가는 0 이상이어야 합니다.");
 		}
-		if (discountPrice.compareTo(unitPrice) > 0) {
-			throw new IllegalArgumentException(
-				"할인가[%S] 는 원가[%s] 보다 클 수 없습니다.".formatted(discountPrice, unitPrice)
-			);
-		}
+		// if (discountPrice.compareTo(unitPrice) > 0) {
+		// 	throw new IllegalArgumentException(
+		// 		"할인가[%S] 는 원가[%s] 보다 클 수 없습니다.".formatted(discountPrice, unitPrice)
+		// 	);
+		// }
 
 		BigDecimal subtotal = discountPrice.multiply(BigDecimal.valueOf(quantity));
 
@@ -94,11 +94,11 @@ public class OrderItem extends BaseEntity {
 			.orderItemId(UUID.randomUUID())
 			.timeDealStockId(timeDealStockId)
 			.quantity(quantity)
-			.unitPrice(unitPrice)
+			// .unitPrice(unitPrice)
 			.discountPrice(discountPrice)
 			.subtotal(subtotal)
-			.timeDealId(UUID.fromString(productSnapshot.timeDealId()))
-			.productSnapshot(productSnapshot)
+			// .timeDealId(UUID.fromString(productSnapshot.timeDealId()))
+			// .productSnapshot(productSnapshot)
 			.build();
 	}
 

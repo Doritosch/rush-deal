@@ -5,13 +5,12 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.rushcrew.order_service.application.command.dto.command.CreateOrderCommand;
 import com.rushcrew.order_service.application.saga.dto.OrderCreationSagaData;
 import com.rushcrew.order_service.application.saga.dto.SagaContext;
-import com.rushcrew.order_service.application.saga.step.CreateOrderStep;
-import com.rushcrew.order_service.application.saga.step.DeductPointStep;
-import com.rushcrew.order_service.application.saga.step.ReserveStockStep;
+import com.rushcrew.order_service.application.saga.step.RequestStockReservationStep;
+import com.rushcrew.order_service.application.saga.step.UsePointStep;
 import com.rushcrew.order_service.domain.enums.SagaStatus;
+import com.rushcrew.order_service.domain.enums.SagaStepName;
 import com.rushcrew.order_service.domain.model.saga.SagaInstance;
 import com.rushcrew.order_service.domain.model.saga.SagaStep;
 
@@ -19,98 +18,116 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Saga 복구 서비스
- * 타임아웃된 Saga에 대한 보상 트랜잭션 실행
+ * Saga 보상 트랜잭션 서비스
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class SagaRecoveryService {
 
-	private final ReserveStockStep reserveStockStep;
-	private final DeductPointStep deductPointStep;
+	private final UsePointStep usePointStep;
+	private final RequestStockReservationStep requestStockReservationStep;
 
-	/* 타임아웃된 Saga에 대한 보상 트랜잭션 실행 */
 	@Transactional
 	public void compensateSaga(SagaInstance sagaInstance) {
-		log.info("Saga 보상 트랜잭션 시작: sagaId={}, sagaType={}",
+		log.info("Saga 보상 시작: sagaId={}, type={}",
 			sagaInstance.getSagaId(), sagaInstance.getSagaType());
 
-		try {
-			// ORDER_CREATION Saga만 처리
-			if (!"ORDER_CREATION".equals(sagaInstance.getSagaType())) {
-				log.warn("지원하지 않는 Saga 타입: {}", sagaInstance.getSagaType());
-				return;
-			}
-
-			// 완료된 Step들을 역순으로 보상 트랜잭션 실행
-			List<SagaStep> completedSteps = sagaInstance.getSteps().stream()
-				.filter(step -> step.getStatus() == SagaStatus.COMPLETED)
-				.sorted((s1, s2) -> s2.getExecutedAt().compareTo(s1.getExecutedAt())) // 역순 정렬
-				.toList();
-
-			if (completedSteps.isEmpty()) {
-				log.info("보상할 완료된 Step이 없음: sagaId={}", sagaInstance.getSagaId());
-				sagaInstance.fail("Saga 타임아웃 - 보상할 Step 없음");
-				return;
-			}
-
-			// SagaContext와 SagaData 재구성 (최소한의 정보만)
-			SagaContext context = SagaContext.builder()
-				.sagaId(sagaInstance.getSagaId())
-				.userId(sagaInstance.getUserId())
-				.build();
-
-			// CreateOrderCommand는 복구 시에는 최소한의 정보만 필요
-			// 실제로는 DB에서 주문 정보를 조회하여 사용해야 하지만,
-			// 타임아웃된 Saga의 경우 주문이 생성되지 않았을 수도 있음
-			OrderCreationSagaData sagaData = OrderCreationSagaData.builder()
-				.command(CreateOrderCommand.builder()
-					.userId(sagaInstance.getUserId())
-					.build())
-				.build();
-
-			// 각 Step에 대해 역순으로 보상 트랜잭션 실행
-			for (SagaStep step : completedSteps) {
-				try {
-					compensateStep(step.getStepName(), context, sagaData);
-					step.markAsCompensated();
-					log.info("Step 보상 완료: sagaId={}, stepName={}",
-						sagaInstance.getSagaId(), step.getStepName());
-				} catch (Exception e) {
-					log.error("Step 보상 실패: sagaId={}, stepName={}",
-						sagaInstance.getSagaId(), step.getStepName(), e);
-					step.markAsFailed("보상 실패: " + e.getMessage());
-					// 보상 실패해도 다음 Step 보상 시도
-				}
-			}
-
-			sagaInstance.fail("Saga 타임아웃 - 보상 트랜잭션 완료");
-			log.info("Saga 보상 트랜잭션 완료: sagaId={}", sagaInstance.getSagaId());
-
-		} catch (Exception e) {
-			log.error("Saga 보상 트랜잭션 중 오류 발생: sagaId={}", sagaInstance.getSagaId(), e);
-			sagaInstance.fail("Saga 타임아웃 - 보상 트랜잭션 실패: " + e.getMessage());
-			throw e;
+		if (!"ORDER_CREATION".equals(sagaInstance.getSagaType())) {
+			log.warn("지원하지 않는 Saga 타입: {}", sagaInstance.getSagaType());
+			return;
 		}
+
+		// 완료된 Step들을 역순으로 정렬
+		List<SagaStep> completedSteps = sagaInstance.getSteps().stream()
+			.filter(step -> step.getStatus() == SagaStatus.COMPLETED)
+			.sorted((a, b) -> b.getExecutedAt().compareTo(a.getExecutedAt()))
+			.toList();
+
+		if (completedSteps.isEmpty()) {
+			log.info("보상할 완료된 Step이 없음: sagaId={}", sagaInstance.getSagaId());
+			sagaInstance.fail("Saga timeout - no completed steps");
+			return;
+		}
+
+		SagaContext context = SagaContext.builder()
+			.sagaId(sagaInstance.getSagaId())
+			.userId(sagaInstance.getUserId())
+			.build();
+
+		// SagaData 복원
+		OrderCreationSagaData data = sagaInstance.restoreData();
+
+		if (data == null) {
+			log.error("SagaData 복원 실패: sagaId={}", sagaInstance.getSagaId());
+			sagaInstance.fail("Saga timeout - data restoration failed");
+			return;
+		}
+
+		// 역순으로 보상 실행
+		int successCount = 0;
+		int failCount = 0;
+
+		for (SagaStep step : completedSteps) {
+			try {
+				compensateStep(step.getStepName(), context, data, sagaInstance);
+				step.markAsCompensated();
+				successCount++;
+				log.info("Step 보상 완료: sagaId={}, step={}",
+					sagaInstance.getSagaId(), step.getStepName());
+			} catch (Exception e) {
+				log.error("Step 보상 실패: sagaId={}, step={}",
+					sagaInstance.getSagaId(), step.getStepName(), e);
+				step.markAsFailed(e.getMessage());
+				failCount++;
+			}
+		}
+
+		sagaInstance.fail(String.format(
+			"Saga timeout - compensation finished (success=%d, fail=%d)",
+			successCount, failCount
+		));
+
+		log.info("Saga 보상 완료: sagaId={}, success={}, fail={}",
+			sagaInstance.getSagaId(), successCount, failCount);
 	}
 
-	/* 특정 Step에 대한 보상 트랜잭션 실행 */
-	private void compensateStep(String stepName, SagaContext context, OrderCreationSagaData sagaData) {
+	/**
+	 * Step별 보상 로직 실행
+	 */
+	private void compensateStep(
+		String stepName,
+		SagaContext context,
+		OrderCreationSagaData data,
+		SagaInstance sagaInstance
+	) {
+		log.info("Step 보상 실행: sagaId={}, step={}", context.getSagaId(), stepName);
+
 		switch (stepName) {
-			case "DEDUCT_POINT":
-				deductPointStep.compensate(context, sagaData);
+			case "USE_POINT":
+				usePointStep.compensate(context, data);
+				sagaInstance.addStep(SagaStepName.USE_POINT_COMPENSATE, SagaStatus.COMPLETED);
 				break;
-			case "RESERVE_STOCK":
-				reserveStockStep.compensate(context, sagaData);
+
+			case "REQUEST_STOCK_RESERVATION":
+				log.info("[Saga-{}] 재고 예약 취소 실행", context.getSagaId());
+				requestStockReservationStep.compensate(context, data);
+				sagaInstance.addStep(
+					SagaStepName.REQUEST_STOCK_RESERVATION_COMPENSATE,
+					SagaStatus.COMPLETED
+				);
 				break;
+
 			case "VALIDATE_STOCK":
-				// 조회만 수행하므로 보상 불필요
-				log.debug("VALIDATE_STOCK은 보상 불필요: sagaId={}", context.getSagaId());
+				log.info("[Saga-{}] 보상 불필요한 Step: VALIDATE_STOCK", context.getSagaId());
 				break;
+
+			case "CREATE_ORDER":
+				log.info("[Saga-{}] 보상 불필요한 Step: {}", context.getSagaId(), stepName);
+				break;
+
 			default:
-				log.warn("알 수 없는 Step 이름: {}, 보상 스킵", stepName);
+				log.warn("[Saga-{}] 알 수 없는 Step: {}", context.getSagaId(), stepName);
 		}
 	}
 }
-

@@ -1,5 +1,5 @@
 singleServerConfig:
-  address: "redis://localhost:6381"
+  address: "redis://${ORDER_REDIS_HOST:localhost}:${ORDER_REDIS_PORT:6381}"
   connectionMinimumIdleSize: 10
   connectionPoolSize: 30
   idleConnectionTimeout: 10000
