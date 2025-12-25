@@ -24,15 +24,14 @@ public class OrderQueryService implements GetOrderDetailUseCase, GetOrderListUse
 	private final OrderQueryPort orderQueryPort;
 
 	@Override
-	public OrderDetailDto getOrderDetail(UUID orderId, Long userId, boolean isMaster) {
+	public OrderDetailDto getOrderDetail(UUID orderId, Long userId, String role) {
 		OrderDetailDto dto = orderQueryPort.findOrderDetail(orderId)
 			.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
-
-		// 권한 검증: 관리자가 아니고 본인 주문이 아니면 예외
-		if (!isMaster && !dto.getUserId().equals(userId)) {
+		// 권한 검증: MASTER가 아니고 본인 주문이 아니면 예외
+		boolean isAdmin = "MASTER".equals(role);
+		if (!isAdmin && !dto.getUserId().equals(userId)) {
 			throw new BusinessException(OrderErrorCode.ORDER_ACCESS_DENIED);
 		}
-
 		return dto;
 	}
 
