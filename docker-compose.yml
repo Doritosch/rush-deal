@@ -45,6 +45,7 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+      - "6383:6379"
     volumes:
       - rushdeal_user_redis_data:/data
     healthcheck:
@@ -54,6 +55,7 @@ services:
       retries: 5
     networks:
      - rushdeal-network
+    command: redis-server --save 60 1 --loglevel warning
 
   rushdeal_queue_redis: # 서비스 이름은 rushdeal_redis로 설정합니다.
     image: redis:7-alpine
@@ -85,22 +87,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
-  rushdeal_user_redis:
-    image: redis:7-alpine
-    container_name: rushdeal_user_redis
-    restart: unless-stopped
-    ports:
-      - "6383:6379"
-    volumes:
-      - rushdeal_user_redis_data:/data
-    command: redis-server --save 60 1 --loglevel warning
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    networks:
-      - rushdeal-network
+
 
   rushdeal_timedeal_redis:
     image: redis:7-alpine
@@ -118,20 +105,7 @@ services:
     networks:
       - rushdeal-network
 
-  rushdeal_user_redis:
-    image: redis:7-alpine
-    container_name: rushdeal_user_redis
-    restart: unless-stopped
-    ports:
-      - "6383:6379"
-    volumes:
-      - rushdeal_user_redis_data:/data
-    command: redis-server --save 60 1 --loglevel warning
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+
 
   redisinsight:
     image: redis/redisinsight:latest
