@@ -6,6 +6,8 @@ import com.rushcrew.common.global.error.CommonErrorCode;
 import com.rushcrew.timedeal.application.command.CreateTimeDealCommand;
 import com.rushcrew.timedeal.application.command.UpdateTimeDealCommand;
 import com.rushcrew.timedeal.application.event.TimeDealScheduledEvent;
+import com.rushcrew.timedeal.application.event.TimeDealsEndedEvent;
+import com.rushcrew.timedeal.application.event.TimeDealsStartedEvent;
 import com.rushcrew.timedeal.application.model.ProductInfo;
 import com.rushcrew.timedeal.application.result.CreateTimeDealResult;
 import com.rushcrew.timedeal.application.result.TimeDealDetailResult;
@@ -27,15 +29,19 @@ import com.rushcrew.timedeal.domain.vo.TimeDealStatus;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -138,25 +144,41 @@ public class TimeDealServiceImpl implements TimeDealService {
 
     @Override
     @Transactional
-    public List<String> startTimeDeals(List<String> timeDealIds) {
-        return executeStatusUpdate(timeDealIds, TimeDealStatus.IN_PROGRESS);
+    public void startTimeDeals(List<String> timeDealIds) {
+        List<TimeDeal> updatedTimeDeals = executeStatusUpdate(timeDealIds,
+            TimeDealStatus.IN_PROGRESS);
+
+        Map<String, Instant> startMap = updatedTimeDeals.stream()
+            .collect(Collectors.toMap(
+                timeDeal -> timeDeal.getId().toString(),
+                timeDeal -> timeDeal.getPeriod().getStartAt()
+            ));
+
+        eventPublisher.publishEvent(new TimeDealsStartedEvent(startMap));
     }
 
     @Override
     @Transactional
-    public List<String> endTimeDeals(List<String> timeDealIds) {
-        return executeStatusUpdate(timeDealIds, TimeDealStatus.ENDED);
+    public void endTimeDeals(List<String> timeDealIds) {
+        List<TimeDeal> updatedTimeDeals = executeStatusUpdate(timeDealIds, TimeDealStatus.ENDED);
+
+        Map<String, Instant> endMap = updatedTimeDeals.stream()
+            .collect(Collectors.toMap(
+                timeDeal -> timeDeal.getId().toString(),
+                timeDeal -> timeDeal.getPeriod().getEndAt()
+            ));
+
+        eventPublisher.publishEvent(new TimeDealsEndedEvent(endMap));
     }
 
-    private List<String> executeStatusUpdate(
+    private List<TimeDeal> executeStatusUpdate(
         List<String> timeDealIds,
         TimeDealStatus newStatus
     ) {
-
         List<UUID> idList = timeDealIds.stream().map(UUID::fromString).toList();
-        List<TimeDeal> timeDealList = timeDealRepository.findAllById(idList);
 
-        List<String> updatedIds = new ArrayList<>();
+        List<TimeDeal> timeDealList = timeDealRepository.findAllById(idList);
+        List<TimeDeal> updatedTimeDeals = new ArrayList<>();
 
         for (TimeDeal timeDeal : timeDealList) {
             TimeDealStatus previousStatus = timeDeal.getStatus();
@@ -165,7 +187,7 @@ public class TimeDealServiceImpl implements TimeDealService {
                 case IN_PROGRESS -> {
                     if (previousStatus == TimeDealStatus.SCHEDULED) {
                         timeDeal.updateStatus(newStatus);
-                        updatedIds.add(timeDeal.getId().toString());
+                        updatedTimeDeals.add(timeDeal);
                     }
                 }
                 case ENDED -> {
@@ -173,13 +195,13 @@ public class TimeDealServiceImpl implements TimeDealService {
                         || previousStatus == TimeDealStatus.SOLD_OUT
                     ) {
                         timeDeal.updateStatus(newStatus);
-                        updatedIds.add(timeDeal.getId().toString());
+                        updatedTimeDeals.add(timeDeal);
                     }
                 }
             }
         }
 
-        return updatedIds;
+        return updatedTimeDeals;
     }
 
     @Override

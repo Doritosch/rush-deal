@@ -52,4 +52,9 @@ public class StockRepositoryAdapter implements StockRepository {
     ) {
         return stockJpaRepository.findLogByIdAndFilter(stockId, eventType, pageable);
     }
+
+    @Override
+    public Optional<TimeDealStock> findStockForReservation(UUID stockId) {
+        return stockJpaRepository.findStockForReservation(stockId);
+    }
 }

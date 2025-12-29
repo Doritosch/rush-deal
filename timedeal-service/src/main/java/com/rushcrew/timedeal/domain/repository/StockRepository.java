@@ -24,4 +24,6 @@ public interface StockRepository {
     Optional<StockLog> findLastByStockIdAndOrderId(UUID stockId, UUID orderId);
 
     Page<StockLogResult> findLogByIdAndFilter(UUID stockId, String eventType, Pageable pageable);
+
+    Optional<TimeDealStock> findStockForReservation(UUID stockId);
 }

@@ -105,4 +105,15 @@ public interface StockJpaRepository extends JpaRepository<TimeDealStock, UUID> {
         @Param("eventType") String eventType,
         Pageable pageable
     );
+
+
+    @Query("""
+                SELECT tds
+                FROM TimeDealStock tds
+                JOIN FETCH tds.timeDealProduct tdp
+                JOIN FETCH tdp.timeDeal td
+                WHERE tds.id = :stockId
+                  AND tds.deletedAt IS NULL
+     """)
+    Optional<TimeDealStock> findStockForReservation(@Param("stockId") UUID stockId);
 }
