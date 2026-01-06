@@ -62,7 +62,7 @@ public class QueueService implements QueuePort {
         }
 
         String tokenValue = queueToken.getId().getValue().toString();
-        return getQueueRank(command.productId(), tokenValue, command.userId(), command.role());
+        return getQueueRank(command.productId(), tokenValue, command.userId());
     }
 
     /**
@@ -180,7 +180,7 @@ public class QueueService implements QueuePort {
      * 토큰 유효성 검증 (활성화 여부)
      */
     @Override
-    public boolean validateActivatedQueueToken(UUID productId, String token, Long userId, String role) {
+    public boolean validateActivatedQueueToken(UUID productId, String token) {
         TokenId tokenId = extractValidQueueTokenId(token);
         return queueRepository.isActivatedToken(productId, tokenId);
     }
