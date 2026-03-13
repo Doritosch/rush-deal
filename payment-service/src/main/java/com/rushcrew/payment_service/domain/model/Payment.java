@@ -57,6 +57,10 @@ public class Payment extends BaseEntity {
         this.status = PaymentStatus.CANCELLED;
     }
 
+    public void failPayment() {
+        this.status = PaymentStatus.FAILED;
+    }
+
     public void verifyPaymentOrThrow(Long amount, String currency) {
         if (!verifyAmount(amount)) {
             throw new IllegalArgumentException("결제 금액이 일치하지 않습니다.");
