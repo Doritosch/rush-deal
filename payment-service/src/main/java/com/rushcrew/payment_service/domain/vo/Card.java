@@ -40,6 +40,4 @@ public class Card {
         this.name = name;
         this.number = number;
     }
-
-    public Card from(Payment)
 }
