@@ -13,7 +13,8 @@ public enum PaymentErrorCode implements ErrorCode {
     NOT_FOUND_PAYMENT_TRANSACTION(HttpStatus.NOT_FOUND, "NOT_FOUND_PAYMENT_TRANSACTION", "결제 트랜잭션을 찾을 수 없습니다."),
     FAILED_CANCEL_PAYMENT(HttpStatus.BAD_REQUEST, "FAILED_CANCEL_PAYMENT", "결제 취소에 실패했습니다."),
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER_NOT_FOUND", "주문 정보를 찾을 수 없습니다."),
-    AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "AMOUNT_MISMATCH", "결제 금액이 주문 금액과 일치하지 않습니다.");
+    AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "AMOUNT_MISMATCH", "결제 금액이 주문 금액과 일치하지 않습니다."),
+    INVALID_WEBHOOK(HttpStatus.BAD_REQUEST, "INVALID_WEBHOOK", "유효하지 않은 웹훅입니다.");
 
     private final HttpStatus httpStatus;
     private final String name;

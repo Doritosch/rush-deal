@@ -74,7 +74,7 @@ public class PaymentController {
     }
 
     @PostMapping("/webhook")
-    public Mono<Unit> handleWebhook(
+    public Mono<Void> handleWebhook(
             @RequestBody String body,
             @RequestHeader("webhook-id") String webhookId,
             @RequestHeader("webhook-timestamp") String webhookTimestamp,
