@@ -1,7 +1,8 @@
-package com.rushcrew.payment_service.application;
+package com.rushcrew.payment_service.application.service;
 
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.payment_service.application.command.PaymentCommand;
+import com.rushcrew.payment_service.application.mapper.PaymentMapper;
 import com.rushcrew.payment_service.application.result.PaymentPrepareResult;
 import com.rushcrew.payment_service.application.result.PaymentResult;
 import com.rushcrew.payment_service.domain.exception.PaymentErrorCode;
@@ -13,9 +14,7 @@ import com.rushcrew.payment_service.domain.vo.Amount;
 import com.rushcrew.payment_service.domain.vo.Card;
 import com.rushcrew.payment_service.infrastructure.client.OrderClient;
 import com.rushcrew.payment_service.infrastructure.client.dto.OrderResponse;
-import com.rushcrew.payment_service.infrastructure.event.PaymentCompletedEvent;
 import com.rushcrew.payment_service.infrastructure.event.PaymentEventProducer;
-import com.rushcrew.payment_service.presentation.dto.response.PaymentResponse;
 import feign.FeignException;
 import io.portone.sdk.server.payment.PaidPayment;
 import io.portone.sdk.server.payment.PaymentClient;
@@ -38,10 +37,8 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
-
     private final PaymentClient portone;
     private final WebhookVerifier portoneWebhook;
-
     private final PaymentEventProducer paymentEventProducer;
     private final OrderClient orderClient;
 
@@ -147,49 +144,19 @@ public class PaymentService {
                             paymentRepository.save(payment);
 
                             if (paidPayment.getMethod() instanceof PaymentMethodCard paymentMethodCard) {
-                                PaymentTransaction transaction = PaymentTransaction.create(
-                                        payment,
-                                        paidPayment.getId(),
-                                        paidPayment.getTransactionId(),
-                                        paidPayment.getStoreId(),
-                                        paidPayment.getRequestedAt(),
-                                        paidPayment.getUpdatedAt(),
-                                        paidPayment.getStatusChangedAt()
-                                );
+                                PaymentTransaction transaction = PaymentMapper.toPaymentTransaction(paidPayment, payment);
 
-                                Card card = new Card(
-                                        paymentMethodCard.getCard().getPublisher(),
-                                        paymentMethodCard.getCard().getIssuer(),
-                                        paymentMethodCard.getCard().getBrand().toString(),
-                                        paymentMethodCard.getCard().getType().toString(),
-                                        paymentMethodCard.getCard().getOwnerType().toString(),
-                                        paymentMethodCard.getCard().getBin(),
-                                        paymentMethodCard.getCard().getName(),
-                                        paymentMethodCard.getCard().getNumber()
-                                );
+                                Card card = PaymentMapper.toCard(paymentMethodCard);
                                 transaction.addCard(card);
 
-                                Amount amount = new Amount(
-                                        paidPayment.getAmount().getTotal(),
-                                        paidPayment.getAmount().getTaxFree(),
-                                        paidPayment.getAmount().getVat(),
-                                        paidPayment.getAmount().getSupply(),
-                                        paidPayment.getAmount().getDiscount(),
-                                        paidPayment.getAmount().getPaid()
-                                );
+                                Amount amount = PaymentMapper.toAmount(paidPayment);
                                 transaction.addAmount(amount);
 
                                 paymentTransactionRepository.save(transaction);
                             }
 
-                            // Kafka 이벤트 발행
-                            PaymentCompletedEvent event = PaymentCompletedEvent.of(
-                                    payment.getPaymentId(),
-                                    payment.getOrderId(),
-                                    payment.getAmount(),
-                                    paidPayment.getCurrency().getValue()
-                            );
-                            paymentEventProducer.publishPaymentCompleted(event);
+                            paymentEventProducer.completePayment(payment.getPaymentId(), payment.getOrderId(),
+                                    payment.getAmount(), paidPayment.getCurrency().getValue());
 
                             return Mono.just(PaymentResult.from(payment));
                         default:

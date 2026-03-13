@@ -1,6 +1,6 @@
 package com.rushcrew.payment_service.presentation;
 
-import com.rushcrew.payment_service.application.PaymentService;
+import com.rushcrew.payment_service.application.service.PaymentService;
 import com.rushcrew.payment_service.application.command.PaymentCommand;
 import com.rushcrew.payment_service.application.result.PaymentPrepareResult;
 import com.rushcrew.payment_service.application.result.PaymentResult;
