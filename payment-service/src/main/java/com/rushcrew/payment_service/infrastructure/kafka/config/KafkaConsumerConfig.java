@@ -1,4 +1,4 @@
-package com.rushcrew.payment_service.infrastructure.config;
+package com.rushcrew.payment_service.infrastructure.kafka.config;
 
 import com.fasterxml.jackson.databind.deser.std.StringDeserializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -14,22 +14,23 @@ import java.util.Map;
 
 @EnableKafka
 @Configuration
-public class PaymentApplicationKafkaConfig {
+public class KafkaConsumerConfig {
 
     private static final String KAFKA_BROKER_URL = "localhost:9092";
-
+    private static final String PAYMENT_TRANSACTION_RESULT_GROUP_ID = "payment-transaction-result-group";
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
-        Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_BROKER_URL);
-        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        return new DefaultKafkaConsumerFactory<>(configProps);
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KAFKA_BROKER_URL);
+        configs.put(ConsumerConfig.GROUP_ID_CONFIG, PAYMENT_TRANSACTION_RESULT_GROUP_ID);
+        configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        return new DefaultKafkaConsumerFactory<>(configs);
     }
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        final ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
     }
