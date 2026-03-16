@@ -199,6 +199,7 @@ public class OrderEventConsumer {
 	@KafkaListener(topics = "payment-request", groupId = "order-transaction-result-group")
 	public void consumeOrderPaymentTransactionResultEvent(final String paymentResponseMessage) throws JsonProcessingException {
 		final PaymentCompletedMessage paymentCompletedMessage = objectMapper.readValue(paymentResponseMessage, PaymentCompletedMessage.class);
+		PaymentMessageStatus resultStatus = PaymentMessageStatus.COMPLETED;
 
 		try {
 			Order order = orderJpaRepository.findById(paymentCompletedMessage.orderId())
@@ -206,27 +207,18 @@ public class OrderEventConsumer {
 								new IllegalArgumentException("주문ID에 해당하는 주문을 찾지 못했습니다."));
 			order.completePayment();
 			orderJpaRepository.save(order);
-			PaymentRequestMessage paymentRequestMessage = new PaymentRequestMessage(
-					paymentCompletedMessage.paymentId(),
-					paymentCompletedMessage.orderId(),
-					paymentCompletedMessage.totalAmount(),
-					paymentCompletedMessage.currency(),
-					paymentCompletedMessage.completedAt(),
-					paymentCompletedMessage.status(),
-					PaymentMessageStatus.COMPLETED
-			);
-			orderEventProducer.sendTransactionResultMessage(paymentRequestMessage);
 		} catch (Exception e) {
-			PaymentRequestMessage paymentRequestMessage = new PaymentRequestMessage(
-					paymentCompletedMessage.paymentId(),
-					paymentCompletedMessage.orderId(),
-					paymentCompletedMessage.totalAmount(),
-					paymentCompletedMessage.currency(),
-					paymentCompletedMessage.completedAt(),
-					paymentCompletedMessage.status(),
-					PaymentMessageStatus.FAILED
-			);
-			orderEventProducer.sendTransactionResultMessage(paymentRequestMessage);
+			resultStatus = PaymentMessageStatus.FAILED;
 		}
+		PaymentRequestMessage paymentRequestMessage = new PaymentRequestMessage(
+				paymentCompletedMessage.paymentId(),
+				paymentCompletedMessage.orderId(),
+				paymentCompletedMessage.totalAmount(),
+				paymentCompletedMessage.currency(),
+				paymentCompletedMessage.completedAt(),
+				paymentCompletedMessage.status(),
+				resultStatus
+		);
+		orderEventProducer.sendTransactionResultMessage(paymentRequestMessage);
 	}
 }
