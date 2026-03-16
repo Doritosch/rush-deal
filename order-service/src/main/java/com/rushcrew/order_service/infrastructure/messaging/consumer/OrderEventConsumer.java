@@ -199,7 +199,7 @@ public class OrderEventConsumer {
 	@KafkaListener(topics = "payment-request", groupId = "order-transaction-result-group")
 	public void consumeOrderPaymentTransactionResultEvent(final String paymentResponseMessage) throws JsonProcessingException {
 		final PaymentCompletedMessage paymentCompletedMessage = objectMapper.readValue(paymentResponseMessage, PaymentCompletedMessage.class);
-		PaymentMessageStatus resultStatus = PaymentMessageStatus.COMPLETED;
+		PaymentMessageStatus resultStatus = PaymentMessageStatus.REWARDED;
 
 		try {
 			Order order = orderJpaRepository.findById(paymentCompletedMessage.orderId())
