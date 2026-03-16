@@ -1,13 +1,10 @@
 package com.rushcrew.payment_service.infrastructure.event;
 
-import org.junit.jupiter.api.Test;
+import com.rushcrew.payment_service.infrastructure.kafka.TransactionKafkaProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
-
-import java.math.BigDecimal;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -17,6 +14,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class PaymentEventProducerTest {
 
     @Autowired
-    private PaymentEventProducer paymentEventProducer;
+    private TransactionKafkaProducer transactionKafkaProducer;
 
 }

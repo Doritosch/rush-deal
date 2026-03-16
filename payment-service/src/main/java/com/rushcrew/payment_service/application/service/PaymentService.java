@@ -1,5 +1,6 @@
 package com.rushcrew.payment_service.application.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.payment_service.application.command.PaymentCommand;
 import com.rushcrew.payment_service.application.mapper.PaymentMapper;
@@ -15,7 +16,9 @@ import com.rushcrew.payment_service.domain.vo.Card;
 import com.rushcrew.payment_service.infrastructure.adpater.PortonePaymentAdapter;
 import com.rushcrew.payment_service.infrastructure.client.OrderClient;
 import com.rushcrew.payment_service.infrastructure.client.dto.OrderResponse;
-import com.rushcrew.payment_service.infrastructure.event.PaymentEventProducer;
+import com.rushcrew.payment_service.infrastructure.event.PaymentCompletedMessage;
+import com.rushcrew.payment_service.infrastructure.event.PaymentRequestMessage;
+import com.rushcrew.payment_service.infrastructure.kafka.TransactionKafkaProducer;
 import feign.FeignException;
 import io.portone.sdk.server.payment.PaidPayment;
 import io.portone.sdk.server.payment.PaymentMethodCard;
@@ -27,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -37,7 +41,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final WebhookVerifier portoneWebhook;
-    private final PaymentEventProducer paymentEventProducer;
+    private final TransactionKafkaProducer transactionKafkaProducer;
     private final OrderClient orderClient;
     private final PortonePaymentAdapter adapter;
 
@@ -124,40 +128,43 @@ public class PaymentService {
 
     private Mono<PaymentResult> processPayment(Payment payment, Object actualPayment) {
 
-        if (actualPayment instanceof PaidPayment paidPayment) {
-
-            try {
+        try {
+            if (actualPayment instanceof PaidPayment paidPayment) {
                 payment.verifyPaymentOrThrow(
                         paidPayment.getAmount().getPaid(),
                         paidPayment.getCurrency().getValue()
                 );
-            } catch (IllegalArgumentException e) {
-                return Mono.error(new BusinessException(PaymentErrorCode.FAILED_VERIFYING_PAYMENT));
+
+                payment.completePayment();
+                paymentRepository.save(payment);
+
+                if (paidPayment.getMethod() instanceof PaymentMethodCard paymentMethodCard) {
+                    PaymentTransaction transaction = PaymentMapper.toPaymentTransaction(paidPayment, payment);
+
+                    Card card = PaymentMapper.toCard(paymentMethodCard);
+                    transaction.addCard(card);
+
+                    Amount amount = PaymentMapper.toAmount(paidPayment);
+                    transaction.addAmount(amount);
+
+                    paymentTransactionRepository.save(transaction);
+                }
+
+                transactionKafkaProducer.completePayment(
+                        new PaymentCompletedMessage(
+                                payment.getPaymentId(),
+                                payment.getOrderId(),
+                                payment.getAmount(),
+                                paidPayment.getCurrency().getValue(),
+                                LocalDateTime.now(),
+                                payment.getStatus().toString()
+                        )
+                );
+
+                return Mono.just(PaymentResult.from(payment));
             }
-
-            payment.completePayment();
-            paymentRepository.save(payment);
-
-            if (paidPayment.getMethod() instanceof PaymentMethodCard paymentMethodCard) {
-                PaymentTransaction transaction = PaymentMapper.toPaymentTransaction(paidPayment, payment);
-
-                Card card = PaymentMapper.toCard(paymentMethodCard);
-                transaction.addCard(card);
-
-                Amount amount = PaymentMapper.toAmount(paidPayment);
-                transaction.addAmount(amount);
-
-                paymentTransactionRepository.save(transaction);
-            }
-
-            paymentEventProducer.completePayment(
-                    payment.getPaymentId(),
-                    payment.getOrderId(),
-                    payment.getAmount(),
-                    paidPayment.getCurrency().getValue()
-            );
-
-            return Mono.just(PaymentResult.from(payment));
+        } catch (JsonProcessingException e) {
+            return Mono.error(new BusinessException(PaymentErrorCode.EVENT_SERIALIZATION_FAILED));
         }
         return Mono.error(new BusinessException(PaymentErrorCode.NOT_COMPLETED_PAYMENT));
     }
