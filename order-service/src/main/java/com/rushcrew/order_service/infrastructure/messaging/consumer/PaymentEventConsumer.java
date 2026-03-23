@@ -2,8 +2,10 @@ package com.rushcrew.order_service.infrastructure.messaging.consumer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.order_service.application.command.service.RequestPaymentService;
 import com.rushcrew.order_service.domain.model.order.Order;
+import com.rushcrew.order_service.global.error.OrderErrorCode;
 import com.rushcrew.order_service.infrastructure.dto.payment.PaymentCompletedMessage;
 import com.rushcrew.order_service.infrastructure.dto.payment.PaymentMessageStatus;
 import com.rushcrew.order_service.infrastructure.dto.payment.PaymentResultMessage;
@@ -40,7 +42,7 @@ public class PaymentEventConsumer {
         try {
             Order order = orderJpaRepository.findById(paymentCompletedMessage.orderId())
                     .orElseThrow(() ->
-                            new IllegalArgumentException("주문ID에 해당하는 주문을 찾지 못했습니다."));
+                            new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
             order.completePayment();
             orderJpaRepository.save(order);
         } catch (Exception e) {
