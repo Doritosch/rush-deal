@@ -1,14 +1,11 @@
 package com.rushcrew.order_service.infrastructure.messaging.consumer;
 
-import java.util.Optional;
 import java.util.UUID;
 
-import com.rushcrew.common.exception.BusinessException;
-import com.rushcrew.order_service.application.query.dto.OrderDetailDto;
 import com.rushcrew.order_service.domain.model.order.Order;
 import com.rushcrew.order_service.infrastructure.dto.payment.PaymentCompletedMessage;
 import com.rushcrew.order_service.infrastructure.dto.payment.PaymentMessageStatus;
-import com.rushcrew.order_service.infrastructure.dto.payment.PaymentRequestMessage;
+import com.rushcrew.order_service.infrastructure.dto.payment.PaymentResultMessage;
 import com.rushcrew.order_service.infrastructure.messaging.producer.OrderEventProducer;
 import com.rushcrew.order_service.infrastructure.persistence.repository.OrderJpaRepository;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -194,31 +191,5 @@ public class OrderEventConsumer {
 			case "order.updated" -> "ORDER_UPDATED";
 			default -> "UNKNOWN";
 		};
-	}
-
-	@KafkaListener(topics = "payment-request", groupId = "order-transaction-result-group")
-	public void consumeOrderPaymentTransactionResultEvent(final String paymentResponseMessage) throws JsonProcessingException {
-		final PaymentCompletedMessage paymentCompletedMessage = objectMapper.readValue(paymentResponseMessage, PaymentCompletedMessage.class);
-		PaymentMessageStatus resultStatus = PaymentMessageStatus.REWARDED;
-
-		try {
-			Order order = orderJpaRepository.findById(paymentCompletedMessage.orderId())
-							.orElseThrow(() ->
-								new IllegalArgumentException("주문ID에 해당하는 주문을 찾지 못했습니다."));
-			order.completePayment();
-			orderJpaRepository.save(order);
-		} catch (Exception e) {
-			resultStatus = PaymentMessageStatus.FAILED;
-		}
-		PaymentRequestMessage paymentRequestMessage = new PaymentRequestMessage(
-				paymentCompletedMessage.paymentId(),
-				paymentCompletedMessage.orderId(),
-				paymentCompletedMessage.totalAmount(),
-				paymentCompletedMessage.currency(),
-				paymentCompletedMessage.completedAt(),
-				paymentCompletedMessage.status(),
-				resultStatus
-		);
-		orderEventProducer.sendTransactionResultMessage(paymentRequestMessage);
 	}
 }

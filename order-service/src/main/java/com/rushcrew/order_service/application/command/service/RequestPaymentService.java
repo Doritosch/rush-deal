@@ -1,9 +1,12 @@
 package com.rushcrew.order_service.application.command.service;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.rushcrew.order_service.infrastructure.dto.payment.PaymentRequestMessage;
+import com.rushcrew.order_service.infrastructure.messaging.producer.PaymentEventProducer;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,7 +16,6 @@ import com.rushcrew.order_service.application.command.dto.result.RequestPaymentR
 import com.rushcrew.order_service.application.command.port.out.OrderCommandPort;
 import com.rushcrew.order_service.application.command.usecase.RequestPaymentUseCase;
 import com.rushcrew.order_service.application.port.out.OutboxPort;
-import com.rushcrew.order_service.application.port.out.PaymentPort;
 import com.rushcrew.order_service.domain.model.order.Order;
 import com.rushcrew.order_service.global.error.OrderErrorCode;
 import com.rushcrew.order_service.infrastructure.messaging.event.OutboxEventType;
@@ -28,9 +30,9 @@ import lombok.extern.slf4j.Slf4j;
 public class RequestPaymentService implements RequestPaymentUseCase {
 
 	private final OrderCommandPort orderCommandPort;
-	private final PaymentPort paymentPort;
 	private final OutboxPort outboxPort;
 	private final ObjectMapper objectMapper;
+	private final PaymentEventProducer paymentEventProducer;
 
 	@Override
 	@Transactional
@@ -48,49 +50,48 @@ public class RequestPaymentService implements RequestPaymentUseCase {
 			throw new BusinessException(OrderErrorCode.ORDER_CANNOT_PAY);
 		}
 
-		// 결제 서비스에 결제 요청 (feign 동기 통신)
-		boolean paymentSuccess = paymentPort.requestPayment(
-			order.getOrderId(),
-			order.getUserId(),
-			order.getFinalAmount()
-		);
-
-		if (!paymentSuccess) {
-			log.error("결제 실패: orderId={}", order.getOrderId());
-			throw new BusinessException(OrderErrorCode.PAYMENT_FAILED);
+		try {
+			PaymentRequestMessage paymentRequestMessage = new PaymentRequestMessage(order.getOrderId(),
+					order.getUserId(),
+					order.getFinalAmount().longValue());
+			paymentEventProducer.sendPaymentRequest(paymentRequestMessage);
+		} catch (JsonProcessingException e) {
+			log.error("PAYMENT_REQUEST 이벤트 전송 실패: orderId={}", order.getOrderId(), e);
 		}
 
-		// 주문 상태 변경 PENDING -> PAID
-		order.completePayment();
-		Order savedOrder = orderCommandPort.save(order);
+		return RequestPaymentResult.builder()
+			.orderId(order.getOrderId())
+			.orderStatus(order.getStatus().name())
+			.paymentAmount(order.getFinalAmount())
+			.paymentCompletedAt(order.getPaymentCompletedAt())
+			.autoConfirmScheduledAt(order.getAutoConfirmScheduledAt())
+			.build();
+	}
 
-		// ORDER_PAID 이벤트 outbox에 저장
+	public void paymentComplete(UUID orderId) {
+		Order order = orderCommandPort.findById(orderId)
+				.orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
+
+		order.completePayment();
+		orderCommandPort.save(order);
+
 		try {
 			Map<String, Object> eventPayload = new HashMap<>();
-			eventPayload.put("orderId", savedOrder.getOrderId());
-			eventPayload.put("userId", savedOrder.getUserId());
-			eventPayload.put("status", savedOrder.getStatus().name());
-			eventPayload.put("paymentAmount", savedOrder.getFinalAmount());
-			eventPayload.put("paymentCompletedAt", savedOrder.getPaymentCompletedAt());
-			eventPayload.put("autoConfirmScheduledAt", savedOrder.getAutoConfirmScheduledAt());
+			eventPayload.put("orderId", order.getOrderId());
+			eventPayload.put("userId", order.getUserId());
+			eventPayload.put("status", order.getStatus().name());
+			eventPayload.put("paymentAmount", order.getFinalAmount());
+			eventPayload.put("paymentCompletedAt", order.getPaymentCompletedAt());
+			eventPayload.put("autoConfirmScheduledAt", order.getAutoConfirmScheduledAt());
 
 			outboxPort.createAndSave(
-				"ORDER",
-				savedOrder.getOrderId(),
-				OutboxEventType.ORDER_PAID,
-				objectMapper.writeValueAsString(eventPayload)
+					"ORDER",
+					order.getOrderId(),
+					OutboxEventType.ORDER_PAID,
+					objectMapper.writeValueAsString(eventPayload)
 			);
 		} catch (Exception e) {
-			log.error("ORDER_PAID 이벤트 저장 실패: orderId={}", savedOrder.getOrderId(), e);
+			log.error("ORDER_PAID 이벤트 저장 실패: orderId={}", order.getOrderId(), e);
 		}
-
-		// 업데이트 된 Order 반환
-		return RequestPaymentResult.builder()
-			.orderId(savedOrder.getOrderId())
-			.orderStatus(savedOrder.getStatus().name())
-			.paymentAmount(savedOrder.getFinalAmount())
-			.paymentCompletedAt(savedOrder.getPaymentCompletedAt())
-			.autoConfirmScheduledAt(savedOrder.getAutoConfirmScheduledAt())
-			.build();
 	}
 }

@@ -17,7 +17,6 @@ import com.rushcrew.payment_service.infrastructure.adpater.PortonePaymentAdapter
 import com.rushcrew.payment_service.infrastructure.client.OrderClient;
 import com.rushcrew.payment_service.infrastructure.client.dto.OrderResponse;
 import com.rushcrew.payment_service.infrastructure.event.PaymentCompletedMessage;
-import com.rushcrew.payment_service.infrastructure.event.PaymentRequestMessage;
 import com.rushcrew.payment_service.infrastructure.kafka.TransactionKafkaProducer;
 import feign.FeignException;
 import io.portone.sdk.server.payment.PaidPayment;
