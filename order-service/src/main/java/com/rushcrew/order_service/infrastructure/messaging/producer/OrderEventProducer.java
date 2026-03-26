@@ -13,7 +13,7 @@ public class OrderEventProducer {
 
     private static final String PAYMENT_TRANSACTION_RESULT_TOPIC = "payment-transaction-result";
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
     public void sendTransactionResultMessage(final PaymentResultMessage paymentResultMessage) throws JsonProcessingException {

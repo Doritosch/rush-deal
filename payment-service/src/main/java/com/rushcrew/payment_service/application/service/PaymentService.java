@@ -165,8 +165,8 @@ public class PaymentService {
 
                 PaymentOutbox paymentOutbox =
                         PaymentOutbox.create("payment-complete-result", objectMapper.writeValueAsString(message));
-                transactionKafkaProducer.completePayment(message);
                 paymentOutboxRepository.save(paymentOutbox);
+                transactionKafkaProducer.completePayment(message);
 
                 return Mono.just(PaymentResult.from(payment));
             }

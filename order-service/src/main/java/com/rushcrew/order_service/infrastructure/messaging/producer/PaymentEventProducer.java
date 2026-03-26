@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class PaymentEventProducer {
 
     private static final String PAYMENT_REQUEST_TOPIC = "payment-request";
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
     public void sendPaymentRequest(PaymentRequestMessage requestMessage) throws JsonProcessingException {

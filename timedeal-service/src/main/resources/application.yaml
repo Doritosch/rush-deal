@@ -3,8 +3,8 @@ spring:
     name: timedeal-service
   data:
     redis:
-      host: ${TIMEDEAL_REDIS_HOST}
-      port: ${TIMEDEAL_REDIS_PORT}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -22,7 +22,7 @@ spring:
     init:
       mode: always
   kafka:
-    bootstrap-servers: ${BOOTSTRAP_SERVERS}
+    bootstrap-servers: ${KAFKA_BROKERS}
 
 eureka:
   client:

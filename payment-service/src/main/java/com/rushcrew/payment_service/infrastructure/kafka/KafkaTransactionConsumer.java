@@ -2,29 +2,52 @@ package com.rushcrew.payment_service.infrastructure.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.payment_service.application.command.PaymentCommand;
 import com.rushcrew.payment_service.application.service.PaymentService;
+import com.rushcrew.payment_service.domain.exception.PaymentErrorCode;
+import com.rushcrew.payment_service.domain.model.Payment;
+import com.rushcrew.payment_service.domain.repository.PaymentRepository;
 import com.rushcrew.payment_service.infrastructure.event.PaymentMessageStatus;
 import com.rushcrew.payment_service.infrastructure.event.PaymentRequestMessage;
 import com.rushcrew.payment_service.infrastructure.event.PaymentResultMessage;
+import io.portone.sdk.server.errors.PaymentException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class KafkaTransactionConsumer {
 
     private final ObjectMapper objectMapper;
     private final PaymentService paymentService;
+    private final PaymentRepository paymentRepository;
 
     @KafkaListener(topics = "payment-transaction-result", groupId = "payment-transaction-result-group")
     public void consumePaymentTransactionResultEvent(final String paymentResponseMessage) {
         try {
-            final PaymentResultMessage paymentResultMessage = objectMapper.readValue(paymentResponseMessage, PaymentResultMessage.class);
+            final PaymentResultMessage paymentResultMessage =
+                    objectMapper.readValue(paymentResponseMessage, PaymentResultMessage.class);
 
             if (paymentResultMessage.messageStatus() == PaymentMessageStatus.FAILED) {
-                paymentService.cancelPayment(paymentResultMessage.paymentId(), "Payment Messaging 실패").block();
+                Payment payment = paymentRepository.findById(paymentResultMessage.paymentId())
+                        .orElseThrow(() -> new BusinessException(PaymentErrorCode.INVALID_PAYMENT));
+
+                switch (payment.getStatus()) {
+                    case PENDING -> {
+                        payment.failPayment();
+                        paymentRepository.save(payment);
+                    }
+                    case PAID -> {
+                        paymentService.cancelPayment(payment.getPaymentId(), "Saga rollback").block();
+                    }
+                    case CANCELLED, FAILED -> {
+                        log.info("결제가 이미 취소되었거나 실패했습니다 {}", payment.getPaymentId());
+                    }
+                }
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Deserialization 실패", e);
