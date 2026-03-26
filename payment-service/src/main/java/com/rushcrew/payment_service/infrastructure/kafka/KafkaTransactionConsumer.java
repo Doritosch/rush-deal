@@ -19,11 +19,17 @@ public class KafkaTransactionConsumer {
     private final PaymentService paymentService;
 
     @KafkaListener(topics = "payment-transaction-result", groupId = "payment-transaction-result-group")
-    public void consumePaymentTransactionResultEvent(final String paymentResponseMessage) throws JsonProcessingException {
-        final PaymentResultMessage paymentResultMessage = objectMapper.readValue(paymentResponseMessage, PaymentResultMessage.class);
+    public void consumePaymentTransactionResultEvent(final String paymentResponseMessage) {
+        try {
+            final PaymentResultMessage paymentResultMessage = objectMapper.readValue(paymentResponseMessage, PaymentResultMessage.class);
 
-        if (paymentResultMessage.messageStatus() == PaymentMessageStatus.FAILED) {
-            paymentService.cancelPayment(paymentResultMessage.paymentId(), "Payment Messaging 실패");
+            if (paymentResultMessage.messageStatus() == PaymentMessageStatus.FAILED) {
+                paymentService.cancelPayment(paymentResultMessage.paymentId(), "Payment Messaging 실패");
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Deserialization 실패", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Processing 실패", e);
         }
     }
 
