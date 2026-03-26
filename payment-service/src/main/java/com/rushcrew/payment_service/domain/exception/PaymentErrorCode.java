@@ -15,7 +15,9 @@ public enum PaymentErrorCode implements ErrorCode {
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER_NOT_FOUND", "주문 정보를 찾을 수 없습니다."),
     AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "AMOUNT_MISMATCH", "결제 금액이 주문 금액과 일치하지 않습니다."),
     INVALID_WEBHOOK(HttpStatus.BAD_REQUEST, "INVALID_WEBHOOK", "유효하지 않은 웹훅입니다."),
-    EVENT_SERIALIZATION_FAILED(HttpStatus.BAD_REQUEST, "EVENT_SERIALIZATION_FAILED", "이벤트 직렬화에 실패했습니다.");
+    EVENT_SERIALIZATION_FAILED(HttpStatus.BAD_REQUEST, "EVENT_SERIALIZATION_FAILED", "이벤트 직렬화에 실패했습니다."),
+    ALREADY_PUBLISHED_STATUS(HttpStatus.BAD_REQUEST, "ALREADY_PUBLISHED_STATUS", "이미 PUBLISHED 상태인 이벤트 입니다."),
+    ALREADY_FAILED_STATUS(HttpStatus.BAD_REQUEST, "ALREADY_FAILED_STATUS", "이미 FAILED 상태인 이벤트 입니다.");
 
     private final HttpStatus httpStatus;
     private final String name;

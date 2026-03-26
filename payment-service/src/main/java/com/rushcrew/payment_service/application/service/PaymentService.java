@@ -1,6 +1,7 @@
 package com.rushcrew.payment_service.application.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rushcrew.common.exception.BusinessException;
 import com.rushcrew.payment_service.application.command.PaymentCommand;
 import com.rushcrew.payment_service.application.mapper.PaymentMapper;
@@ -8,6 +9,7 @@ import com.rushcrew.payment_service.application.result.PaymentPrepareResult;
 import com.rushcrew.payment_service.application.result.PaymentResult;
 import com.rushcrew.payment_service.domain.exception.PaymentErrorCode;
 import com.rushcrew.payment_service.domain.model.Payment;
+import com.rushcrew.payment_service.domain.model.PaymentOutbox;
 import com.rushcrew.payment_service.domain.model.PaymentTransaction;
 import com.rushcrew.payment_service.domain.repository.PaymentRepository;
 import com.rushcrew.payment_service.domain.repository.PaymentTransactionRepository;
@@ -18,6 +20,7 @@ import com.rushcrew.payment_service.infrastructure.client.OrderClient;
 import com.rushcrew.payment_service.infrastructure.client.dto.OrderResponse;
 import com.rushcrew.payment_service.infrastructure.event.PaymentCompletedMessage;
 import com.rushcrew.payment_service.infrastructure.kafka.TransactionKafkaProducer;
+import com.rushcrew.payment_service.infrastructure.repository.PaymentOutboxRepository;
 import feign.FeignException;
 import io.portone.sdk.server.payment.PaidPayment;
 import io.portone.sdk.server.payment.PaymentMethodCard;
@@ -39,10 +42,12 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final PaymentOutboxRepository paymentOutboxRepository;
     private final WebhookVerifier portoneWebhook;
     private final TransactionKafkaProducer transactionKafkaProducer;
     private final OrderClient orderClient;
     private final PortonePaymentAdapter adapter;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public PaymentPrepareResult preparePayment(PaymentCommand command) {
@@ -149,16 +154,19 @@ public class PaymentService {
                     paymentTransactionRepository.save(transaction);
                 }
 
-                transactionKafkaProducer.completePayment(
-                        new PaymentCompletedMessage(
-                                payment.getPaymentId(),
-                                payment.getOrderId(),
-                                payment.getAmount(),
-                                paidPayment.getCurrency().getValue(),
-                                LocalDateTime.now(),
-                                payment.getStatus().toString()
-                        )
+                PaymentCompletedMessage message = new PaymentCompletedMessage(
+                        payment.getPaymentId(),
+                        payment.getOrderId(),
+                        payment.getAmount(),
+                        paidPayment.getCurrency().getValue(),
+                        LocalDateTime.now(),
+                        payment.getStatus().toString()
                 );
+
+                PaymentOutbox paymentOutbox =
+                        PaymentOutbox.create("payment-complete-result", objectMapper.writeValueAsString(message));
+                transactionKafkaProducer.completePayment(message);
+                paymentOutboxRepository.save(paymentOutbox);
 
                 return Mono.just(PaymentResult.from(payment));
             }
