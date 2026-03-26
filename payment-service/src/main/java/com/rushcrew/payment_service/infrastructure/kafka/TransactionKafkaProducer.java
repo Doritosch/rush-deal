@@ -47,7 +47,7 @@ public class TransactionKafkaProducer {
                         paymentOutboxRepository.save(event);
                     } else {
                         event.incrementRetry();
-                        if (event.getRetryCount() > 3) {
+                        if (event.getRetryCount() >= 3) {
                             event.markAsFailed();
                         }
                         paymentOutboxRepository.save(event);

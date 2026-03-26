@@ -42,7 +42,7 @@ public class KafkaTransactionConsumer {
                     paymentRequestMessage.finalAmount());
             paymentService.preparePayment(paymentCommand);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Deserializatin 실패", e);
+            throw new RuntimeException("Deserialization 실패", e);
         } catch (Exception e) {
             throw new RuntimeException("Processing 실패", e);
         }
