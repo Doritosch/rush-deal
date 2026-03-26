@@ -24,7 +24,7 @@ public class KafkaTransactionConsumer {
             final PaymentResultMessage paymentResultMessage = objectMapper.readValue(paymentResponseMessage, PaymentResultMessage.class);
 
             if (paymentResultMessage.messageStatus() == PaymentMessageStatus.FAILED) {
-                paymentService.cancelPayment(paymentResultMessage.paymentId(), "Payment Messaging 실패");
+                paymentService.cancelPayment(paymentResultMessage.paymentId(), "Payment Messaging 실패").block();
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Deserialization 실패", e);
@@ -42,7 +42,7 @@ public class KafkaTransactionConsumer {
                     paymentRequestMessage.finalAmount());
             paymentService.preparePayment(paymentCommand);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Deserializatino 실패", e);
+            throw new RuntimeException("Deserializatin 실패", e);
         } catch (Exception e) {
             throw new RuntimeException("Processing 실패", e);
         }
