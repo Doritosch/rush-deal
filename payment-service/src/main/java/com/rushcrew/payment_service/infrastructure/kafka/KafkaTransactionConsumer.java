@@ -34,11 +34,17 @@ public class KafkaTransactionConsumer {
     }
 
     @KafkaListener(topics = "payment-request", groupId = "payment-request-result-group")
-    public void consumePaymentRequestEvent(final String requestMessage) throws JsonProcessingException {
-        PaymentRequestMessage paymentRequestMessage = objectMapper.readValue(requestMessage, PaymentRequestMessage.class);
+    public void consumePaymentRequestEvent(final String requestMessage) {
+        try {
+            PaymentRequestMessage paymentRequestMessage = objectMapper.readValue(requestMessage, PaymentRequestMessage.class);
 
-        PaymentCommand paymentCommand = new PaymentCommand(paymentRequestMessage.orderId(),
-                paymentRequestMessage.finalAmount());
-        paymentService.preparePayment(paymentCommand);
+            PaymentCommand paymentCommand = new PaymentCommand(paymentRequestMessage.orderId(),
+                    paymentRequestMessage.finalAmount());
+            paymentService.preparePayment(paymentCommand);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Deserializatino 실패", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Processing 실패", e);
+        }
     }
 }
