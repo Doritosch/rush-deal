@@ -32,6 +32,9 @@ public class Payment extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
+    @Version
+    private Long version;
+
     public static Payment create(UUID orderId, Long amount, String portonePaymentId) {
         Payment payment = new Payment();
 

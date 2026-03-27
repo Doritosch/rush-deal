@@ -15,6 +15,7 @@ import io.portone.sdk.server.errors.PaymentException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -39,7 +40,12 @@ public class KafkaTransactionConsumer {
                 switch (payment.getStatus()) {
                     case PENDING -> {
                         payment.failPayment();
-                        paymentRepository.save(payment);
+                        try {
+                            paymentRepository.save(payment);
+                        } catch (ObjectOptimisticLockingFailureException e) {
+                            log.warn("동시 업데이트 감지 - 보상 트랜잭션 재시도 필요: {}", payment.getPaymentId());
+                            throw new RuntimeException("Optimistic lock failed - will retry", e);
+                        }
                     }
                     case PAID -> {
                         paymentService.cancelPayment(payment.getPaymentId(), "Saga rollback").block();

@@ -28,6 +28,7 @@ import io.portone.sdk.server.webhook.Webhook;
 import io.portone.sdk.server.webhook.WebhookTransaction;
 import io.portone.sdk.server.webhook.WebhookVerifier;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
@@ -95,11 +96,21 @@ public class PaymentService {
         return adapter.cancelPayment(portonePaymentId, cancelReason)
                 .flatMap(cancelResponse -> {
                     payment.cancelPayment();
-                    paymentRepository.save(payment);
+
+                    try {
+                        paymentRepository.save(payment);
+                    } catch (ObjectOptimisticLockingFailureException e) {
+                        return Mono.error(new BusinessException(PaymentErrorCode.CONCURRENT_UPDATE_DETECTED));
+                    }
 
                     return Mono.just(PaymentResult.from(payment));
                 })
-                .onErrorMap(e -> new BusinessException(PaymentErrorCode.FAILED_CANCEL_PAYMENT));
+                .onErrorMap(e -> {
+                    if (e instanceof BusinessException) {
+                        return e;
+                    }
+                    return new BusinessException(PaymentErrorCode.FAILED_CANCEL_PAYMENT);
+                });
     }
 
     public PaymentResult findPaymentByPaymentId(UUID paymentId) {
@@ -140,7 +151,12 @@ public class PaymentService {
                 );
 
                 payment.completePayment();
-                paymentRepository.save(payment);
+
+                try {
+                    paymentRepository.save(payment);
+                } catch (ObjectOptimisticLockingFailureException e) {
+                    return Mono.error(new BusinessException(PaymentErrorCode.CONCURRENT_UPDATE_DETECTED));
+                }
 
                 if (paidPayment.getMethod() instanceof PaymentMethodCard paymentMethodCard) {
                     PaymentTransaction transaction = PaymentMapper.toPaymentTransaction(paidPayment, payment);

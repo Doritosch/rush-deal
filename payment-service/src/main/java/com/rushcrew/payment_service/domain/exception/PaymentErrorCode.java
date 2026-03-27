@@ -17,7 +17,8 @@ public enum PaymentErrorCode implements ErrorCode {
     INVALID_WEBHOOK(HttpStatus.BAD_REQUEST, "INVALID_WEBHOOK", "유효하지 않은 웹훅입니다."),
     EVENT_SERIALIZATION_FAILED(HttpStatus.BAD_REQUEST, "EVENT_SERIALIZATION_FAILED", "이벤트 직렬화에 실패했습니다."),
     ALREADY_PUBLISHED_STATUS(HttpStatus.BAD_REQUEST, "ALREADY_PUBLISHED_STATUS", "이미 PUBLISHED 상태인 이벤트 입니다."),
-    ALREADY_FAILED_STATUS(HttpStatus.BAD_REQUEST, "ALREADY_FAILED_STATUS", "이미 FAILED 상태인 이벤트 입니다.");
+    ALREADY_FAILED_STATUS(HttpStatus.BAD_REQUEST, "ALREADY_FAILED_STATUS", "이미 FAILED 상태인 이벤트 입니다."),
+    CONCURRENT_UPDATE_DETECTED(HttpStatus.CONFLICT, "CONCURRENT_UPDATE_DETECTED", "동시에 결제 정보가 수정되었습니다. 다시 시도해주세요.");
 
     private final HttpStatus httpStatus;
     private final String name;
