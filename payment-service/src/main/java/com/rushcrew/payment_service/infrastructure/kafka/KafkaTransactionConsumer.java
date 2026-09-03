@@ -48,7 +48,7 @@ public class KafkaTransactionConsumer {
                         }
                     }
                     case PAID -> {
-                        paymentService.cancelPayment(payment.getPaymentId(), "Saga rollback").block();
+                        paymentService.cancelPayment(payment.getPaymentId(), "Saga rollback");
                     }
                     case CANCELLED, FAILED -> {
                         log.info("결제가 이미 취소되었거나 실패했습니다 {}", payment.getPaymentId());

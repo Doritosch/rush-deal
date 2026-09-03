@@ -38,27 +38,19 @@ public class TransactionKafkaProducer {
         List<PaymentOutbox> pendingEvents =
                 paymentOutboxRepository.findByStatusOrderByCreatedAtAsc(OutboxStatus.PENDING, PageRequest.of(0, 100));
 
-        for(PaymentOutbox event : pendingEvents) {
+        for (PaymentOutbox event : pendingEvents) {
             try {
-                kafkaTemplate.send(event.getTopic(), event.getPayload())
-                        .whenComplete((result, ex) -> {
-                    if (ex == null) {
-                        event.markAsPublished();
-                        paymentOutboxRepository.save(event);
-                    } else {
-                        event.incrementRetry();
-                        if (event.getRetryCount() >= 3) {
-                            event.markAsFailed();
-                        }
-                        paymentOutboxRepository.save(event);
-                    }
-                });
+                // 트랜잭션 안에서 발행 결과를 확정지은 뒤 상태를 변경해야 원자성이 보장됨
+                kafkaTemplate.send(event.getTopic(), event.getPayload()).get();
+                event.markAsPublished();
             } catch (Exception e) {
+                log.error("이벤트 발행 실패: {}", event.getId(), e);
                 event.incrementRetry();
-                event.markAsFailed();
-                paymentOutboxRepository.save(event);
+                if (event.getRetryCount() >= 3) {
+                    event.markAsFailed();
+                }
             }
+            paymentOutboxRepository.save(event);
         }
-
     }
 }

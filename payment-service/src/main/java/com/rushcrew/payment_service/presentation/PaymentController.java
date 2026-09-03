@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.UUID;
 
@@ -42,9 +43,9 @@ public class PaymentController {
     public Mono<PaymentResponse> completePayment(
             @RequestBody CompletePaymentRequest completeRequest
     ) {
-        Mono<PaymentResult> result = paymentService.completePayment(completeRequest.portOnePaymentId());
-
-        return result.map(PaymentResponse::from);
+        return Mono.fromCallable(() -> paymentService.completePayment(completeRequest.portOnePaymentId()))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(PaymentResponse::from);
     }
 
     @PostMapping("/{paymentId}/cancel")
@@ -53,8 +54,9 @@ public class PaymentController {
             @PathVariable("paymentId") UUID paymentId,
             @Valid @RequestBody CancelPaymentRequest request
             ) {
-        Mono<PaymentResult> result = paymentService.cancelPayment(paymentId, request.cancelReason());
-        return result.map(PaymentResponse::from);
+        return Mono.fromCallable(() -> paymentService.cancelPayment(paymentId, request.cancelReason()))
+                .subscribeOn(Schedulers.boundedElastic())
+                .map(PaymentResponse::from);
     }
 
     @GetMapping("/{paymentId}")
@@ -79,7 +81,11 @@ public class PaymentController {
             @RequestHeader("webhook-id") String webhookId,
             @RequestHeader("webhook-timestamp") String webhookTimestamp,
             @RequestHeader("webhook-signature") String webhookSignature
-    ) throws Exception {
-        return paymentService.handleWebhook(body, webhookId, webhookTimestamp, webhookSignature);
+    ) {
+        return Mono.<Void>fromCallable(() -> {
+                    paymentService.handleWebhook(body, webhookId, webhookTimestamp, webhookSignature);
+                    return null;
+                })
+                .subscribeOn(Schedulers.boundedElastic());
     }
 }
